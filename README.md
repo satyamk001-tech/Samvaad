@@ -2,22 +2,32 @@
 
 > **"Har baat, ek saath."**
 
-Samvaad is a complete, portfolio-grade, real-time communication platform inspired by WhatsApp. Built with modern enterprise Java 25 backend architecture, React frontend, PostgreSQL persistence, Redis presence tracking, Apache Kafka event streaming, STOMP WebSockets, and WebRTC voice/video calling.
+Samvaad is a complete, sovereign, high-concurrency real-time communication platform built with modern enterprise Java 25 backend architecture, React frontend, PostgreSQL persistence, Redis presence tracking, Apache Kafka event streaming, STOMP WebSockets, and WebRTC voice/video calling with Indic script and language architecture.
 
-![Viora Design System](.stitch-reference/stitch_violet_messenger_app_frontend/main_chat_interface/screen.png)
+![Samvaad Chat Interface & Dossier](docs/screens/samvaad_chat_dossier.png)
+
+---
+
+## 📸 Sovereign Design System & Interfaces
+
+| **1. वार्तालाप एवं संपर्क विवरण (Chat & Dossier)** | **2. भाषा एवं क्षेत्रीय प्राथमिकताएं (Indic AI Engine)** |
+|:---:|:---:|
+| ![Chat Interface](docs/screens/samvaad_chat_dossier.png) | ![Indic Languages](docs/screens/samvaad_indic_languages.png) |
+| **3. संप्रभु संलेख प्रवेश (Sovereign Auth Protocol)** | **4. उच्च गुणवत्ता वीडियो संवाद (VoLTE HD Calls)** |
+| ![Auth Protocol](docs/screens/samvaad_auth_screen.png) | ![Video Calls](docs/screens/samvaad_video_call.png) |
 
 ---
 
 ## Key Features
 
-* 🔐 **Authentication & Security:** User registration, login, logout, password hashing (BCrypt), JWT access/refresh token rotation, Spring Security context authorization.
+* 🔐 **Authentication & Security:** Sovereign citizen credentials, Mobile OTP, password hashing (BCrypt), JWT access/refresh token rotation, and Spring Security authorization.
 * 💬 **One-to-One & Group Messaging:** Real-time message delivery over STOMP WebSockets, message persistence, history pagination, message editing, deletion, replies, and reactions.
 * 📋 **Delivery Status Receipts:** Server acknowledgement, Sent (`✓`), Delivered (`✓✓`), and Read (`✓✓` colored) receipt state tracking.
 * 🟢 **Multi-Session Presence & Typing:** Redis-backed online status tracking across multiple tabs/devices, heartbeats, last-seen timestamps, and live typing indicators.
-* 📁 **Attachment & File Sharing:** MIME validation, size limits, local/S3 storage abstraction, and short-lived signed media links.
-* 📞 **WebRTC Audio & Video Calling:** Peer-to-peer browser calling, STOMP signaling server, ICE candidate exchange, call state machine (Initiating, Ringing, Connected, Ended, Missed), and call history.
+* 📁 **Attachment & File Sharing:** Direct conversation uploads, MIME validation, size limits, local/S3 storage abstraction, and short-lived signed media links.
+* 📞 **WebRTC Audio & Video Calling:** Peer-to-peer browser calling, STOMP signaling server, ICE candidate exchange, VoLTE HD network metrics, and live neural translation subtitle strip.
 * ⚡ **Asynchronous Event Processing:** Transactional Outbox pattern with Apache Kafka event bus for notifications and analytics dispatch.
-* 🎨 **Whitish-Purple Interface:** Refined design system featuring smooth typography, lavender accents, responsive mobile/desktop layouts, and keyboard accessibility.
+* 🎨 **Sovereign Indic Design Language:** Warm parchment (`#FAF7F2`), Sovereign Navy (`#191C3B`), and gold/saffron accents with support for 14 Indian languages and phonetic transliteration.
 
 ---
 
