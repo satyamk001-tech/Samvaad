@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={"darkMode":"class","theme":{"extend":{"colors":{"on-tertiary-fixed-variant":"#474457","primary-fixed-dim":"#d0bcff","surface-container-high":"#ebe5ff","surface-container-low":"#f7f1ff","surface":"#fdf8ff","on-primary":"#ffffff","inverse-primary":"#d0bcff","on-error":"#ffffff","surface-container-highest":"#e5dffd","on-surface-variant":"#494454","on-primary-container":"#fffbff","surface-variant":"#e5dffd","tertiary-container":"#767287","surface-tint":"#6d3bd7","on-secondary-container":"#fffbff","tertiary-fixed-dim":"#c9c3da","on-error-container":"#93000a","surface-dim":"#dcd6f4","on-primary-fixed-variant":"#5516be","surface-bright":"#fdf8ff","surface-container":"#f1ebff","on-secondary-fixed":"#21005d","error":"#ba1a1a","on-secondary-fixed-variant":"#511cbc","error-container":"#ffdad6","secondary-container":"#8057ec","secondary":"#673bd2","inverse-on-surface":"#f4eeff","on-secondary":"#ffffff","primary-container":"#8455ef","on-tertiary-fixed":"#1c192a","on-surface":"#1c192e","secondary-fixed-dim":"#cebdff","inverse-surface":"#312e44","secondary-fixed":"#e8ddff","tertiary-fixed":"#e5dff7","surface-container-lowest":"#ffffff","outline-variant":"#cbc3d7","on-tertiary":"#ffffff","primary-fixed":"#e9ddff","on-primary-fixed":"#23005c","primary":"#6b38d4","outline":"#7b7486","tertiary":"#5d5a6d","background":"#fdf8ff","on-background":"#1c192e","on-tertiary-container":"#fffbff"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-lg":"1rem","space-md":"0.75rem","gutter-desktop":"1.5rem","space-sm":"0.5rem","space-xl":"1.5rem","space-xs":"0.25rem","margin":"1rem","space-2xl":"2rem","margin-desktop":"2rem","gutter":"1rem"},"fontFamily":{"body-lg":["Inter"],"display-lg-mobile":["Inter"],"body-md":["Inter"],"headline-lg":["Inter"],"display-lg":["Inter"],"headline-sm":["Inter"],"label-md":["Inter"],"headline-md":["Inter"],"label-sm":["Inter"],"caption":["Inter"],"body-sm":["Inter"]},"fontSize":{"body-lg":["16px",{"lineHeight":"26px","letterSpacing":"-0.005em","fontWeight":"400"}],"display-lg-mobile":["28px",{"lineHeight":"36px","letterSpacing":"-0.02em","fontWeight":"600"}],"body-md":["14px",{"lineHeight":"22px","letterSpacing":"0em","fontWeight":"400"}],"headline-lg":["24px",{"lineHeight":"32px","letterSpacing":"-0.02em","fontWeight":"600"}],"display-lg":["36px",{"lineHeight":"44px","letterSpacing":"-0.025em","fontWeight":"600"}],"headline-sm":["16px",{"lineHeight":"24px","letterSpacing":"-0.01em","fontWeight":"600"}],"label-md":["13px",{"lineHeight":"18px","letterSpacing":"0.005em","fontWeight":"500"}],"headline-md":["20px",{"lineHeight":"28px","letterSpacing":"-0.015em","fontWeight":"600"}],"label-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.01em","fontWeight":"500"}],"caption":["11px",{"lineHeight":"14px","letterSpacing":"0.02em","fontWeight":"500"}],"body-sm":["13px",{"lineHeight":"18px","letterSpacing":"0em","fontWeight":"400"}]}}}};</script></head><body class="bg-background font-body-md text-body-md text-on-surface antialiased"><header class="fixed top-0 left-20 right-0 z-40 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 w-full px-gutter-desktop flex items-center justify-between"><div class="flex items-center gap-space-md"><img alt="Violet Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1W6cQqzkQEWgIWOq9F9ZeSzXgPnX0k9rM50-ryLLpsSCNeRHS-tR7_6JRyAhaIlezCgimjbb3vwdclATJ0ELNyZaheNibIwSXeeVZ1LednOhZBaIdwo6NXfhShT2RTsj6pEIMFIT_SXtZ61KJCzvcsXPQwK0FotzRK1XhMPphAq1k3sQAOlZUOLjsX92TebyiMxRwDfNNCbOc7izSt-tKgBk4NZSGuIQVq4u-iVkDRIQ-KMPobpl0ISw0Ga"/><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight">Violet Workspace</span></div><nav class="hidden md:flex items-center gap-space-sm" data-active-classes="bg-primary-container text-on-primary-container"><a class="px-space-md py-space-xs rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="chats" href="#">Chats</a><a aria-current="page" class="px-space-md py-space-xs rounded-lg font-label-md transition-colors bg-primary-container text-on-primary-container" data-path="calls" href="#">Calls</a><a class="px-space-md py-space-xs rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="contacts" href="#">Contacts</a><a class="px-space-md py-space-xs rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="media-vault" href="#">Shared Files</a><a class="px-space-md py-space-xs rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="settings" href="#">Preferences</a></nav><div class="flex items-center gap-space-md"><div class="relative flex items-center"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCq2fvmRjUjGcFkSTwNEYyHBR0MhvRAobFnLSCpSAJZT25bWm3W6dKbBMX7SWc1S66i4-23QhqF_euiraw3HjaiAUW7gJQBueKs4AaZrTkmUUBM4goPZ4fw9DK-C5k8X2eZclBTD_0m1eXwFW8KDiltIo-biTxpWA3TpOCmqb5oR5zZp0UkqeDaGMZ7Ntkio7pecsGIVe7YaTEtmmFkkUEBapfQevVM3qRoFE5RFVodMCIBEhmRdwwO-Q"/><span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#22A06B] ring-2 ring-surface-container-lowest"></span></div></div></div></header><aside class="fixed left-0 top-0 bottom-0 w-20 bg-surface-container-lowest z-50 flex flex-col items-center justify-between py-space-lg shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex flex-col items-center gap-space-xl w-full"><div class="flex items-center justify-center p-space-xs"><img alt="Violet Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1W6cQqzkQEWgIWOq9F9ZeSzXgPnX0k9rM50-ryLLpsSCNeRHS-tR7_6JRyAhaIlezCgimjbb3vwdclATJ0ELNyZaheNibIwSXeeVZ1LednOhZBaIdwo6NXfhShT2RTsj6pEIMFIT_SXtZ61KJCzvcsXPQwK0FotzRK1XhMPphAq1k3sQAOlZUOLjsX92TebyiMxRwDfNNCbOc7izSt-tKgBk4NZSGuIQVq4u-iVkDRIQ-KMPobpl0ISw0Ga"/></div><nav class="flex flex-col items-center gap-space-md w-full px-space-xs" data-active-classes="bg-primary-container text-on-primary-container"><a class="relative group flex items-center justify-center w-12 h-12 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="chats" href="#"><span class="material-symbols-outlined">chat</span><span class="absolute top-2 right-2 flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-primary font-caption text-caption text-on-primary">4</span></a><a aria-current="page" class="relative group flex items-center justify-center w-12 h-12 rounded-xl transition-colors bg-primary-container text-on-primary-container" data-path="calls" href="#"><span class="material-symbols-outlined">call</span></a><a class="relative group flex items-center justify-center w-12 h-12 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="contacts" href="#"><span class="material-symbols-outlined">group</span></a><a class="relative group flex items-center justify-center w-12 h-12 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="media-vault" href="#"><span class="material-symbols-outlined">folder_shared</span></a></nav></div><div class="flex flex-col items-center gap-space-md w-full px-space-xs"><a class="flex items-center justify-center w-12 h-12 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="settings" href="#"><span class="material-symbols-outlined">settings</span></a><div class="relative flex items-center justify-center p-space-xs"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCq2fvmRjUjGcFkSTwNEYyHBR0MhvRAobFnLSCpSAJZT25bWm3W6dKbBMX7SWc1S66i4-23QhqF_euiraw3HjaiAUW7gJQBueKs4AaZrTkmUUBM4goPZ4fw9DK-C5k8X2eZclBTD_0m1eXwFW8KDiltIo-biTxpWA3TpOCmqb5oR5zZp0UkqeDaGMZ7Ntkio7pecsGIVe7YaTEtmmFkkUEBapfQevVM3qRoFE5RFVodMCIBEhmRdwwO-Q"/><span class="absolute bottom-1 right-1 w-2.5 h-2.5 rounded-full bg-[#22A06B] ring-2 ring-surface-container-lowest"></span></div></div></aside><div class="pl-20"><main class="w-full pt-16 min-h-screen bg-background"><div class="flex flex-col w-full h-[calc(100vh-4rem)] overflow-hidden">
+<div class="flex flex-1 w-full h-full overflow-hidden">
+<!-- Call Directory & History Sidebar (Left Rail) -->
+<aside class="w-80 lg:w-96 flex-shrink-0 flex flex-col bg-surface-container-lowest shadow-[1px_0_12px_rgba(37,34,56,0.03)] z-10">
+<!-- Search & Filters Header -->
+<div class="p-space-lg flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="font-headline-sm text-headline-sm text-on-surface">Calls Hub</span>
+<span class="px-space-xs py-0.5 rounded-full bg-secondary-container/15 text-primary font-caption text-caption uppercase tracking-wider font-semibold">Live</span>
+</div>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center text-tertiary hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[20px]">add_call</span>
+</button>
+</div>
+<!-- Filter Pill Segment -->
+<div class="flex p-1 rounded-xl bg-surface-container-low gap-1">
+<button class="flex-1 py-1.5 px-space-sm rounded-lg text-center font-label-md text-label-md bg-surface-container-lowest text-primary shadow-sm transition-all font-medium">All Calls</button>
+<button class="flex-1 py-1.5 px-space-sm rounded-lg text-center font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors flex items-center justify-center gap-1">
+<span>Missed</span>
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+</button>
+</div>
+</div>
+<!-- Call History List -->
+<div class="flex-1 overflow-y-auto px-space-md space-y-1">
+<!-- Active Call Item (Elena Rostova) -->
+<div class="relative p-space-md rounded-xl bg-surface-container-high/60 cursor-pointer transition-all flex items-center gap-space-md shadow-sm">
+<div class="absolute left-0 top-3 bottom-3 w-1 bg-primary rounded-r-full"></div>
+<div class="relative flex-shrink-0">
+<img class="w-11 h-11 rounded-full object-cover shadow-sm" data-alt="Close up photographic portrait of Elena Rostova, professional architectural designer in a modern bright studio wearing minimal chic dark attire, soft cinematic lavender ambient rim light, photorealistic 8k" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAejzs3-LrxOYI0qEJ926MV2b6WAFDE5oNBak-r4knuWC2rH1TTheG5SNSzIedk9NKZxcRVwX7SHkRMZrPf-BTYAfK6CQ2KTNvD2RK7IACiyyxYrqb_L1dmOF-lr8ZUDS_tUNo3Val2c08xgqQ5iRJQ8RhTOWTNf1ScgpVgJ_tbi4zhjpW0AcnMa_WJY8EK4xcDJl5yCjsfKRneU0ZBYfZYnRpzzfMKeC4CEAPh4OUMnBcghgojeFIHoQ"/>
+<span class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[#22A06B] ring-2 ring-surface-container-lowest"></span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-0.5">
+<h4 class="font-label-md text-label-md text-on-surface truncate font-semibold">Elena Rostova</h4>
+<span class="font-caption text-caption text-primary font-medium" id="sidebar-timer">14:32</span>
+</div>
+<div class="flex items-center gap-1.5 text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px] text-primary">videocam</span>
+<span class="text-primary font-medium">Active Call</span>
+</div>
+</div>
+<div class="flex items-center">
+<span class="flex h-2 w-2 relative">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+</span>
+</div>
+</div>
+<!-- Past Call 1: Julian Hayes -->
+<div class="p-space-md rounded-xl hover:bg-surface-container-low cursor-pointer transition-colors flex items-center gap-space-md group">
+<div class="relative flex-shrink-0">
+<img class="w-11 h-11 rounded-full object-cover" data-alt="Studio portrait of Julian Hayes, male technology lead with sleek glasses in soft warm studio lighting, professional clean composition, violet background undertones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDGpqZ3-Y2R9_JwXVn0jdJcJlaEpCL-esh-lOKzFaOO1VpCa6zNfrGxWF66AVaFPYNVE8kEAlgjN_Toe1wLg0-gxR2bvwUZ9ntzl4vr3IBJeTgGfltvgilYTns5kcbvSWjA2Dd1V1isUQxlcH-1hpyriav08QwECx8Y62o-nsxuxQwLVi4bsgbenDY4Nj3A-XlznjrMhaFAAyGce69jqwthTuX0s-X6V8Ko08wkg77H2OlzOPrjCFAx7g"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-0.5">
+<h4 class="font-label-md text-label-md text-on-surface truncate group-hover:text-primary transition-colors">Julian Hayes</h4>
+<span class="font-caption text-caption text-tertiary">Yesterday</span>
+</div>
+<div class="flex items-center gap-1.5 text-tertiary font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px] text-tertiary">call_received</span>
+<span class="truncate">Incoming Audio • 32m</span>
+</div>
+</div>
+<button class="opacity-0 group-hover:opacity-100 text-tertiary hover:text-primary transition-opacity p-1">
+<span class="material-symbols-outlined text-[18px]">phone_forwarded</span>
+</button>
+</div>
+<!-- Past Call 2: Dev Standup (Group Call) -->
+<div class="p-space-md rounded-xl hover:bg-surface-container-low cursor-pointer transition-colors flex items-center gap-space-md group">
+<div class="w-11 h-11 rounded-full bg-secondary-fixed flex items-center justify-center text-primary flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">groups</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-0.5">
+<h4 class="font-label-md text-label-md text-on-surface truncate group-hover:text-primary transition-colors">Core Product Standup</h4>
+<span class="font-caption text-caption text-tertiary">May 14</span>
+</div>
+<div class="flex items-center gap-1.5 text-tertiary font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px] text-tertiary">video_call</span>
+<span class="truncate">Group Call (6) • 45m</span>
+</div>
+</div>
+<button class="opacity-0 group-hover:opacity-100 text-tertiary hover:text-primary transition-opacity p-1">
+<span class="material-symbols-outlined text-[18px]">history</span>
+</button>
+</div>
+<!-- Missed Call 1: Alex Rivera -->
+<div class="p-space-md rounded-xl hover:bg-surface-container-low cursor-pointer transition-colors flex items-center gap-space-md group">
+<div class="relative flex-shrink-0">
+<img class="w-11 h-11 rounded-full object-cover" data-alt="Portrait photo of Alex Rivera, young creative strategist with relaxed thoughtful expression, natural studio daylight with violet and neutral palette" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHeL4KodUXG628POTDzKN4GgePVHLeRf1m9DfRAJ5fOjPhLmE9rjglKehDmoqbCJQmlOmHZM0g3vOs7GMFeySynSmBJ1mzBmcOfWirapyUaEmAgwH7hTIZOlRFobjpo1YIwhP4ifDch7GoA5QseLB53oi2ruNDBeueXabYOKtFx8JTSsqTYOtoW4RqAAIZ8B517H8Z-GROMM3jytL0Rr3QGKfyL3IM9Ufqr3gFqdQb2fuW9gQcCeoR_g"/>
+<span class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-error-container text-error flex items-center justify-center">
+<span class="material-symbols-outlined text-[12px] font-bold">call_missed</span>
+</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-0.5">
+<h4 class="font-label-md text-label-md text-on-surface truncate group-hover:text-error transition-colors">Alex Rivera</h4>
+<span class="font-caption text-caption text-error font-medium">10:14 AM</span>
+</div>
+<div class="flex items-center gap-1.5 text-error font-body-sm text-body-sm font-medium">
+<span class="material-symbols-outlined text-[16px]">call_missed_outgoing</span>
+<span class="truncate">Missed Video Call</span>
+</div>
+</div>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center bg-surface-container text-tertiary hover:bg-primary hover:text-on-primary transition-all">
+<span class="material-symbols-outlined text-[16px]">call</span>
+</button>
+</div>
+<!-- Additional item for spatial rhythm -->
+<div class="p-space-md rounded-xl hover:bg-surface-container-low cursor-pointer transition-colors flex items-center gap-space-md group">
+<div class="relative flex-shrink-0">
+<img class="w-11 h-11 rounded-full object-cover" data-alt="Editorial portrait of Maya Patel, senior researcher in technology setting, calm gaze, refined soft purple lighting aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzHxdr6qc7y6sYE__HqrbR42WDisufcWzwndgpV7pf-l16lplmXCjR66QzX9MzDKkzlyUeIUSou2PYAsqFjra4e5NltZjXbCyw0VJxKkQqv38sExWBB_rhhqQjMI46mbAbrfbrXg3PRsJkvZe6yXNoPmKcSY046_DdoRzHwKzSrtnIlhPhK1mv__TubTCc1N0rGzIsQsnhuqEI6MlwgPwZGkzSBu1hams-gm6hfKJctNjE9pkqcw77ZQ"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-0.5">
+<h4 class="font-label-md text-label-md text-on-surface truncate group-hover:text-primary transition-colors">Maya Patel</h4>
+<span class="font-caption text-caption text-tertiary">May 12</span>
+</div>
+<div class="flex items-center gap-1.5 text-tertiary font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px] text-tertiary">call_made</span>
+<span class="truncate">Outgoing Audio • 18m</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Audio Setting Device Bar -->
+<div class="p-space-md bg-surface-container-low/70 flex items-center justify-between">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-primary text-[18px]">headset</span>
+<div class="min-w-0">
+<p class="font-caption text-caption text-on-surface truncate font-semibold">WH-1000XM5 Stereo</p>
+<p class="font-caption text-caption text-tertiary truncate">48kHz • Active Noise Filter</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-tertiary text-[18px] cursor-pointer hover:text-on-surface">tune</span>
+</div>
+</aside>
+<!-- Center Stage: Active Video Call Studio -->
+<main class="flex-1 relative bg-inverse-surface flex flex-col overflow-hidden">
+<!-- Full Bleed Remote Video Canvas -->
+<div class="absolute inset-0 w-full h-full">
+<img class="w-full h-full object-cover object-center filter brightness-[0.96]" data-alt="Cinematic ultra-high definition video conference perspective of Elena Rostova looking directly into the camera during an engaging business discussion, seated in an elegant modern Scandinavian workspace with soft diffuse morning light, violet atmospheric accents, shallow depth of field, photorealistic 8k video frame" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB3zh7ApM59mzjvn-qTyIkDGe8Nv3AAZ2SQBuTXHzJnIlflRJMFLwqBsXBcZHR5a0W48e8F2ZAFnuuVD_CP0S1cMrNM_ih31gTcjYodRY3rhS82Sq8aaa8ouZ_iu35zoKmX1udq5ZzFOLtTjIlsQ4u61G3eklR8uuPwy2HfF-sgUAtCvdZbHLBJFeyS4Eq2EWSJPH7YjhcYTUknsTmH7V13cQtB9BgqmsV7E3vtLfBnpDyQ-LBf4wrwjA"/>
+<!-- Subtle Cinematic Gradient Overlays -->
+<div class="absolute inset-0 bg-gradient-to-t from-inverse-surface/85 via-transparent to-inverse-surface/60 pointer-events-none"></div>
+</div>
+<!-- Top Overlay: Session Meta & Quality Metrics -->
+<div class="relative z-20 w-full p-space-lg flex items-center justify-between">
+<!-- Remote Participant Info Pill -->
+<div class="flex items-center gap-space-md px-space-md py-space-xs rounded-full bg-inverse-surface/75 backdrop-blur-xl shadow-lg">
+<div class="relative">
+<span class="w-2.5 h-2.5 rounded-full bg-[#22A06B] block"></span>
+<span class="w-2.5 h-2.5 rounded-full bg-[#22A06B] animate-ping absolute inset-0 opacity-75"></span>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-headline-sm text-headline-sm text-surface-bright font-semibold">Elena Rostova</span>
+<span class="text-tertiary-fixed-dim font-caption">•</span>
+<span class="font-body-md text-body-md text-surface-container tracking-wider font-mono" id="call-counter">14:32</span>
+<span class="text-tertiary-fixed-dim font-caption">•</span>
+<span class="flex items-center gap-1 font-label-sm text-label-sm text-primary-fixed-dim">
+<span class="material-symbols-outlined text-[14px]">high_quality</span>
+<span>HD Audio</span>
+</span>
+<span class="text-tertiary-fixed-dim font-caption">•</span>
+<span class="px-2 py-0.5 rounded-full bg-[#22A06B]/20 text-[#34D399] font-caption text-caption font-medium tracking-wide">Connected</span>
+</div>
+</div>
+<!-- Connection Signal Quality & Layout Controls -->
+<div class="flex items-center gap-space-sm">
+<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-inverse-surface/75 backdrop-blur-xl shadow-lg text-surface-bright font-label-sm text-label-sm">
+<div class="flex items-end gap-0.5 h-3">
+<span class="w-0.5 h-1.5 bg-[#34D399] rounded-full"></span>
+<span class="w-0.5 h-2 bg-[#34D399] rounded-full"></span>
+<span class="w-0.5 h-2.5 bg-[#34D399] rounded-full"></span>
+<span class="w-0.5 h-3 bg-[#34D399] rounded-full"></span>
+</div>
+<span class="text-surface-container font-mono text-[11px]">38ms latency</span>
+</div>
+<button class="w-9 h-9 rounded-full bg-inverse-surface/75 hover:bg-inverse-surface text-surface-bright flex items-center justify-center backdrop-blur-xl transition-all shadow-lg" title="Grid Layout">
+<span class="material-symbols-outlined text-[18px]">grid_view</span>
+</button>
+<button class="w-9 h-9 rounded-full bg-inverse-surface/75 hover:bg-inverse-surface text-surface-bright flex items-center justify-center backdrop-blur-xl transition-all shadow-lg" title="Fullscreen">
+<span class="material-symbols-outlined text-[18px]">fullscreen</span>
+</button>
+</div>
+</div>
+<!-- Center Stage Focus Element: Subtle Audio Visualizer on Speaking -->
+<div class="relative z-10 flex-1 flex items-end justify-center pb-28 pointer-events-none">
+<div class="px-space-md py-1.5 rounded-full bg-inverse-surface/60 backdrop-blur-md flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-fixed text-[16px]">graphic_eq</span>
+<span class="font-label-sm text-label-sm text-surface-bright">Elena is speaking...</span>
+<div class="flex items-center gap-0.5 h-2.5">
+<span class="w-1 h-2 bg-primary-fixed rounded-full animate-pulse"></span>
+<span class="w-1 h-3.5 bg-primary-fixed rounded-full animate-pulse" style="animation-delay: 150ms;"></span>
+<span class="w-1 h-1.5 bg-primary-fixed rounded-full animate-pulse" style="animation-delay: 300ms;"></span>
+<span class="w-1 h-3 bg-primary-fixed rounded-full animate-pulse" style="animation-delay: 75ms;"></span>
+</div>
+</div>
+</div>
+<!-- Picture-In-Picture (PiP) Local User Video Stream -->
+<div class="absolute bottom-24 right-6 z-30 w-56 sm:w-64 aspect-[4/3] rounded-2xl overflow-hidden bg-surface-container-lowest shadow-[0_16px_36px_rgba(0,0,0,0.35)] transition-all transform hover:scale-[1.02] cursor-grab active:cursor-grabbing ring-1 ring-white/10" id="pip-container">
+<div class="relative w-full h-full">
+<img class="w-full h-full object-cover" data-alt="Photographic webcam preview of creative director user smiling softly at screen during a remote design presentation, modern minimal loft office, violet neon backlights, crisp studio lighting, 8k" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCMo07BV8yyExRr1tL0XTvvfUfu2968RgRmg0bW3OAn6_ij8rY767c4lLFauX5FFdvmmxLROFhD1NBD5U8tixJ5UvZW9mp6uGgau-MG51gmeakDIP2qfqeTtLP549y5Zm60S8XxQ2xC0f-1fLRk4nTJSY5LuxE2DSaC0NxxBOnNQPyM92fnlelCrlWN006sz7DiFImDl69g_-vmZsx6fuO3FpLYzmsETvc-R9wAbid2UlAaIkHqMeAgLA"/>
+<div class="absolute inset-0 bg-gradient-to-t from-inverse-surface/80 via-transparent to-transparent"></div>
+<!-- PiP Top Info -->
+<div class="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between">
+<span class="px-2 py-0.5 rounded-md bg-inverse-surface/70 backdrop-blur-md text-surface-bright font-caption text-caption font-medium">You</span>
+<button class="w-5 h-5 rounded-full bg-inverse-surface/60 text-surface-bright flex items-center justify-center hover:bg-inverse-surface transition-colors">
+<span class="material-symbols-outlined text-[13px]">flip_camera_ios</span>
+</button>
+</div>
+<!-- PiP Bottom Controls & Audio Level Indicator -->
+<div class="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between">
+<!-- Audio Meter Visualizer -->
+<div class="flex items-center gap-1.5 px-2 py-1 rounded-full bg-inverse-surface/75 backdrop-blur-md">
+<span class="material-symbols-outlined text-[13px] text-[#34D399]">mic</span>
+<div class="flex items-center gap-0.5 h-2">
+<span class="w-0.5 h-1.5 bg-[#34D399] rounded-full"></span>
+<span class="w-0.5 h-2.5 bg-[#34D399] rounded-full"></span>
+<span class="w-0.5 h-1 bg-[#34D399] rounded-full"></span>
+<span class="w-0.5 h-2 bg-[#34D399] rounded-full"></span>
+</div>
+</div>
+<span class="font-caption text-caption text-surface-bright/80 font-mono text-[10px]">1080p60</span>
+</div>
+</div>
+</div>
+<!-- Floating Call Controls Dock (Bottom Center) -->
+<div class="absolute bottom-6 left-0 right-0 z-30 flex items-center justify-center px-space-md pointer-events-none">
+<div class="pointer-events-auto flex items-center gap-space-sm p-2 rounded-2xl bg-inverse-surface/85 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.4)]">
+<!-- Microphone Toggle with Shortcut Pill -->
+<div class="relative group">
+<button class="flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-surface-container-high/20 hover:bg-surface-container-high/30 text-surface-bright transition-all active:scale-95" id="mic-btn" onclick="toggleMic()">
+<span class="material-symbols-outlined text-[22px]" id="mic-icon">mic</span>
+</button>
+<span class="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-inverse-surface text-surface-bright px-1.5 py-0.5 rounded font-caption text-[10px]">Mic (M)</span>
+</div>
+<!-- Camera Toggle with Shortcut Pill -->
+<div class="relative group">
+<button class="flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-surface-container-high/20 hover:bg-surface-container-high/30 text-surface-bright transition-all active:scale-95" id="cam-btn" onclick="toggleCam()">
+<span class="material-symbols-outlined text-[22px]" id="cam-icon">videocam</span>
+</button>
+<span class="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-inverse-surface text-surface-bright px-1.5 py-0.5 rounded font-caption text-[10px]">Camera (V)</span>
+</div>
+<!-- Screen Share Toggle -->
+<div class="relative group">
+<button class="flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-surface-container-high/20 hover:bg-surface-container-high/30 text-surface-bright transition-all active:scale-95">
+<span class="material-symbols-outlined text-[22px]">screen_share</span>
+</button>
+<span class="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-inverse-surface text-surface-bright px-1.5 py-0.5 rounded font-caption text-[10px]">Share Screen</span>
+</div>
+<!-- Output Device Audio Selector Dropdown -->
+<div class="relative group">
+<button class="flex items-center gap-1.5 px-3 h-12 rounded-xl bg-surface-container-high/20 hover:bg-surface-container-high/30 text-surface-bright transition-all active:scale-95" onclick="toggleAudioMenu()">
+<span class="material-symbols-outlined text-[20px]">volume_up</span>
+<span class="material-symbols-outlined text-[16px] text-tertiary-fixed-dim">expand_more</span>
+</button>
+<!-- Audio Output Flyout Dropdown -->
+<div class="hidden absolute bottom-16 left-1/2 -translate-x-1/2 w-64 p-2 rounded-xl bg-surface-container-lowest text-on-surface shadow-2xl z-50" id="audio-menu">
+<p class="font-caption text-caption text-tertiary px-space-sm py-1 font-semibold uppercase tracking-wider">Audio Output</p>
+<div class="space-y-1">
+<button class="w-full flex items-center justify-between px-space-sm py-2 rounded-lg bg-surface-container text-primary font-label-md text-label-md text-left">
+<span class="truncate">Sony WH-1000XM5</span>
+<span class="material-symbols-outlined text-[16px]">check</span>
+</button>
+<button class="w-full flex items-center justify-between px-space-sm py-2 rounded-lg hover:bg-surface-container-low text-on-surface font-label-md text-label-md text-left">
+<span class="truncate">MacBook Pro Speakers</span>
+</button>
+<button class="w-full flex items-center justify-between px-space-sm py-2 rounded-lg hover:bg-surface-container-low text-on-surface font-label-md text-label-md text-left">
+<span class="truncate">Display Audio (4K Monitor)</span>
+</button>
+</div>
+</div>
+</div>
+<div class="w-px h-6 bg-white/20 mx-1"></div>
+<!-- Call Chat Side-Drawer Toggle with Badge -->
+<div class="relative group">
+<button class="relative flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-surface-container-high/20 hover:bg-surface-container-high/30 text-surface-bright transition-all active:scale-95" onclick="toggleSideChat()">
+<span class="material-symbols-outlined text-[22px]">forum</span>
+<span class="absolute top-2 right-2 flex items-center justify-center w-4 h-4 rounded-full bg-primary font-caption text-[10px] text-on-primary font-bold">3</span>
+</button>
+<span class="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-inverse-surface text-surface-bright px-1.5 py-0.5 rounded font-caption text-[10px]">In-Call Chat</span>
+</div>
+<!-- Hand Raise Reaction -->
+<div class="relative group">
+<button class="flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-surface-container-high/20 hover:bg-surface-container-high/30 text-surface-bright transition-all active:scale-95">
+<span class="material-symbols-outlined text-[22px]">front_hand</span>
+</button>
+<span class="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-inverse-surface text-surface-bright px-1.5 py-0.5 rounded font-caption text-[10px]">Raise Hand</span>
+</div>
+<!-- End Call Button (Pill shaped, prominent red #ba1a1a / #E5484D style) -->
+<button class="flex items-center gap-2 px-5 h-12 rounded-full bg-[#ba1a1a] hover:bg-[#93000a] text-on-primary transition-all active:scale-95 shadow-lg ml-2 font-label-md text-label-md font-semibold">
+<span class="material-symbols-outlined text-[22px]">call_end</span>
+<span>Leave</span>
+</button>
+</div>
+</div>
+</main>
+<!-- In-Call Messaging Side-Drawer -->
+<aside class="w-80 flex-shrink-0 bg-surface-container-lowest shadow-[-1px_0_12px_rgba(37,34,56,0.03)] flex flex-col transition-all duration-300 z-20" id="chat-sidebar">
+<!-- Chat Header -->
+<div class="p-space-lg flex items-center justify-between bg-surface-container-low/40">
+<div class="flex items-center gap-space-sm">
+<span class="font-headline-sm text-headline-sm text-on-surface">Call Chat</span>
+<span class="px-2 py-0.5 rounded-full bg-primary-container text-on-primary-container font-caption text-caption font-semibold">3 new</span>
+</div>
+<button class="text-tertiary hover:text-on-surface p-1 rounded-lg hover:bg-surface-container transition-colors" onclick="toggleSideChat()">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Messages Stream -->
+<div class="flex-1 overflow-y-auto p-space-md space-y-space-md bg-surface">
+<div class="flex justify-center">
+<span class="px-3 py-1 rounded-full bg-surface-container-high text-primary font-caption text-caption font-medium">Call began at 10:45 AM</span>
+</div>
+<!-- Message from Elena -->
+<div class="flex flex-col gap-1 items-start">
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">Elena Rostova</span>
+<span class="font-caption text-caption text-tertiary">10:48 AM</span>
+</div>
+<div class="p-3 rounded-2xl rounded-tl-sm bg-surface-container-lowest text-on-surface shadow-sm font-body-sm text-body-sm max-w-[90%]">
+            Sharing the Figma prototype link for the spatial workspace layout right now.
+          </div>
+</div>
+<!-- Attachment card shared in call -->
+<div class="flex flex-col gap-1 items-start">
+<div class="p-3 rounded-2xl bg-surface-container text-on-surface shadow-sm font-body-sm text-body-sm max-w-[90%] flex items-center gap-3">
+<div class="w-9 h-9 rounded-xl bg-primary text-on-primary flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">link</span>
+</div>
+<div class="min-w-0">
+<p class="font-label-md text-label-md font-semibold truncate text-primary">Violet_DesignSystem_v4.2</p>
+<p class="font-caption text-caption text-tertiary">figma.com • 42 MB</p>
+</div>
+</div>
+</div>
+<!-- Outgoing user message -->
+<div class="flex flex-col gap-1 items-end">
+<div class="flex items-center gap-2">
+<span class="font-caption text-caption text-tertiary">10:52 AM</span>
+<span class="font-label-sm text-label-sm font-semibold text-primary">You</span>
+</div>
+<div class="p-3 rounded-2xl rounded-tr-sm bg-primary text-on-primary shadow-sm font-body-sm text-body-sm max-w-[90%]">
+            Looks crisp! The micro-interaction timings on the dock match our refined standards.
+          </div>
+</div>
+<!-- Latest incoming -->
+<div class="flex flex-col gap-1 items-start">
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">Elena Rostova</span>
+<span class="font-caption text-caption text-tertiary">Just now</span>
+</div>
+<div class="p-3 rounded-2xl rounded-tl-sm bg-surface-container-lowest text-on-surface shadow-sm font-body-sm text-body-sm max-w-[90%]">
+            Let's review the active participants view next.
+          </div>
+</div>
+</div>
+<!-- In-Call Message Composer Input -->
+<div class="p-space-md bg-surface-container-lowest shadow-[0_-1px_8px_rgba(0,0,0,0.03)]">
+<div class="flex items-center gap-2 bg-surface-container rounded-xl p-1.5 focus-within:ring-2 focus-within:ring-primary/40 transition-all">
+<input class="flex-1 bg-transparent px-2 font-body-sm text-body-sm text-on-surface placeholder:text-tertiary focus:outline-none" placeholder="Send message to call..." type="text"/>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center text-tertiary hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">attach_file</span>
+</button>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center bg-primary text-on-primary transition-transform active:scale-95 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">send</span>
+</button>
+</div>
+</div>
+</aside>
+</div>
+</div>
+<script>
+  // Timer Simulation
+  let totalSeconds = 14 * 60 + 32;
+  const counterEl = document.getElementById('call-counter');
+  const sidebarTimerEl = document.getElementById('sidebar-timer');
+
+  setInterval(() => {
+    totalSeconds++;
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    const formatted = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    if (counterEl) counterEl.textContent = formatted;
+    if (sidebarTimerEl) sidebarTimerEl.textContent = formatted;
+  }, 1000);
+
+  // Mute / Unmute Toggle
+  let isMuted = false;
+  function toggleMic() {
+    isMuted = !isMuted;
+    const btn = document.getElementById('mic-btn');
+    const icon = document.getElementById('mic-icon');
+    if (isMuted) {
+      btn.classList.remove('bg-surface-container-high/20', 'text-surface-bright');
+      btn.classList.add('bg-error', 'text-on-error');
+      icon.textContent = 'mic_off';
+    } else {
+      btn.classList.remove('bg-error', 'text-on-error');
+      btn.classList.add('bg-surface-container-high/20', 'text-surface-bright');
+      icon.textContent = 'mic';
+    }
+  }
+
+  // Camera Toggle
+  let isCamOff = false;
+  function toggleCam() {
+    isCamOff = !isCamOff;
+    const btn = document.getElementById('cam-btn');
+    const icon = document.getElementById('cam-icon');
+    const pip = document.getElementById('pip-container');
+    if (isCamOff) {
+      btn.classList.remove('bg-surface-container-high/20', 'text-surface-bright');
+      btn.classList.add('bg-error', 'text-on-error');
+      icon.textContent = 'videocam_off';
+      if (pip) pip.style.opacity = '0.3';
+    } else {
+      btn.classList.remove('bg-error', 'text-on-error');
+      btn.classList.add('bg-surface-container-high/20', 'text-surface-bright');
+      icon.textContent = 'videocam';
+      if (pip) pip.style.opacity = '1';
+    }
+  }
+
+  // Audio Menu Toggle
+  function toggleAudioMenu() {
+    const menu = document.getElementById('audio-menu');
+    menu.classList.toggle('hidden');
+  }
+
+  // Side Chat Toggle
+  function toggleSideChat() {
+    const chat = document.getElementById('chat-sidebar');
+    chat.classList.toggle('hidden');
+  }
+
+  // Keyboard shortcut listener for (M) and (V)
+  window.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT') return;
+    if (e.key === 'm' || e.key === 'M') {
+      toggleMic();
+    }
+    if (e.key === 'v' || e.key === 'V') {
+      toggleCam();
+    }
+  });
+</script></main></div></body></html>

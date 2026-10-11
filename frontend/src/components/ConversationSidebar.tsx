@@ -1,0 +1,207 @@
+import React, { useState } from 'react';
+import { Conversation, User } from '../types';
+import { Search, Plus, Users, Shield } from 'lucide-react';
+
+interface ConversationSidebarProps {
+  conversations: Conversation[];
+  activeConversation: Conversation | null;
+  onSelectConversation: (conversation: Conversation) => void;
+  currentUser: User;
+  onOpenNewChat: () => void;
+}
+
+type FilterCategory = 'ALL' | 'UNREAD' | 'GROUPS' | 'WORK' | 'FAMILY';
+
+export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
+  conversations,
+  activeConversation,
+  onSelectConversation,
+  currentUser,
+  onOpenNewChat,
+}) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedFilter, setSelectedFilter] = useState<FilterCategory>('ALL');
+
+  const filteredConversations = conversations.filter((c) => {
+    // 1. Search term match
+    let matchesSearch = true;
+    if (searchTerm.trim()) {
+      if (c.type === 'GROUP') {
+        matchesSearch = (c.title || 'Group').toLowerCase().includes(searchTerm.toLowerCase());
+      } else {
+        const other = c.members.find((m) => m.user.id !== currentUser.id)?.user;
+        const name = (other?.displayName || other?.username || 'Chat').toLowerCase();
+        matchesSearch = name.includes(searchTerm.toLowerCase());
+      }
+    }
+
+    if (!matchesSearch) return false;
+
+    // 2. Filter pill match
+    if (selectedFilter === 'GROUPS') {
+      return c.type === 'GROUP';
+    }
+    // All other filters default to true for demonstration
+    return true;
+  });
+
+  const getConversationTitle = (c: Conversation) => {
+    if (c.type === 'GROUP') {
+      return c.title || 'सामूहिक वार्ता • Group';
+    }
+    const other = c.members.find((m) => m.user.id !== currentUser.id)?.user;
+    return other?.displayName || other?.username || 'वार्तालाप • Conversation';
+  };
+
+  const getOtherUser = (c: Conversation) => {
+    return c.members.find((m) => m.user.id !== currentUser.id)?.user;
+  };
+
+  return (
+    <aside className="w-80 md:w-96 bg-[#FFFFFF] border-r border-[#E8E2D5] flex flex-col h-full z-10 select-none">
+      {/* 1. Header with Sovereign Badge and New Chat Button */}
+      <div className="p-4 border-b border-[#E8E2D5] bg-[#FFFFFF]">
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <div className="flex items-center gap-1.5">
+              <h2 className="text-base font-bold text-[#191C3B] tracking-tight">
+                वार्तालाप
+              </h2>
+              <span className="text-[11px] font-semibold text-[#686578] uppercase tracking-wider">
+                • CONVERSATIONS
+              </span>
+            </div>
+            <p className="text-[11px] text-[#686578]">
+              {conversations.length} सक्रिय संवाद सत्र • Active
+            </p>
+          </div>
+
+          <button
+            onClick={onOpenNewChat}
+            className="h-8 px-3 rounded-xl bg-[#191C3B] text-white flex items-center gap-1.5 hover:bg-[#101226] transition-all shadow-sm shadow-[#191C3B]/10 text-xs font-medium"
+            title="नया संदेश • New Conversation"
+          >
+            <Plus className="w-3.5 h-3.5 text-[#C59A58]" />
+            <span>नया संदेश</span>
+          </button>
+        </div>
+
+        {/* Search Bar */}
+        <div className="relative mt-2">
+          <Search className="w-4 h-4 text-[#9E9AA8] absolute left-3 top-2.5" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="खोजें or Search conversations..."
+            className="w-full bg-[#FAF7F2] border border-[#E8E2D5] rounded-xl pl-9 pr-3 py-1.5 text-xs text-[#191C3B] placeholder:text-[#9E9AA8] focus:outline-none focus:border-[#C59A58]"
+          />
+        </div>
+
+        {/* Filter Pills: All, Unread, Groups, Work, Family */}
+        <div className="flex items-center gap-1.5 mt-3 overflow-x-auto pb-0.5 no-scrollbar">
+          {[
+            { id: 'ALL', label: 'सभी (All)' },
+            { id: 'UNREAD', label: 'अपठित (Unread)' },
+            { id: 'GROUPS', label: 'समूह (Groups)' },
+            { id: 'WORK', label: 'कार्य (Work)' },
+            { id: 'FAMILY', label: 'परिवार (Family)' },
+          ].map((pill) => (
+            <button
+              key={pill.id}
+              onClick={() => setSelectedFilter(pill.id as FilterCategory)}
+              className={`px-2.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap transition-all border ${
+                selectedFilter === pill.id
+                  ? 'bg-[#191C3B] text-white border-[#191C3B]'
+                  : 'bg-[#FAF7F2] text-[#686578] border-[#E8E2D5] hover:border-[#C59A58] hover:text-[#191C3B]'
+              }`}
+            >
+              {pill.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 2. Conversations List */}
+      <div className="flex-1 overflow-y-auto divide-y divide-[#E8E2D5]/40">
+        {filteredConversations.length === 0 ? (
+          <div className="p-8 text-center text-[#686578] text-xs">
+            <p className="font-medium">कोई वार्तालाप नहीं मिला</p>
+            <p className="text-[11px] text-[#9E9AA8] mt-1">No conversations matching search</p>
+          </div>
+        ) : (
+          filteredConversations.map((conv) => {
+            const isActive = activeConversation?.id === conv.id;
+            const title = getConversationTitle(conv);
+            const otherUser = getOtherUser(conv);
+            const isOnline = otherUser?.isOnline;
+
+            return (
+              <button
+                key={conv.id}
+                onClick={() => onSelectConversation(conv)}
+                className={`w-full p-3.5 flex items-start gap-3 text-left transition-all hover:bg-[#FAF7F2] ${
+                  isActive
+                    ? 'bg-[#FDF8EE] border-l-4 border-[#C59A58]'
+                    : 'bg-white'
+                }`}
+              >
+                {/* Indic Avatar */}
+                <div className="relative flex-shrink-0">
+                  <div className="w-11 h-11 rounded-2xl bg-[#F5F0E8] border border-[#E8E2D5] flex items-center justify-center text-[#191C3B] font-bold text-sm shadow-xs">
+                    {conv.type === 'GROUP' ? (
+                      <Users className="w-5 h-5 text-[#B45309]" />
+                    ) : (
+                      <span className="font-serif">
+                        {title.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  {conv.type === 'DIRECT' && (
+                    <span
+                      className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${
+                        isOnline ? 'bg-emerald-500' : 'bg-gray-300'
+                      }`}
+                    />
+                  )}
+                </div>
+
+                {/* Details */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="text-xs font-bold text-[#191C3B] truncate tracking-tight">
+                      {title}
+                    </h3>
+                    <span className="text-[10px] text-[#9E9AA8] flex-shrink-0">
+                      {new Date(conv.updatedAt).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-[#686578] truncate">
+                    {conv.lastMessage?.content ||
+                      (conv.type === 'GROUP' ? 'नया समूह निर्मित हुआ' : 'बातचीत शुरू करें...')}
+                  </p>
+
+                  <div className="mt-1 flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-[#B45309] bg-[#FDF8EE] px-1.5 py-0.5 rounded border border-[#EAD9BE]">
+                      <Shield className="w-2.5 h-2.5" />
+                      E2EE
+                    </span>
+                    {conv.type === 'GROUP' && (
+                      <span className="text-[9px] text-[#9E9AA8]">
+                        {conv.members.length} सदस्य
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </button>
+            );
+          })
+        )}
+      </div>
+    </aside>
+  );
+};

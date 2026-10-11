@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={"darkMode":"class","theme":{"extend":{"colors":{"on-tertiary-fixed-variant":"#474457","primary-fixed-dim":"#d0bcff","surface-container-high":"#ebe5ff","surface-container-low":"#f7f1ff","surface":"#fdf8ff","on-primary":"#ffffff","inverse-primary":"#d0bcff","on-error":"#ffffff","surface-container-highest":"#e5dffd","on-surface-variant":"#494454","on-primary-container":"#fffbff","surface-variant":"#e5dffd","tertiary-container":"#767287","surface-tint":"#6d3bd7","on-secondary-container":"#fffbff","tertiary-fixed-dim":"#c9c3da","on-error-container":"#93000a","surface-dim":"#dcd6f4","on-primary-fixed-variant":"#5516be","surface-bright":"#fdf8ff","surface-container":"#f1ebff","on-secondary-fixed":"#21005d","error":"#ba1a1a","on-secondary-fixed-variant":"#511cbc","error-container":"#ffdad6","secondary-container":"#8057ec","secondary":"#673bd2","inverse-on-surface":"#f4eeff","on-secondary":"#ffffff","primary-container":"#8455ef","on-tertiary-fixed":"#1c192a","on-surface":"#1c192e","secondary-fixed-dim":"#cebdff","inverse-surface":"#312e44","secondary-fixed":"#e8ddff","tertiary-fixed":"#e5dff7","surface-container-lowest":"#ffffff","outline-variant":"#cbc3d7","on-tertiary":"#ffffff","primary-fixed":"#e9ddff","on-primary-fixed":"#23005c","primary":"#6b38d4","outline":"#7b7486","tertiary":"#5d5a6d","background":"#fdf8ff","on-background":"#1c192e","on-tertiary-container":"#fffbff"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-lg":"1rem","space-md":"0.75rem","gutter-desktop":"1.5rem","space-sm":"0.5rem","space-xl":"1.5rem","space-xs":"0.25rem","margin":"1rem","space-2xl":"2rem","margin-desktop":"2rem","gutter":"1rem"},"fontFamily":{"body-lg":["Inter"],"display-lg-mobile":["Inter"],"body-md":["Inter"],"headline-lg":["Inter"],"display-lg":["Inter"],"headline-sm":["Inter"],"label-md":["Inter"],"headline-md":["Inter"],"label-sm":["Inter"],"caption":["Inter"],"body-sm":["Inter"]},"fontSize":{"body-lg":["16px",{"lineHeight":"26px","letterSpacing":"-0.005em","fontWeight":"400"}],"display-lg-mobile":["28px",{"lineHeight":"36px","letterSpacing":"-0.02em","fontWeight":"600"}],"body-md":["14px",{"lineHeight":"22px","letterSpacing":"0em","fontWeight":"400"}],"headline-lg":["24px",{"lineHeight":"32px","letterSpacing":"-0.02em","fontWeight":"600"}],"display-lg":["36px",{"lineHeight":"44px","letterSpacing":"-0.025em","fontWeight":"600"}],"headline-sm":["16px",{"lineHeight":"24px","letterSpacing":"-0.01em","fontWeight":"600"}],"label-md":["13px",{"lineHeight":"18px","letterSpacing":"0.005em","fontWeight":"500"}],"headline-md":["20px",{"lineHeight":"28px","letterSpacing":"-0.015em","fontWeight":"600"}],"label-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.01em","fontWeight":"500"}],"caption":["11px",{"lineHeight":"14px","letterSpacing":"0.02em","fontWeight":"500"}],"body-sm":["13px",{"lineHeight":"18px","letterSpacing":"0em","fontWeight":"400"}]}}}};</script></head><body class="bg-background font-body-md text-body-md text-on-surface antialiased"><header class="fixed top-0 left-20 right-0 z-40 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 w-full px-gutter-desktop flex items-center justify-between"><div class="flex items-center gap-space-md"><img alt="Violet Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1W6cQqzkQEWgIWOq9F9ZeSzXgPnX0k9rM50-ryLLpsSCNeRHS-tR7_6JRyAhaIlezCgimjbb3vwdclATJ0ELNyZaheNibIwSXeeVZ1LednOhZBaIdwo6NXfhShT2RTsj6pEIMFIT_SXtZ61KJCzvcsXPQwK0FotzRK1XhMPphAq1k3sQAOlZUOLjsX92TebyiMxRwDfNNCbOc7izSt-tKgBk4NZSGuIQVq4u-iVkDRIQ-KMPobpl0ISw0Ga"/><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight">Violet Workspace</span></div><nav class="hidden md:flex items-center gap-space-sm" data-active-classes="bg-primary-container text-on-primary-container"><a aria-current="page" class="px-space-md py-space-xs rounded-lg font-label-md transition-colors bg-primary-container text-on-primary-container" data-path="chats" href="#">Chats</a><a class="px-space-md py-space-xs rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="calls" href="#">Calls</a><a class="px-space-md py-space-xs rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="contacts" href="#">Contacts</a><a class="px-space-md py-space-xs rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="media-vault" href="#">Shared Files</a><a class="px-space-md py-space-xs rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="settings" href="#">Preferences</a></nav><div class="flex items-center gap-space-md"><div class="relative flex items-center"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCq2fvmRjUjGcFkSTwNEYyHBR0MhvRAobFnLSCpSAJZT25bWm3W6dKbBMX7SWc1S66i4-23QhqF_euiraw3HjaiAUW7gJQBueKs4AaZrTkmUUBM4goPZ4fw9DK-C5k8X2eZclBTD_0m1eXwFW8KDiltIo-biTxpWA3TpOCmqb5oR5zZp0UkqeDaGMZ7Ntkio7pecsGIVe7YaTEtmmFkkUEBapfQevVM3qRoFE5RFVodMCIBEhmRdwwO-Q"/><span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#22A06B] ring-2 ring-surface-container-lowest"></span></div></div></div></header><aside class="fixed left-0 top-0 bottom-0 w-20 bg-surface-container-lowest z-50 flex flex-col items-center justify-between py-space-lg shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex flex-col items-center gap-space-xl w-full"><div class="flex items-center justify-center p-space-xs"><img alt="Violet Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1W6cQqzkQEWgIWOq9F9ZeSzXgPnX0k9rM50-ryLLpsSCNeRHS-tR7_6JRyAhaIlezCgimjbb3vwdclATJ0ELNyZaheNibIwSXeeVZ1LednOhZBaIdwo6NXfhShT2RTsj6pEIMFIT_SXtZ61KJCzvcsXPQwK0FotzRK1XhMPphAq1k3sQAOlZUOLjsX92TebyiMxRwDfNNCbOc7izSt-tKgBk4NZSGuIQVq4u-iVkDRIQ-KMPobpl0ISw0Ga"/></div><nav class="flex flex-col items-center gap-space-md w-full px-space-xs" data-active-classes="bg-primary-container text-on-primary-container"><a aria-current="page" class="relative group flex items-center justify-center w-12 h-12 rounded-xl transition-colors bg-primary-container text-on-primary-container" data-path="chats" href="#"><span class="material-symbols-outlined">chat</span><span class="absolute top-2 right-2 flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-primary font-caption text-caption text-on-primary">4</span></a><a class="relative group flex items-center justify-center w-12 h-12 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="calls" href="#"><span class="material-symbols-outlined">call</span></a><a class="relative group flex items-center justify-center w-12 h-12 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="contacts" href="#"><span class="material-symbols-outlined">group</span></a><a class="relative group flex items-center justify-center w-12 h-12 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="media-vault" href="#"><span class="material-symbols-outlined">folder_shared</span></a></nav></div><div class="flex flex-col items-center gap-space-md w-full px-space-xs"><a class="flex items-center justify-center w-12 h-12 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="settings" href="#"><span class="material-symbols-outlined">settings</span></a><div class="relative flex items-center justify-center p-space-xs"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCq2fvmRjUjGcFkSTwNEYyHBR0MhvRAobFnLSCpSAJZT25bWm3W6dKbBMX7SWc1S66i4-23QhqF_euiraw3HjaiAUW7gJQBueKs4AaZrTkmUUBM4goPZ4fw9DK-C5k8X2eZclBTD_0m1eXwFW8KDiltIo-biTxpWA3TpOCmqb5oR5zZp0UkqeDaGMZ7Ntkio7pecsGIVe7YaTEtmmFkkUEBapfQevVM3qRoFE5RFVodMCIBEhmRdwwO-Q"/><span class="absolute bottom-1 right-1 w-2.5 h-2.5 rounded-full bg-[#22A06B] ring-2 ring-surface-container-lowest"></span></div></div></aside><div class="pl-20"><main class="w-full pt-16 min-h-screen bg-background"><div class="flex flex-col w-full h-[calc(100vh-4rem)] overflow-hidden">
+<div class="flex flex-1 w-full h-full overflow-hidden bg-surface-container-low">
+<!-- COLUMN 1: Conversations List (340px) -->
+<aside class="w-[340px] flex-shrink-0 flex flex-col bg-surface-container-lowest shadow-[0_1px_8px_rgba(37,34,56,0.04)] z-20 overflow-hidden">
+<!-- Header -->
+<div class="p-space-lg flex flex-col gap-space-md bg-surface-container-lowest">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<h1 class="font-headline-md text-headline-md text-on-surface tracking-tight">Chats</h1>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-primary font-caption text-caption font-semibold">12</span>
+</div>
+<button class="flex items-center justify-center w-9 h-9 rounded-lg bg-primary-container text-on-primary-container hover:bg-primary transition-all duration-200 shadow-sm" title="New Message">
+<span class="material-symbols-outlined text-[19px]">edit_square</span>
+</button>
+</div>
+<!-- Search Bar -->
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-tertiary text-[20px] pointer-events-none">search</span>
+<input class="w-full pl-9 pr-12 py-2 bg-surface-container-low rounded-xl font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:bg-surface-container-lowest transition-colors shadow-inner" placeholder="Search messages or contacts..." type="text"/>
+<div class="absolute right-2.5 px-1.5 py-0.5 rounded bg-surface-container-highest text-tertiary font-caption text-caption font-medium tracking-wide">
+            ⌘K
+          </div>
+</div>
+<!-- Filter Pills -->
+<div class="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
+<button class="px-3 py-1 rounded-full bg-primary text-on-primary font-label-sm text-label-sm shadow-sm whitespace-nowrap">
+            All
+          </button>
+<button class="px-3 py-1 rounded-full bg-surface-container-low hover:bg-surface-container text-tertiary hover:text-on-surface font-label-sm text-label-sm transition-colors flex items-center gap-1.5 whitespace-nowrap">
+            Unread
+            <span class="w-4 h-4 rounded-full bg-primary text-on-primary flex items-center justify-center text-[10px] font-bold">3</span>
+</button>
+<button class="px-3 py-1 rounded-full bg-surface-container-low hover:bg-surface-container text-tertiary hover:text-on-surface font-label-sm text-label-sm transition-colors whitespace-nowrap">
+            Favorites
+          </button>
+<button class="px-3 py-1 rounded-full bg-surface-container-low hover:bg-surface-container text-tertiary hover:text-on-surface font-label-sm text-label-sm transition-colors whitespace-nowrap">
+            Groups
+          </button>
+</div>
+</div>
+<!-- Conversations Scrollable Stream -->
+<div class="flex-1 overflow-y-auto px-space-xs py-space-xs flex flex-col gap-1">
+<!-- Active Item: Elena Rostova -->
+<div class="relative flex items-center gap-space-md p-space-md rounded-xl bg-surface-container-high/60 cursor-pointer transition-all duration-200">
+<div class="absolute left-0 top-2 bottom-2 w-1 bg-primary rounded-r-full"></div>
+<div class="relative flex-shrink-0">
+<img class="w-12 h-12 rounded-full object-cover" data-alt="Photorealistic close portrait of Elena Rostova, creative lead with modern aesthetic glasses, serene expression, soft ambient violet rim lighting in a minimal studio setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuABp1hfknlgYPZTRMbBCJF9ZMrxhp_p5lOT7wIbHU66PGzcWIXrZsF5icjstQUOmsRFVkyciJPRRvWfcq9PS4UXkp450aF6OC6ctspEcqBz27mLFNSx0kpYoeF_799EgawDr1Kr7-i3raP6QNhkO86LMDxAOwwAHv_1xFyRIaYIluiNHeilSkvWnWBBOwdfLolyybgFS7LhqSvmhv80-PN_m1romAuu1xqSrMENpgZLponp7slLtdGR2w"/>
+<span class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[#22A06B] ring-2 ring-surface-container-lowest"></span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-0.5">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Elena Rostova</span>
+<span class="font-caption text-caption text-primary font-medium">10:42 AM</span>
+</div>
+<div class="flex items-center justify-between gap-1">
+<p class="font-body-sm text-body-sm text-on-surface font-medium truncate">
+                The updated design tokens look stunning! 💜
+              </p>
+<span class="flex-shrink-0 min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-on-primary font-caption text-caption font-bold flex items-center justify-center">
+                2
+              </span>
+</div>
+</div>
+</div>
+<!-- Conversation 2: Design Systems Core (Group) -->
+<div class="relative flex items-center gap-space-md p-space-md rounded-xl hover:bg-surface-container-low cursor-pointer transition-colors">
+<div class="relative flex-shrink-0 w-12 h-12">
+<div class="absolute top-0 left-0 w-8 h-8 rounded-full overflow-hidden shadow-sm">
+<img class="w-full h-full object-cover" data-alt="Editorial team headshot of software engineer in violet sweater looking focused" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRlzEu9_2wM6cpHslmwOb4xnKP_6Sxrnufqk0K7bTZoXwCklYterUQW3DI_VRTn-H8-zsJVpv33P94IU7tCS5Q-YbuT1E-79LS7dCLsgyu11iiO57uDF2SfxMmD2GinZKqoJUG5XYel4EmsTE5mN7pL-IlcS3kYDeSToFs1E62K_Xf09uaeYkZP44uHkybt5ccl8lfXj6es1yMfQXJ5J6iD3Ten5WfH4_tu1qYvcT8P-SwdZrqZBnyqw"/>
+</div>
+<div class="absolute bottom-0 right-0 w-8 h-8 rounded-full overflow-hidden shadow-sm ring-2 ring-surface-container-lowest">
+<img class="w-full h-full object-cover" data-alt="Portrait of senior product manager in light lavender studio setup" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbh3cvm3CzLj14PkMA_vRZ2iBWUyJURlcuzak20pOZ1QbGWHPng-CCmUTJt7gC-f4xreV4npzIsdEB1K8uZZvMVN0ehum2cZFFe_yF3Se7uK9mLAS8rAWvBeaqczS5-EFrkuHwB2CirJUBEpZ8027rkMqFG4ZAgvtRs_oMeN3utvbBja7wIuVy7tBuxlvIPhHL8ldZZXhgehDvJBLG2qVmqHc6p8UYJsxZGbRppTRwlsXv0U5t-rKVew"/>
+</div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-0.5">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Design Systems Core</span>
+<span class="font-caption text-caption text-outline">9:15 AM</span>
+</div>
+<p class="font-body-sm text-body-sm text-tertiary truncate">
+<span class="text-on-surface font-medium">Marcus:</span> Just merged the Tailwind config
+            </p>
+</div>
+</div>
+<!-- Conversation 3: Julian Hayes -->
+<div class="relative flex items-center gap-space-md p-space-md rounded-xl hover:bg-surface-container-low cursor-pointer transition-colors">
+<div class="relative flex-shrink-0">
+<img class="w-12 h-12 rounded-full object-cover" data-alt="Headshot of tech lead Julian Hayes, clean minimalist lighting with violet tint, subtle smile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBbKpt9Hc8R9jF6le7H2i4eRbn6VhHYnsnpUT5zj_gKEwc0Dl2DANGybzvKxpBxBVKzmfMX9e00cAHnzNWYY4PcUn4gj6oSjBhdzQ0WTCmgEesNQ3iy9tUyeesdaHk4bgRK7Shu0DQE9pnS27vdVvPsh_F_XoX7wQVRuERLRY4Ej653moelShhiV3FUR_-41TJpkhtI3L1QktJPMuZVgOOyzBpXnzlEyzOtyq9qSLktViUFNSRxD36zzQ"/>
+<span class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-outline-variant ring-2 ring-surface-container-lowest"></span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-0.5">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Julian Hayes</span>
+<span class="font-caption text-caption text-outline">Yesterday</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-primary flex-shrink-0">done_all</span>
+<p class="font-body-sm text-body-sm text-tertiary truncate">
+                Can you review the WebRTC call latency test?
+              </p>
+</div>
+</div>
+</div>
+<!-- Conversation 4: Sophie Martin -->
+<div class="relative flex items-center gap-space-md p-space-md rounded-xl hover:bg-surface-container-low cursor-pointer transition-colors">
+<div class="relative flex-shrink-0">
+<img class="w-12 h-12 rounded-full object-cover" data-alt="Portrait of female UX architect Sophie Martin with warm studio lighting, subtle purple backdrop" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBNlca-DuRMg5XkNfYjzXKhmL79Fm5iQ0tBPZaGKIDmoYjlePSePgtTyVkVHPxWypp8t_Mv-E1mnhNqRt2SFHBromdG3FTtbBiVLae8zLiNofrkJoW_uC9ZF0QdYcXMpsguvv7bgF7iUTgKR5Z9Q9-oWYzR6jp_GTLNgBIM9EAm-eLISHhpJiWWJ--fsaRe-QNseSJMPx88UsDIEgRe246_vKnv4_BzPpFxFviMjMQeWIpi7kRB-2UMSg"/>
+<span class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[#22A06B] ring-2 ring-surface-container-lowest"></span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-0.5">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Sophie Martin</span>
+<span class="font-caption text-caption text-outline">Yesterday</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-tertiary">attach_file</span>
+<p class="font-body-sm text-body-sm text-tertiary truncate">
+                violet-specs.pdf (4.2 MB)
+              </p>
+</div>
+</div>
+</div>
+<!-- Conversation 5: Dev Guild -->
+<div class="relative flex items-center gap-space-md p-space-md rounded-xl hover:bg-surface-container-low cursor-pointer transition-colors">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center flex-shrink-0 text-primary font-headline-sm">
+<span class="material-symbols-outlined text-[24px]">terminal</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-0.5">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Dev Guild</span>
+<span class="font-caption text-caption text-outline">May 12</span>
+</div>
+<p class="font-body-sm text-body-sm text-tertiary truncate">
+<span class="text-on-surface font-medium">Liam:</span> Deployment successful on staging ✨
+            </p>
+</div>
+</div>
+</div>
+</aside>
+<!-- COLUMN 2: Center Chat Conversation Area -->
+<section class="flex-1 min-w-0 flex flex-col bg-background relative overflow-hidden">
+<!-- Top Conversation Header -->
+<header class="h-16 px-space-xl flex-shrink-0 flex items-center justify-between bg-surface-container-lowest/90 backdrop-blur-md shadow-sm z-10">
+<div class="flex items-center gap-space-md min-w-0">
+<div class="relative flex-shrink-0 cursor-pointer" id="toggle-info-btn">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="Close-up of Elena Rostova, modern clean lighting with soft lavender shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzmMAAuE1JnGN7M2ZPRTidv7p9Anxph3fk_6Ir1xI3X7UiwerlawWmlChazCrOqw1mKR2rfMP0IBTEx3Z4TWOr9gL9PufbQhMBImNUWdFVks-V38jyEANRSevcK8Yn_980vP0nlvSgo-Yd_GyxMW72hgItz14R90GSZ7uWjZkRyW3B0eBfYd9Gqjfu0QfUHKipqGVszFh56VOaEY02_UQuL4LQS3KgPTwvOJFgiowulaRGUIawfC0kDw"/>
+<span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#22A06B] ring-2 ring-surface-container-lowest"></span>
+</div>
+<div class="min-w-0">
+<div class="flex items-center gap-2">
+<h2 class="font-headline-sm text-headline-sm text-on-surface truncate">Elena Rostova</h2>
+<span class="px-2 py-0.5 rounded-md bg-surface-container text-primary font-caption text-caption font-semibold">Lead Designer</span>
+</div>
+<div class="flex items-center gap-1.5 font-caption text-caption">
+<span class="w-1.5 h-1.5 rounded-full bg-[#22A06B] animate-pulse"></span>
+<span class="text-primary font-medium">Active now • typing...</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-1">
+<button class="w-9 h-9 rounded-lg flex items-center justify-center text-tertiary hover:text-primary hover:bg-surface-container-high transition-colors" title="Voice Call">
+<span class="material-symbols-outlined text-[20px]">call</span>
+</button>
+<button class="w-9 h-9 rounded-lg flex items-center justify-center text-tertiary hover:text-primary hover:bg-surface-container-high transition-colors" title="Video Call">
+<span class="material-symbols-outlined text-[20px]">videocam</span>
+</button>
+<button class="w-9 h-9 rounded-lg flex items-center justify-center text-tertiary hover:text-primary hover:bg-surface-container-high transition-colors" title="Search in chat">
+<span class="material-symbols-outlined text-[20px]">search</span>
+</button>
+<button class="w-9 h-9 rounded-lg flex items-center justify-center text-tertiary hover:text-primary hover:bg-surface-container-high transition-colors" title="More Options">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+</header>
+<!-- Message History Stream -->
+<div class="flex-1 overflow-y-auto px-space-xl py-space-lg flex flex-col gap-space-md" id="chat-stream">
+<!-- Date Divider -->
+<div class="flex items-center justify-center my-space-xs">
+<span class="px-3 py-1 rounded-full bg-surface-container-highest text-primary font-label-sm text-label-sm shadow-sm">
+            Today, May 15
+          </span>
+</div>
+<!-- Incoming Message from Elena -->
+<div class="flex items-start gap-space-sm max-w-[75%] group">
+<img class="w-7 h-7 rounded-full object-cover flex-shrink-0 mt-1" data-alt="Small thumbnail avatar of designer Elena Rostova with calm focus" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCEUgb70tIaoYbLFW0PsYjp0xim3AnXSJM3KcHE_8vNLZgUiBeDUGRDze1kmadmamDQGjPkKjnbkgn5FGsFQAmXHC8txmYyFv0DTY1IW5ExiRRgWKQofqmxtRZd65C5WUVNhjOR9e4cKOzWKY4yrgfjgTgDyNZW0TnKVvXrS5trFJr9U-oKhvhLqK5QoixpXX39XYgkitH7D_ik620shCpAfL3e_ppzOcD7vVS2ADuZEaBrnGQymB-_OQ"/>
+<div class="flex flex-col items-start gap-1">
+<div class="p- space-md px-4 py-3 rounded-2xl rounded-bl-sm bg-surface-container-lowest text-on-surface shadow-sm max-w-xl">
+<p class="font-body-md text-body-md leading-relaxed">
+                Hey! I checked the new lavender color tokens in the design system review.
+              </p>
+</div>
+<span class="font-caption text-caption text-outline pl-1">10:30 AM</span>
+</div>
+</div>
+<!-- Outgoing Message from Me -->
+<div class="flex items-end justify-end gap-space-sm self-end max-w-[75%] group">
+<div class="flex flex-col items-end gap-1">
+<div class="px-4 py-3 rounded-2xl rounded-br-sm bg-primary text-on-primary shadow-sm max-w-xl">
+<p class="font-body-md text-body-md leading-relaxed text-on-primary">
+                Awesome! We aimed for a crisp white-and-lavender identity rather than oversaturated neon purple. Does the contrast on text feel comfortable?
+              </p>
+</div>
+<div class="flex items-center gap-1 pr-1 font-caption text-caption text-outline">
+<span>10:32 AM</span>
+<span class="material-symbols-outlined text-[16px] text-primary">done_all</span>
+</div>
+</div>
+</div>
+<!-- Incoming Message with Rich Attachment Card -->
+<div class="flex items-start gap-space-sm max-w-[75%] group">
+<img class="w-7 h-7 rounded-full object-cover flex-shrink-0 mt-1" data-alt="Small thumbnail of Elena Rostova in creative workspace setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCv1EEEIrIfEjbxfn6KILjHYbxCI7HsY_vrJNpI0poC7cc2C8nPzOK0_d292St98D7Qw0HEzTM00fj0M86Qf0YTyp-fce3-vu-oO7US5PjjyQj1UqSEErOWauCgPG-WcOEIvVlHLG-HSmP4wOTV6YQl98LF3eEdGOmyuYyGF8TjnMFJFs34IhMcgS2joIWXD_u0vxUnab4KrqybfodOEREv5Syb9VRarRPlLwaZywT2FT3OEJpZWO5J6g"/>
+<div class="flex flex-col items-start gap-1">
+<div class="p-space-md rounded-2xl rounded-bl-sm bg-surface-container-lowest text-on-surface shadow-sm max-w-xl flex flex-col gap-3">
+<!-- Attachment Card -->
+<div class="flex items-center justify-between gap-4 p-3 rounded-xl bg-surface-container-low hover:bg-surface-container transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-primary flex-shrink-0">
+<span class="material-symbols-outlined text-[24px]">palette</span>
+</div>
+<div class="min-w-0">
+<p class="font-headline-sm text-headline-sm text-on-surface truncate">Design_Review_v2.fig</p>
+<p class="font-caption text-caption text-tertiary">Figma File • 14.8 MB</p>
+</div>
+</div>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-on-primary font-label-sm text-label-sm hover:bg-secondary transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[16px]">download</span>
+<span>Download</span>
+</button>
+</div>
+<p class="font-body-md text-body-md leading-relaxed">
+                The updated design tokens look stunning! 💜
+              </p>
+</div>
+<span class="font-caption text-caption text-outline pl-1">10:42 AM</span>
+</div>
+</div>
+<!-- Outgoing Reaction / Preview -->
+<div class="flex items-end justify-end gap-space-sm self-end max-w-[75%]">
+<div class="flex flex-col items-end gap-1">
+<div class="px-4 py-2 rounded-2xl rounded-br-sm bg-surface-container text-on-surface shadow-sm flex items-center gap-2">
+<span class="font-body-md text-body-md">Sounds wonderful. Pushing components to staging now!</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-primary font-caption text-caption font-semibold">🙌 1</span>
+</div>
+<div class="flex items-center gap-1 pr-1 font-caption text-caption text-outline">
+<span>10:43 AM</span>
+<span class="material-symbols-outlined text-[16px] text-primary">done_all</span>
+</div>
+</div>
+</div>
+<!-- Live Typing Indicator Pill -->
+<div class="flex items-center gap-space-sm max-w-[75%]">
+<div class="px-3.5 py-2 rounded-full bg-surface-container-lowest shadow-sm flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-tertiary">Elena is typing</span>
+<div class="flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-bounce"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:0.2s]"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:0.4s]"></span>
+</div>
+</div>
+</div>
+</div>
+<!-- Floating Message Composer Area -->
+<div class="p-space-lg flex-shrink-0 z-20">
+<div class="max-w-4xl mx-auto rounded-2xl bg-surface-container-lowest p-2 shadow-md flex items-center gap-2">
+<!-- Attachment Dropdown Trigger -->
+<button class="w-9 h-9 rounded-xl flex items-center justify-center text-tertiary hover:text-primary hover:bg-surface-container transition-colors" title="Attach file">
+<span class="material-symbols-outlined text-[20px]">add_circle</span>
+</button>
+<!-- Input Element -->
+<input class="flex-1 bg-transparent px-2 py-2 font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none" placeholder="Type a message to Elena... (Shift + Enter for new line)" type="text"/>
+<!-- Action Buttons inside composer -->
+<div class="flex items-center gap-1">
+<button class="w-9 h-9 rounded-xl flex items-center justify-center text-tertiary hover:text-primary hover:bg-surface-container transition-colors" title="Emoji">
+<span class="material-symbols-outlined text-[20px]">sentiment_satisfied</span>
+</button>
+<button class="w-9 h-9 rounded-xl flex items-center justify-center text-tertiary hover:text-primary hover:bg-surface-container transition-colors" title="Voice note">
+<span class="material-symbols-outlined text-[20px]">mic</span>
+</button>
+<!-- Send Button -->
+<button class="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center hover:bg-secondary transition-all shadow-sm active:scale-95" title="Send message">
+<span class="material-symbols-outlined text-[20px]">send</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- COLUMN 3: Right Information Panel (320px) -->
+<aside class="w-[320px] flex-shrink-0 flex flex-col bg-surface-container-lowest shadow-[-1px_0_8px_rgba(37,34,56,0.03)] z-10 overflow-y-auto" id="inspector-rail">
+<!-- Header -->
+<div class="h-16 px-space-lg flex items-center justify-between flex-shrink-0">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Contact Info</h3>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center text-tertiary hover:text-on-surface hover:bg-surface-container-high transition-colors" id="close-inspector-btn">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<!-- Profile Summary -->
+<div class="px-space-lg pb-space-lg flex flex-col items-center text-center">
+<div class="relative mb-3">
+<img class="w-24 h-24 rounded-full object-cover shadow-sm ring-4 ring-surface-container-high" data-alt="Editorial profile portrait of Elena Rostova, sleek styling with violet accents and soft cinematic depth of field" src="https://lh3.googleusercontent.com/aida-public/AB6AXuATWLFkdls985V_aN5OTdzbdKcNwLGB2bsW2PVN-QxUNOlUzWXfVIW1by9dPPzfY1L6jU250MR60_kmiqm5nZCB3wNW6N6DTMEQs2AjZhZyIeRoWYf5YJWWqWUW40I8sswvSP8DrqV4HuViVTxQvEuoGfZQMAcXiQvqUx692sFqilkaTGuyTL-7azrUSHai-UsfuMla1KZRwULr1sSAMvgZPiZnIhiPURIB6Z-oVMpERL6AyXC65vjzZQ"/>
+<span class="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-[#22A06B] ring-2 ring-surface-container-lowest"></span>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-surface">Elena Rostova</h4>
+<p class="font-body-sm text-body-sm text-primary font-medium">@elena_design</p>
+<p class="mt-2 font-body-sm text-body-sm text-tertiary leading-relaxed px-2">
+          Staff Product Designer @ Violet. Loving typography & micro-interactions.
+        </p>
+<!-- Quick Action Buttons -->
+<div class="flex items-center justify-center gap-2 mt-4 w-full">
+<button class="flex-1 py-2 px-2 rounded-xl bg-surface-container-low hover:bg-surface-container text-tertiary hover:text-primary font-label-sm text-label-sm flex flex-col items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-[18px]">notifications_off</span>
+<span>Mute</span>
+</button>
+<button class="flex-1 py-2 px-2 rounded-xl bg-surface-container-low hover:bg-surface-container text-tertiary hover:text-primary font-label-sm text-label-sm flex flex-col items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-[18px]">search</span>
+<span>Search</span>
+</button>
+<button class="flex-1 py-2 px-2 rounded-xl bg-surface-container-low hover:bg-surface-container text-tertiary hover:text-primary font-label-sm text-label-sm flex flex-col items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-[18px]">ios_share</span>
+<span>Export</span>
+</button>
+</div>
+</div>
+<!-- Shared Media Preview Grid -->
+<div class="px-space-lg py-space-md flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-headline-sm text-on-surface">Shared Media</span>
+<span class="font-caption text-caption text-primary font-semibold hover:underline cursor-pointer">View all (24)</span>
+</div>
+<div class="grid grid-cols-2 gap-2">
+<div class="h-20 rounded-xl overflow-hidden shadow-sm group relative cursor-pointer">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Modern dashboard UI screen with purple accent graphs and minimal charts" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJOqakH71RdfdiR6RJaif4I5ofGnEkQoff3QErrEduauA-VOan-bFX7I7JkjcawyJ0TRKRULX17Hv3DvebQ7kGBMaik1VJXa9P4F_fsR5T22Hj0Z3TDpown49XbVtt_12rIo-YVw2kIxAuigszjY08ogBDa8Of5TMQN3qvD2tzBraMjp1WOmPA2yyD5C-I6u6_81gx3sH_DAgVRKbEUaFvODuftYyDTLwOTsZ4zwkm3KjEO9qkpEaLRg"/>
+</div>
+<div class="h-20 rounded-xl overflow-hidden shadow-sm group relative cursor-pointer">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Typography specimen sheet displaying modern clean sans-serif layouts in lavender tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAW8FaVAXNok9-tc3l53-YsOOHF0RxSpAxkBYvtd0TTBhg4WUcG3o8xwdEUufGZVD3mZmitiyFK5xtDTNufGctwJi2nrpOQJo-NBVyuSWJ1Zdfl694G65aFzfQXaWIA93ot98EyZVVuPS8PxUdBg-6jP1-Lkot6f3wlbobmvzIv7e9GNaHnJn2r7rUofY48mF6A2SeBVEVB8QUfJ7aZGfWeXq-jMh0rjfH7l_d_yxOt65G4HB8_gmzRcw"/>
+</div>
+<div class="h-20 rounded-xl overflow-hidden shadow-sm group relative cursor-pointer">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="3D abstract violet glass orbs and liquid gradient shapes on light backdrop" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDHKFkMCpcWXB0TItAGHRmzY_vOPBKGgPzlm0QWV0pr0B7N1H5o27KagMqfeOPiSmT_xuGEYEYUARE2vFtOtVzSgHDVNMhotzRORxwjkezj9hzUiAD67px5j7qepb5nfrj7XjKJrAiELI9XXIOuZtI_VSQFwlIHOQmPEsCYl2vPpv2wqhAGga5j9r60o4dpeTEKXiL10Oo6yUN_1YFSqawjiy6x6tqXapuVGHFXKY6EA7bthldVuX4Yyw"/>
+</div>
+<div class="h-20 rounded-xl overflow-hidden shadow-sm group relative cursor-pointer">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Mobile UI mockup of dark and light theme messenger with soft purple chat bubbles" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCLqBdMMQevJe2PyOOVdkCv_grVv68cLHaJs-FXthr6P_Htzt8JnhoTiVR0B3jwL1GwUm6r1ZZhBRlWZO4vCkmKFmYMePHJSk3qNIIoLYZa5Cld9WaUhr1bE82Djuvi_RxJ4oxeIwMNHAENkWk4J-8i5LKJnpMU8puLbvMI5CVIuwTjq7v48hG8PUE6SeBDF8A9neIPCrStV9-YeqIIrSfDU_8uLQ9t3f2iMKYl2L8WD29wLUNr1JdVw"/>
+</div>
+</div>
+</div>
+<!-- Shared Documents List -->
+<div class="px-space-lg py-space-md flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-headline-sm text-on-surface">Shared Documents</span>
+<span class="font-caption text-caption text-primary font-semibold hover:underline cursor-pointer">See all</span>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-3 p-2 rounded-xl hover:bg-surface-container-low transition-colors cursor-pointer">
+<div class="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-primary flex-shrink-0">
+<span class="material-symbols-outlined text-[18px]">data_object</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="font-label-md text-label-md text-on-surface truncate">violet-tokens-v2.json</p>
+<p class="font-caption text-caption text-tertiary">384 KB • Today</p>
+</div>
+<span class="material-symbols-outlined text-[18px] text-tertiary hover:text-primary">download</span>
+</div>
+<div class="flex items-center gap-3 p-2 rounded-xl hover:bg-surface-container-low transition-colors cursor-pointer">
+<div class="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-primary flex-shrink-0">
+<span class="material-symbols-outlined text-[18px]">description</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="font-label-md text-label-md text-on-surface truncate">design-spec.pdf</p>
+<p class="font-caption text-caption text-tertiary">2.1 MB • Yesterday</p>
+</div>
+<span class="material-symbols-outlined text-[18px] text-tertiary hover:text-primary">download</span>
+</div>
+</div>
+</div>
+<!-- Settings & Danger Zone -->
+<div class="px-space-lg py-space-md flex flex-col gap-3 mt-auto">
+<!-- Notification Toggle -->
+<div class="flex items-center justify-between p-2 rounded-xl bg-surface-container-low">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-tertiary">notifications</span>
+<span class="font-label-md text-label-md text-on-surface">Mute Notifications</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-9 h-5 bg-outline-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-surface-container-lowest after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface-container-lowest after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<!-- Danger Actions -->
+<button class="w-full py-2 px-3 rounded-xl hover:bg-error-container/40 text-error font-label-md text-label-md flex items-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-[18px]">delete_sweep</span>
+<span>Clear Chat History</span>
+</button>
+<button class="w-full py-2 px-3 rounded-xl hover:bg-error-container/40 text-error font-label-md text-label-md flex items-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-[18px]">block</span>
+<span>Block Contact</span>
+</button>
+</div>
+</aside>
+</div>
+</div>
+<script>
+  (function initChatBehavior() {
+    const inspector = document.getElementById('inspector-rail');
+    const toggleBtn = document.getElementById('toggle-info-btn');
+    const closeBtn = document.getElementById('close-inspector-btn');
+
+    if (toggleBtn && inspector) {
+      toggleBtn.addEventListener('click', () => {
+        inspector.classList.toggle('hidden');
+      });
+    }
+
+    if (closeBtn && inspector) {
+      closeBtn.addEventListener('click', () => {
+        inspector.classList.add('hidden');
+      });
+    }
+  })();
+</script></main></div></body></html>
