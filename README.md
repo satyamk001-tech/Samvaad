@@ -2,145 +2,172 @@
 
 > **"Har baat, ek saath."**
 
-Samvaad is a complete, sovereign, high-concurrency real-time communication platform built with modern enterprise Java 25 backend architecture, React frontend, PostgreSQL persistence, Redis presence tracking, Apache Kafka event streaming, STOMP WebSockets, and WebRTC voice/video calling with Indic script and language architecture.
+Samvaad is an enterprise-grade, sovereign, high-concurrency real-time communication platform built with modern Java 25 backend architecture, React 18 + Vite frontend, PostgreSQL persistence, Redis presence tracking, Apache Kafka event streaming, STOMP WebSockets, WebRTC voice/video calling with screen sharing, DigiLocker E2EE sovereign document vault, in-chat UPI instant payments, and the Bhashini Indic AI translation engine.
 
 ![Samvaad Chat Interface & Dossier](docs/screens/samvaad_chat_dossier.png)
 
 ---
 
-## 📸 Sovereign Design System & Interfaces
+## 📸 Sovereign Design System & User Interfaces
 
-| **1. वार्तालाप एवं संपर्क विवरण (Chat & Dossier)** | **2. भाषा एवं क्षेत्रीय प्राथमिकताएं (Indic AI Engine)** |
+| **1. वार्तालाप एवं संपर्क विवरण (Chat & Starred Dossier)** | **2. भाषा एवं क्षेत्रीय प्राथमिकताएं (Indic AI Engine)** |
 |:---:|:---:|
 | ![Chat Interface](docs/screens/samvaad_chat_dossier.png) | ![Indic Languages](docs/screens/samvaad_indic_languages.png) |
-| **3. संप्रभु संलेख प्रवेश (Sovereign Auth Protocol)** | **4. उच्च गुणवत्ता वीडियो संवाद (VoLTE HD Calls)** |
+| **3. संप्रभु संलेख प्रवेश (Sovereign Phone/Email OTP Auth)** | **4. उच्च गुणवत्ता वीडियो संवाद (VoLTE HD Calls & Screen Share)** |
 | ![Auth Protocol](docs/screens/samvaad_auth_screen.png) | ![Video Calls](docs/screens/samvaad_video_call.png) |
 
 ---
 
-## Key Features
+## 🌟 Comprehensive Feature Suites
 
-* 🔐 **Authentication & Security:** Sovereign citizen credentials, Mobile OTP, password hashing (BCrypt), JWT access/refresh token rotation, and Spring Security authorization.
-* 💬 **One-to-One & Group Messaging:** Real-time message delivery over STOMP WebSockets, message persistence, history pagination, message editing, deletion, replies, and reactions.
-* 📋 **Delivery Status Receipts:** Server acknowledgement, Sent (`✓`), Delivered (`✓✓`), and Read (`✓✓` colored) receipt state tracking.
-* 🟢 **Multi-Session Presence & Typing:** Redis-backed online status tracking across multiple tabs/devices, heartbeats, last-seen timestamps, and live typing indicators.
-* 📁 **Attachment & File Sharing:** Direct conversation uploads, MIME validation, size limits, local/S3 storage abstraction, and short-lived signed media links.
-* 📞 **WebRTC Audio & Video Calling:** Peer-to-peer browser calling, STOMP signaling server, ICE candidate exchange, VoLTE HD network metrics, and live neural translation subtitle strip.
-* ⚡ **Asynchronous Event Processing:** Transactional Outbox pattern with Apache Kafka event bus for notifications and analytics dispatch.
-* 🎨 **Sovereign Indic Design Language:** Warm parchment (`#FAF7F2`), Sovereign Navy (`#191C3B`), and gold/saffron accents with support for 14 Indian languages and phonetic transliteration.
+### 1. WhatsApp & Telegram Core Experience
+* 📌 **Pinned Chats (Top 5):** Pin up to 5 priority conversations with persistent server ordering and gold pin indicator badge.
+* ⭐ **Starred Messages:** Bookmark critical messages and review them anytime inside the dedicated **चिह्नित (Starred)** dossier tab.
+* 📋 **Message Status Checkmarks:**
+  * **Single Gray (`✓`)**: Sent to server & persisted in PostgreSQL.
+  * **Double Gray (`✓✓`)**: Delivered to recipient client.
+  * **Double Blue (`✓✓`)**: Read by recipient with real-time STOMP state propagation.
+* ⏳ **Disappearing Messages & Ephemeral Media:**
+  * Configurable self-destruct timers (24h, 7 days, 90 days) per conversation with header notice.
+  * **"View Once" Photos & Audio:** One-time reveal media that self-destructs immediately after closing.
+* 📁 **Chat Folders / Custom Tabs:**
+  * Categorize conversations instantly: **सभी (All)**, **व्यक्तिगत (Personal)**, **कार्य (Work)**, **समूह (Groups)**, **अपठित (Unread)**.
+* 💬 **Quote-Reply & Forwarding:**
+  * Quote-reply with live snippet preview banners.
+  * Forwarded messages carry a styled `प्रेषित (Forwarded)` tag.
 
----
+### 2. Voice & Video Calling (WebRTC Mesh)
+* 🖥️ **Screen Sharing (WhatsApp / Discord style):** 1-click desktop/tab screen sharing with audio and video stream relay.
+* 📞 **Instant Meet / Shareable Call Links:** Generate shareable meeting URLs (`http://localhost:5173/?call={id}`) so users can join immediately.
+* 🎙️ **VoLTE HD Audio & Adaptive Video:** Peer-to-peer browser calling with STOMP signaling server, STUN/TURN (Coturn) NAT traversal, noise suppression, and low-data modes.
+* 🪟 **Floating Picture-in-Picture (PiP):** Minimize calls to continue chatting while keeping audio/video streams live.
 
-## Technology Stack
+### 3. Media, Sharing & Sovereign Vault
+* 🚀 **High-Capacity File Transfer:** Transfer high-resolution photos, documents, and videos up to **500MB - 2GB** with inline progress tracking.
+* 🎵 **In-Chat Audio Player with Waveform Scrubbing:** Listen to voice notes and audio clips with `1.0x` / `1.5x` / `2.0x` playback speed cycling.
+* 🏛️ **DigiLocker / Sovereign Document Vault:** Verified storage and in-chat sharing of government documents (Aadhaar, PAN, Driving License, Degree Certificates) with E2EE badges.
+* 💸 **UPI Instant Payments:** Send money requests directly inside conversations via deep links (`upi://pay?pa=...&pn=Samvaad&am=...&cu=INR`).
 
-### Backend
-* **JDK:** Java 25 LTS
-* **Framework:** Spring Boot 3.4.x
-* **Security:** Spring Security 6, JWT (jjwt)
-* **Real-time:** Spring WebSocket + STOMP
-* **Database & ORM:** PostgreSQL 16, Spring Data JPA, Hibernate, Flyway Migrations
-* **Caching & Presence:** Redis 7 (Spring Data Redis, Lettuce)
-* **Messaging Bus:** Apache Kafka (Spring for Apache Kafka)
-* **Build System:** Apache Maven 3.9+
-
-### Frontend
-* **Core Framework:** React 18+ with TypeScript
-* **Build Tool:** Vite
-* **Styling:** Tailwind CSS (Custom Whitish-Purple design system)
-* **Icons:** Lucide React
-* **Routing:** React Router v6
-* **Real-time Clients:** `@stomp/stompjs`, WebRTC Browser APIs
-
-### Infrastructure & Testing
-* **Containers:** Docker, Docker Compose
-* **STUN/TURN:** Coturn relay server
-* **Backend Testing:** JUnit 5, Mockito, Spring Boot Test, Testcontainers
-* **Frontend Testing:** Vitest, React Testing Library
+### 4. Bhashini AI & Indic Smart Features
+* 🌐 **1-Tap Real-time Translation:** Translate incoming messages into Hindi, Bengali, Tamil, Telugu, Marathi, Punjabi, Gujarati, Kannada, Malayalam, or English.
+* 🎙️ **Voice-to-Text Transcription:** 1-tap **भाषिणी वाक्-से-पाठ (Transcribe)** button to read voice notes in text.
+* ⌨️ **Phonetic Hinglish Transliteration:** Typing English characters automatically suggests Devanagari script (e.g., `namaste` ➔ `नमस्ते`, `dhanyawad` ➔ `धन्यवाद`).
+* ✨ **AI Smart Conversation Summarizer (TL;DR):** 1-click **AI सारांश** button in the chat header to catch up on unread group messages.
 
 ---
 
-## Repository Architecture
+## 🛠️ Technology Stack
 
-```
-viora/
-├── backend/                  # Java 25 Spring Boot Modular Monolith
-│   ├── src/main/java/com/viora/
-│   │   ├── auth/            # Registration, Login, JWT Filters
-│   │   ├── user/            # Profile Management, User Search
-│   │   ├── conversation/    # Direct & Group Conversation Metadata
-│   │   ├── messaging/       # STOMP Handlers, Persistence, History
-│   │   ├── group/           # Group Roles, Admin Controls
-│   │   ├── presence/        # Redis Presence & Heartbeats
-│   │   ├── signaling/       # WebRTC SDP Offer/Answer Routing
-│   │   ├── attachment/      # Storage Adapter, MIME Validation
-│   │   ├── notification/    # Event Consumers & Preferences
-│   │   └── common/          # Outbox Entity, Exception Handlers
-│   └── src/main/resources/
-│       └── db/migration/    # Flyway Migration Scripts
-├── frontend/                 # Vite + React + TS UI Workspace
-│   ├── src/
-│   │   ├── app/             # Routing, Providers, Global Layout
-│   │   ├── components/      # UI Component Library (Buttons, Modals, etc.)
-│   │   ├── features/        # Feature Modules (Chats, Calls, Contacts, Profile)
-│   │   ├── services/        # REST API & STOMP Clients
-│   │   └── styles/          # Tailwind Tokens & Theme Configuration
-├── infrastructure/           # Docker Compose, Coturn & Nginx configs
-├── docs/                     # Architecture, API & Design Specs
-├── .env.example              # Safe environment variable configuration
-├── ARCHITECTURE.md           # System design & ER diagrams
-└── AGENTS.md                 # Engineering guidelines & guidelines
-```
+| Layer | Technologies |
+|---|---|
+| **Backend** | Java 25 LTS, Spring Boot 3.4.2, Spring Security 6, Spring Data JPA, Flyway |
+| **Real-time Messaging** | Spring WebSocket, STOMP protocol, SockJS fallback |
+| **Databases & Cache** | PostgreSQL 16 (Durable data), Redis 7 (Presence & Heartbeats) |
+| **Event Streaming** | Apache Kafka 3.8 (Transactional Outbox Pattern) |
+| **Media & Storage** | Multipart 500MB storage, File system / S3 abstraction |
+| **VoIP & Video** | WebRTC APIs, Coturn STUN/TURN relay |
+| **Frontend** | React 18, TypeScript (Strict Mode), Vite, Tailwind CSS, Lucide Icons |
+| **Internationalization** | i18next (10 Scheduled Indian Languages) |
+| **Authentication** | Mobile Phone OTP (Firebase Phone Auth / Local SMS Gateway), Email OTP, BCrypt |
 
 ---
 
-## Quick Start (Local Development)
+## 🚀 Installation & Local Setup
 
 ### Prerequisites
-* Java JDK 25 installed (`java -version`)
-* Node.js v20+ and npm (`node -v`)
-* Apache Maven 3.9+ (`mvn -v`)
-* Docker Desktop / Docker Engine (`docker -v`)
+Make sure the following tools are installed on your machine:
+* **Java JDK 21 or 25** (`java -version`)
+* **Node.js v20+ & npm** (`node -v`)
+* **Apache Maven 3.9+** (`mvn -v`)
+* **Docker Desktop / Docker Engine** (`docker -v`)
 
-### 1. Clone & Environment Setup
+---
+
+### Step 1: Clone the Repository
 ```bash
-cp .env.example .env
+git clone https://github.com/satyamk001-tech/Samvaad-.git
+cd Samvaad-
 ```
 
-### 2. Start Infrastructure Containers
+### Step 2: Configure Environment Variables
+Copy the template configuration files:
+```bash
+# Root environment
+cp .env.example .env
+
+# Frontend environment
+cp frontend/.env.example frontend/.env
+```
+*(Optional)* Add your Firebase credentials in `frontend/.env` if using Firebase Phone Authentication.
+
+### Step 3: Start Infrastructure Services (Docker)
+Start PostgreSQL, Redis, Kafka, and Coturn using Docker Compose:
 ```bash
 docker-compose up -d
 ```
-Starts PostgreSQL on port `5432`, Redis on port `6379`, Kafka on port `9092`, and Coturn on port `3478`.
+Verify containers are running:
+```bash
+docker ps
+```
+Services started:
+* **PostgreSQL:** `localhost:5432` (`vioradb`)
+* **Redis:** `localhost:6379`
+* **Apache Kafka:** `localhost:9092`
+* **Coturn STUN/TURN:** `localhost:3478`
 
-### 3. Run Backend Application
+### Step 4: Run the Backend (Spring Boot)
+Open a terminal in the root directory:
 ```bash
 cd backend
 mvn clean spring-boot:run
 ```
-The API server will launch at `http://localhost:8080`.
+* The backend will start on **`http://localhost:8080`**.
+* Flyway migrations (`V1`, `V2`, `V3`) will automatically apply all database tables.
+* Health check: `http://localhost:8080/actuator/health`
 
-### 4. Run Frontend Application
+### Step 5: Run the Frontend (React + Vite)
+Open a new terminal window:
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-The frontend dev server will launch at `http://localhost:5173`.
+* The application will launch on **`http://localhost:5173/`**.
 
 ---
 
-## Implementation Roadmap
+## 🧪 Testing & Verification
 
-- [x] **Phase 0:** Project Repository Scaffold & Architecture Specification
-- [ ] **Phase 1:** Backend & Frontend Foundations (Spring Boot 3 + Java 25 & React Vite Setup)
-- [ ] **Phase 2:** Database Migrations & JWT Authentication Engine
-- [ ] **Phase 3:** User Profiles, Directory Search & Conversation REST APIs
-- [ ] **Phase 4:** Real-Time STOMP WebSockets & Message Persistence
-- [ ] **Phase 5:** Message Delivery Receipts, Typing Indicators & Redis Presence
-- [ ] **Phase 6:** Group Conversation Governance & Access Enforcement
-- [ ] **Phase 7:** Storage Abstraction & File Attachments
-- [ ] **Phase 8:** WebRTC Voice/Video Calling & STOMP Signaling Engine
-- [ ] **Phase 9:** Transactional Outbox Pattern & Kafka Asynchronous Events
-- [ ] **Phase 10:** Whitish-Purple UI Completion & Responsive Layout Integration
-- [ ] **Phase 11:** Automated Integration & Unit Testing Suite
-- [ ] **Phase 12:** Docker Deployment Stack & Production Readiness Guide
+### Backend Tests
+```bash
+cd backend
+mvn test
+```
+
+### Frontend Build Verification
+```bash
+cd frontend
+npm run build
+```
+
+---
+
+## 📜 Architectural Decisions & Security Directives
+1. **Zero Hardcoded Credentials:** All credentials driven strictly by `.env` and Spring environment properties.
+2. **Durable Message State:** Messages are committed to PostgreSQL with `SENT` status before durable WebSocket receipts are returned.
+3. **Session Sovereignty:** Identity is always derived from authenticated `SecurityContext` / `StompHeaderAccessor` rather than client-supplied IDs.
+4. **Data Sovereignty:** Local data persistence with E2EE sovereign encryption designed for Indian citizen infrastructure.
+
+---
+
+## 🤝 Contributing
+1. Fork the repository.
+2. Create your feature branch (`git checkout -b feature/amazing-feature`).
+3. Commit your changes (`git commit -m 'feat: add amazing feature'`).
+4. Push to the branch (`git push origin feature/amazing-feature`).
+5. Open a Pull Request.
+
+---
+
+## 📄 License
+This project is licensed under the MIT License - see the LICENSE file for details.
