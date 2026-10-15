@@ -1,6 +1,6 @@
-# VIORA - Engineering Guidelines & Agent Instructions
+# SAMVAAD - Engineering Guidelines & Agent Instructions
 
-This document outlines standard operating procedures, architectural directives, and execution rules for agents and software engineers contributing to Viora.
+This document outlines standard operating procedures, architectural directives, and execution rules for agents and software engineers contributing to Samvaad.
 
 ---
 

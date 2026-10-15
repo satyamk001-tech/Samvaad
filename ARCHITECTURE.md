@@ -1,12 +1,12 @@
-# VIORA - Architecture Specification & System Design
+# SAMVAAD - Architecture Specification & System Design
 
-Viora is a high-performance, real-time messaging and communication platform built with Java 25, Spring Boot, PostgreSQL, Redis, Apache Kafka, React, TypeScript, STOMP WebSockets, and WebRTC.
+Samvaad is a high-performance, real-time messaging and communication platform built with Java 25, Spring Boot, PostgreSQL, Redis, Apache Kafka, React, TypeScript, STOMP WebSockets, and WebRTC.
 
 ---
 
 ## 1. System Overview & Monolith Design
 
-Viora follows a **Modular Monolith** pattern. All components reside within a unified deployment artifact while maintaining strict module boundaries. This guarantees high developer velocity, ACID transaction capabilities across persistent boundaries, and zero network latency overhead between core services, while maintaining a clear upgrade path to distributed microservices if required in the future.
+Samvaad follows a **Modular Monolith** pattern. All components reside within a unified deployment artifact while maintaining strict module boundaries. This guarantees high developer velocity, ACID transaction capabilities across persistent boundaries, and zero network latency overhead between core services, while maintaining a clear upgrade path to distributed microservices if required in the future.
 
 ```mermaid
 graph TD
@@ -43,11 +43,11 @@ graph TD
 
 ## 2. Backend Module Hierarchy
 
-The backend application (`com.viora`) is structured into clean domain modules:
+The backend application (`com.samvaad`) is structured into clean domain modules:
 
 ```
-com.viora/
-├── VioraApplication.java
+com.samvaad/
+├── SamvaadApplication.java
 ├── common/             # Shared DTOs, Exception Handlers, Security Context, Outbox Entity
 ├── auth/               # User Registration, Login, Logout, JWT Token Providers, Auth Filters
 ├── user/               # User Profiles, Contact Directory, Search, User Settings
@@ -277,17 +277,17 @@ Multi-device and multi-tab online presence tracking is executed in Redis to avoi
 
 ## 7. Transactional Outbox Pattern for Kafka Async Events
 
-To prevent state inconsistencies between PostgreSQL transactions and Kafka message dispatching (e.g. sending notification emails or analytics events), Viora uses the **Transactional Outbox Pattern**:
+To prevent state inconsistencies between PostgreSQL transactions and Kafka message dispatching (e.g. sending notification emails or analytics events), Samvaad uses the **Transactional Outbox Pattern**:
 
 1. Business operations perform database changes and insert an `OutboxEvent` entity into `outbox_events` table inside the **same ACID transaction**.
-2. A lightweight background Scheduled Service (`OutboxPublisher`) queries unprocessed outbox events, publishes them to Kafka topics (`viora.messages`, `viora.notifications`, `viora.analytics`), and marks events as `processed = true`.
+2. A lightweight background Scheduled Service (`OutboxPublisher`) queries unprocessed outbox events, publishes them to Kafka topics (`samvaad.messages`, `samvaad.notifications`, `samvaad.analytics`), and marks events as `processed = true`.
 3. Kafka consumers are strictly **idempotent**, checking deduplication caches prior to handling.
 
 ---
 
 ## 8. Frontend Design System & UI Palette
 
-Viora features a refined **Whitish-Purple visual identity**:
+Samvaad features a refined **Whitish-Purple visual identity**:
 
 * **Main Background (`bg-primary`):** `#F8F7FC`
 * **Surface Panel (`bg-surface`):** `#FFFFFF`

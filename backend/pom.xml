@@ -10,11 +10,11 @@
         <relativePath/>
     </parent>
     
-    <groupId>com.viora</groupId>
-    <artifactId>viora-backend</artifactId>
+    <groupId>com.samvaad</groupId>
+    <artifactId>samvaad-backend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>viora-backend</name>
-    <description>Viora - Real-Time Messaging &amp; Communication Backend</description>
+    <name>samvaad-backend</name>
+    <description>Samvaad - Real-Time Sovereign Messaging &amp; Communication Platform</description>
 
     <properties>
         <java.version>21</java.version>

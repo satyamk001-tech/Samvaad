@@ -134,8 +134,8 @@ const MainApp: React.FC = () => {
       }
     };
 
-    window.addEventListener('viora:private_message', handlePrivateMessage);
-    return () => window.removeEventListener('viora:private_message', handlePrivateMessage);
+    window.addEventListener('samvaad:private_message', handlePrivateMessage);
+    return () => window.removeEventListener('samvaad:private_message', handlePrivateMessage);
   }, []);
 
   const handleInitiateCall = async (type: 'AUDIO' | 'VIDEO') => {

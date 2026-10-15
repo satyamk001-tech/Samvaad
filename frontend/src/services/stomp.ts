@@ -119,7 +119,7 @@ class StompService {
 
   private subscribeToPrivateQueue() {
     this.subscribe('/user/queue/messages', (event) => {
-      window.dispatchEvent(new CustomEvent('viora:private_message', { detail: event }));
+      window.dispatchEvent(new CustomEvent('samvaad:private_message', { detail: event }));
     });
   }
 

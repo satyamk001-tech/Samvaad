@@ -3,25 +3,25 @@ version: '3.8'
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: viora-postgres
+    container_name: samvaad-postgres
     restart: always
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-vioradb}
-      POSTGRES_USER: ${POSTGRES_USER:-viora}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-viora_secret_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-samvaaddb}
+      POSTGRES_USER: ${POSTGRES_USER:-samvaad}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-samvaad_secret_pass}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-viora} -d ${POSTGRES_DB:-vioradb}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-samvaad} -d ${POSTGRES_DB:-samvaaddb}"]
       interval: 5s
       timeout: 5s
       retries: 5
 
   redis:
     image: redis:7-alpine
-    container_name: viora-redis
+    container_name: samvaad-redis
     restart: always
     ports:
       - "${REDIS_PORT:-6379}:6379"
@@ -35,7 +35,7 @@ services:
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
-    container_name: viora-zookeeper
+    container_name: samvaad-zookeeper
     restart: always
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
@@ -45,7 +45,7 @@ services:
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
-    container_name: viora-kafka
+    container_name: samvaad-kafka
     restart: always
     depends_on:
       - zookeeper
@@ -61,14 +61,14 @@ services:
 
   coturn:
     image: coturn/coturn:latest
-    container_name: viora-coturn
+    container_name: samvaad-coturn
     restart: always
     ports:
       - "3478:3478/udp"
       - "3478:3478/tcp"
     environment:
       - TURN_PORT=3478
-      - REALM=viora.local
+      - REALM=samvaad.local
       - LISTEN_ON_IP=0.0.0.0
 
 volumes:

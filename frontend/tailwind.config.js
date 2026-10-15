@@ -23,18 +23,6 @@ export default {
           subtext: '#686578',
           muted: '#9E9AA8',
           green: '#10B981',
-          saffron: '#E65100',
-        },
-        viora: {
-          bg: '#FAF7F2',
-          surface: '#FFFFFF',
-          secondary: '#F5F0E8',
-          lavender: '#191C3B',
-          purple: '#191C3B',
-          'light-lavender': '#FDF8EE',
-          text: '#191C3B',
-          subtext: '#686578',
-          border: '#E8E2D5',
         }
       },
       fontFamily: {

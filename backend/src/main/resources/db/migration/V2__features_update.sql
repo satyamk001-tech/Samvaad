@@ -1,5 +1,5 @@
 -- ========================================================
--- VIORA / SAMVAAD DATABASE SCHEMA UPDATE (V2)
+-- SAMVAAD DATABASE SCHEMA UPDATE (V2)
 -- ========================================================
 
 -- Add language_preference and email_verified to users

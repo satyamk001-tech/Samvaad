@@ -233,10 +233,10 @@ export const CallModal: React.FC<CallModalProps> = ({
       }
     };
 
-    window.addEventListener('viora:private_message', handleSignal);
+    window.addEventListener('samvaad:private_message', handleSignal);
 
     return () => {
-      window.removeEventListener('viora:private_message', handleSignal);
+      window.removeEventListener('samvaad:private_message', handleSignal);
       cleanupAndClose();
     };
   }, [call.id, isCaller, peerUser.id, call.type]);

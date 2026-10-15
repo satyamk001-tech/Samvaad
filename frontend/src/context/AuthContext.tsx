@@ -20,10 +20,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('viora_user');
+    const saved = localStorage.getItem('samvaad_user');
     return saved ? JSON.parse(saved) : null;
   });
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem('viora_access_token'));
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem('samvaad_access_token'));
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -31,8 +31,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       logout();
     };
 
-    window.addEventListener('viora:auth_expired', handleAuthExpired);
-    return () => window.removeEventListener('viora:auth_expired', handleAuthExpired);
+    window.addEventListener('samvaad:auth_expired', handleAuthExpired);
+    return () => window.removeEventListener('samvaad:auth_expired', handleAuthExpired);
   }, []);
 
   useEffect(() => {
@@ -49,7 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
           const currentUser = await api.get<User>('/auth/me');
           setUser(currentUser);
-          localStorage.setItem('viora_user', JSON.stringify(currentUser));
+          localStorage.setItem('samvaad_user', JSON.stringify(currentUser));
         } catch {
           logout();
         }
@@ -66,9 +66,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       password,
     });
 
-    localStorage.setItem('viora_access_token', data.accessToken);
-    localStorage.setItem('viora_refresh_token', data.refreshToken);
-    localStorage.setItem('viora_user', JSON.stringify(data.user));
+    localStorage.setItem('samvaad_access_token', data.accessToken);
+    localStorage.setItem('samvaad_refresh_token', data.refreshToken);
+    localStorage.setItem('samvaad_user', JSON.stringify(data.user));
 
     setToken(data.accessToken);
     setUser(data.user);
@@ -82,9 +82,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       displayName,
     });
 
-    localStorage.setItem('viora_access_token', data.accessToken);
-    localStorage.setItem('viora_refresh_token', data.refreshToken);
-    localStorage.setItem('viora_user', JSON.stringify(data.user));
+    localStorage.setItem('samvaad_access_token', data.accessToken);
+    localStorage.setItem('samvaad_refresh_token', data.refreshToken);
+    localStorage.setItem('samvaad_user', JSON.stringify(data.user));
 
     setToken(data.accessToken);
     setUser(data.user);
@@ -95,7 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const currentUser = await api.get<User>('/auth/me');
         setUser(currentUser);
-        localStorage.setItem('viora_user', JSON.stringify(currentUser));
+        localStorage.setItem('samvaad_user', JSON.stringify(currentUser));
       } catch (e) {
         console.error('Failed to reload user', e);
       }
@@ -110,9 +110,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       photoUrl,
     });
 
-    localStorage.setItem('viora_access_token', data.accessToken);
-    localStorage.setItem('viora_refresh_token', data.refreshToken);
-    localStorage.setItem('viora_user', JSON.stringify(data.user));
+    localStorage.setItem('samvaad_access_token', data.accessToken);
+    localStorage.setItem('samvaad_refresh_token', data.refreshToken);
+    localStorage.setItem('samvaad_user', JSON.stringify(data.user));
 
     setToken(data.accessToken);
     setUser(data.user);
@@ -125,18 +125,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       idToken,
     });
 
-    localStorage.setItem('viora_access_token', data.accessToken);
-    localStorage.setItem('viora_refresh_token', data.refreshToken);
-    localStorage.setItem('viora_user', JSON.stringify(data.user));
+    localStorage.setItem('samvaad_access_token', data.accessToken);
+    localStorage.setItem('samvaad_refresh_token', data.refreshToken);
+    localStorage.setItem('samvaad_user', JSON.stringify(data.user));
 
     setToken(data.accessToken);
     setUser(data.user);
   };
 
   const logout = () => {
-    localStorage.removeItem('viora_access_token');
-    localStorage.removeItem('viora_refresh_token');
-    localStorage.removeItem('viora_user');
+    localStorage.removeItem('samvaad_access_token');
+    localStorage.removeItem('samvaad_refresh_token');
+    localStorage.removeItem('samvaad_user');
     setToken(null);
     setUser(null);
     stompService.disconnect();

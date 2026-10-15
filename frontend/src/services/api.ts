@@ -13,7 +13,7 @@ export class ApiError extends Error {
 }
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const token = localStorage.getItem('viora_access_token');
+  const token = localStorage.getItem('samvaad_access_token');
   const headers = new Headers(options.headers || {});
 
   if (token && !headers.has('Authorization')) {
@@ -34,7 +34,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     const refreshed = await attemptTokenRefresh();
     if (refreshed) {
       // Retry original request
-      const newToken = localStorage.getItem('viora_access_token');
+      const newToken = localStorage.getItem('samvaad_access_token');
       headers.set('Authorization', `Bearer ${newToken}`);
       const retryResponse = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
       if (!retryResponse.ok) {
@@ -42,10 +42,10 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
       }
       return retryResponse.json();
     } else {
-      localStorage.removeItem('viora_access_token');
-      localStorage.removeItem('viora_refresh_token');
-      localStorage.removeItem('viora_user');
-      window.dispatchEvent(new Event('viora:auth_expired'));
+      localStorage.removeItem('samvaad_access_token');
+      localStorage.removeItem('samvaad_refresh_token');
+      localStorage.removeItem('samvaad_user');
+      window.dispatchEvent(new Event('samvaad:auth_expired'));
     }
   }
 
@@ -68,7 +68,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 }
 
 async function attemptTokenRefresh(): Promise<boolean> {
-  const refreshToken = localStorage.getItem('viora_refresh_token');
+  const refreshToken = localStorage.getItem('samvaad_refresh_token');
   if (!refreshToken) return false;
 
   try {
@@ -80,9 +80,9 @@ async function attemptTokenRefresh(): Promise<boolean> {
 
     if (!res.ok) return false;
     const data = await res.json();
-    localStorage.setItem('viora_access_token', data.accessToken);
+    localStorage.setItem('samvaad_access_token', data.accessToken);
     if (data.refreshToken) {
-      localStorage.setItem('viora_refresh_token', data.refreshToken);
+      localStorage.setItem('samvaad_refresh_token', data.refreshToken);
     }
     return true;
   } catch {

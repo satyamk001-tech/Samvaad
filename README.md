@@ -110,7 +110,7 @@ Verify containers are running:
 docker ps
 ```
 Services started:
-* **PostgreSQL:** `localhost:5432` (`vioradb`)
+* **PostgreSQL:** `localhost:5432` (`samvaaddb`)
 * **Redis:** `localhost:6379`
 * **Apache Kafka:** `localhost:9092`
 * **Coturn STUN/TURN:** `localhost:3478`

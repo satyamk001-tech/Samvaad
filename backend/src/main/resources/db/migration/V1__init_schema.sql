@@ -1,5 +1,5 @@
 -- ========================================================
--- VIORA DATABASE SCHEMA INITIALIZATION (V1)
+-- SAMVAAD DATABASE SCHEMA INITIALIZATION (V1)
 -- ========================================================
 
 -- Enable UUID extension

@@ -1,5 +1,5 @@
 -- ========================================================
--- VIORA / SAMVAAD DATABASE SCHEMA UPDATE (V3)
+-- SAMVAAD DATABASE SCHEMA UPDATE (V3)
 -- Advanced Feature Suites:
 -- 1. Pinned Chats & Starred Messages
 -- 2. Disappearing Messages, View Once & Forwarding
