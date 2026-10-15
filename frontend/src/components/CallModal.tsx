@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Call, User } from '../types';
 import { stompService } from '../services/stomp';
+import { api } from '../services/api';
 import {
   PhoneOff,
   Mic,
@@ -16,6 +17,111 @@ import {
   Share2,
   Check,
 } from 'lucide-react';
+
+/**
+ * Creates an animated synthetic media stream with Samvaad sovereign branding
+ * when physical camera or microphone is locked (e.g. testing in two tabs on same machine)
+ */
+function createSyntheticMediaStream(displayName: string, isVideo: boolean): MediaStream {
+  const stream = new MediaStream();
+
+  // Synthetic Audio: silent comfort tone to keep WebRTC audio channel alive
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (AudioCtx) {
+      const audioCtx = new AudioCtx();
+      const osc = audioCtx.createOscillator();
+      const dst = audioCtx.createMediaStreamDestination();
+      const gain = audioCtx.createGain();
+      gain.gain.value = 0.0001; // virtually silent carrier
+      osc.connect(gain);
+      gain.connect(dst);
+      osc.start();
+      const audioTrack = dst.stream.getAudioTracks()[0];
+      if (audioTrack) {
+        stream.addTrack(audioTrack);
+      }
+    }
+  } catch (e) {
+    console.warn('Could not generate synthetic audio track', e);
+  }
+
+  // Synthetic Video: animated sovereign canvas stream
+  if (isVideo) {
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 640;
+      canvas.height = 480;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        let frame = 0;
+        const initial = (displayName || 'S').charAt(0).toUpperCase();
+        let animId: number;
+
+        const draw = () => {
+          frame++;
+          // Sovereign gradient background
+          const grad = ctx.createLinearGradient(0, 0, 640, 480);
+          grad.addColorStop(0, '#191C3B');
+          grad.addColorStop(1, '#252238');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, 640, 480);
+
+          // Subtle pulsating aura
+          const pulse = Math.sin(frame * 0.06) * 10;
+          ctx.beginPath();
+          ctx.arc(320, 210, 65 + pulse, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(197, 154, 88, 0.18)';
+          ctx.fill();
+
+          // Circle frame
+          ctx.beginPath();
+          ctx.arc(320, 210, 60, 0, Math.PI * 2);
+          ctx.fillStyle = '#101226';
+          ctx.strokeStyle = '#C59A58';
+          ctx.lineWidth = 3;
+          ctx.fill();
+          ctx.stroke();
+
+          // User Initial
+          ctx.font = 'bold 50px serif';
+          ctx.fillStyle = '#FAF7F2';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(initial, 320, 212);
+
+          // User Name
+          ctx.font = 'bold 18px sans-serif';
+          ctx.fillStyle = '#FAF7F2';
+          ctx.fillText(displayName, 320, 310);
+
+          // Subtitle
+          ctx.font = '12px sans-serif';
+          ctx.fillStyle = '#C59A58';
+          ctx.fillText('संवाद वर्चुअल वीडियो • Samvaad Camera', 320, 338);
+
+          animId = requestAnimationFrame(draw);
+        };
+        draw();
+
+        const canvasStream = canvas.captureStream(25);
+        const videoTrack = canvasStream.getVideoTracks()[0];
+        if (videoTrack) {
+          const origStop = videoTrack.stop.bind(videoTrack);
+          videoTrack.stop = () => {
+            cancelAnimationFrame(animId);
+            origStop();
+          };
+          stream.addTrack(videoTrack);
+        }
+      }
+    } catch (e) {
+      console.warn('Could not generate synthetic video track', e);
+    }
+  }
+
+  return stream;
+}
 
 interface CallModalProps {
   call: Call;
@@ -45,6 +151,7 @@ export const CallModal: React.FC<CallModalProps> = ({
 
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
+  const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const remoteStreamRef = useRef<MediaStream | null>(null);
@@ -88,6 +195,8 @@ export const CallModal: React.FC<CallModalProps> = ({
 
   useEffect(() => {
     let candidateQueue: RTCIceCandidateInit[] = [];
+    const localGatheredCandidates: RTCIceCandidateInit[] = [];
+    let isTerminated = false;
 
     async function setupWebRTC() {
       const pc = new RTCPeerConnection({
@@ -95,6 +204,8 @@ export const CallModal: React.FC<CallModalProps> = ({
           { urls: 'stun:stun.l.google.com:19302' },
           { urls: 'stun:stun1.l.google.com:19302' },
           { urls: 'stun:stun2.l.google.com:19302' },
+          { urls: 'stun:stun3.l.google.com:19302' },
+          { urls: 'stun:stun4.l.google.com:19302' },
         ],
       });
       peerConnectionRef.current = pc;
@@ -105,17 +216,19 @@ export const CallModal: React.FC<CallModalProps> = ({
         } else if (pc.iceConnectionState === 'disconnected') {
           setConnectionStatus('पुनः जुड़ रहा है • Reconnecting...');
         } else if (pc.iceConnectionState === 'failed') {
-          setConnectionStatus('कनेक्शन पुनः प्रयास • Reconnecting');
+          setConnectionStatus('पुनः प्रयास • Reconnecting');
         }
       };
 
       pc.onicecandidate = (event) => {
         if (event.candidate) {
+          const cand = event.candidate.toJSON ? event.candidate.toJSON() : event.candidate;
+          localGatheredCandidates.push(cand);
           stompService.send('/app/call.signal', {
             callId: call.id,
             targetUserId: peerUser.id,
             type: 'ICE_CANDIDATE',
-            data: event.candidate.toJSON ? event.candidate.toJSON() : event.candidate,
+            data: cand,
           });
         }
       };
@@ -125,6 +238,10 @@ export const CallModal: React.FC<CallModalProps> = ({
           remoteStreamRef.current = event.streams[0];
           setHasRemoteStream(true);
           setConnectionStatus('जुड़ा हुआ • Connected');
+          if (remoteAudioRef.current) {
+            remoteAudioRef.current.srcObject = event.streams[0];
+            remoteAudioRef.current.play().catch(() => {});
+          }
           if (remoteVideoRef.current) {
             remoteVideoRef.current.srcObject = event.streams[0];
             remoteVideoRef.current.play().catch(() => {});
@@ -140,18 +257,30 @@ export const CallModal: React.FC<CallModalProps> = ({
             video: call.type === 'VIDEO',
           });
         } catch (mediaErr) {
-          console.warn('Initial media access notice, attempting audio fallback:', mediaErr);
+          console.warn('Initial media access notice, attempting fallback:', mediaErr);
           if (call.type === 'VIDEO') {
             try {
-              stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-              setIsVideoOff(true);
-            } catch (audioErr) {
-              console.warn('Audio fallback also denied or unavailable', audioErr);
+              const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+              const syntheticStream = createSyntheticMediaStream(currentUser.displayName || currentUser.username, true);
+              const videoTrack = syntheticStream.getVideoTracks()[0];
+              const audioTrack = audioStream.getAudioTracks()[0];
+              stream = new MediaStream();
+              if (videoTrack) stream.addTrack(videoTrack);
+              if (audioTrack) stream.addTrack(audioTrack);
+            } catch (fallbackErr) {
+              console.warn('Audio fallback also unavailable, using synthetic stream:', fallbackErr);
+              stream = createSyntheticMediaStream(currentUser.displayName || currentUser.username, true);
+            }
+          } else {
+            try {
+              stream = createSyntheticMediaStream(currentUser.displayName || currentUser.username, false);
+            } catch (err2) {
+              console.warn('Could not generate synthetic audio stream', err2);
             }
           }
         }
 
-        if (stream) {
+        if (stream && !isTerminated) {
           localStreamRef.current = stream;
           if (localVideoRef.current) {
             localVideoRef.current.srcObject = stream;
@@ -161,14 +290,16 @@ export const CallModal: React.FC<CallModalProps> = ({
         }
 
         if (isCaller) {
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-
+          setConnectionStatus(t('outgoingCall') || 'कॉल किया जा रहा है... • Calling...');
+        } else {
+          // Receiver is mounted and ready: emit ACCEPT signal to caller and record in backend
+          setConnectionStatus('स्वीकार किया जा रहा है • Connecting...');
+          api.post(`/calls/${call.id}/accept`).catch(() => {});
           stompService.send('/app/call.signal', {
             callId: call.id,
             targetUserId: peerUser.id,
-            type: 'OFFER',
-            data: offer.sdp,
+            type: 'ACCEPT',
+            data: null,
           });
         }
       } catch (err) {
@@ -179,6 +310,7 @@ export const CallModal: React.FC<CallModalProps> = ({
     setupWebRTC();
 
     const handleSignal = async (e: any) => {
+      if (e.detail?.eventType !== 'CALL_SIGNAL') return;
       const signal = e.detail?.data;
       if (!signal || signal.callId !== call.id) return;
 
@@ -186,7 +318,31 @@ export const CallModal: React.FC<CallModalProps> = ({
       if (!pc) return;
 
       try {
-        if (signal.type === 'OFFER' && !isCaller) {
+        if (signal.type === 'ACCEPT' && isCaller) {
+          setConnectionStatus('स्वीकार किया गया • Connecting...');
+          const offer = await pc.createOffer({
+            offerToReceiveAudio: true,
+            offerToReceiveVideo: call.type === 'VIDEO',
+          });
+          await pc.setLocalDescription(offer);
+
+          stompService.send('/app/call.signal', {
+            callId: call.id,
+            targetUserId: peerUser.id,
+            type: 'OFFER',
+            data: offer.sdp,
+          });
+
+          // Flush any candidates gathered so far
+          localGatheredCandidates.forEach((cand) => {
+            stompService.send('/app/call.signal', {
+              callId: call.id,
+              targetUserId: peerUser.id,
+              type: 'ICE_CANDIDATE',
+              data: cand,
+            });
+          });
+        } else if (signal.type === 'OFFER' && !isCaller) {
           await pc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: signal.data }));
           while (candidateQueue.length > 0) {
             const cand = candidateQueue.shift();
@@ -202,16 +358,16 @@ export const CallModal: React.FC<CallModalProps> = ({
             type: 'ANSWER',
             data: answer.sdp,
           });
-        } else if (signal.type === 'ACCEPT' && isCaller) {
-          setConnectionStatus('स्वीकार किया गया • Accepted, Connecting...');
-          if (pc.localDescription) {
+
+          // Flush any candidates gathered so far
+          localGatheredCandidates.forEach((cand) => {
             stompService.send('/app/call.signal', {
               callId: call.id,
               targetUserId: peerUser.id,
-              type: 'OFFER',
-              data: pc.localDescription.sdp,
+              type: 'ICE_CANDIDATE',
+              data: cand,
             });
-          }
+          });
         } else if (signal.type === 'ANSWER' && isCaller) {
           await pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: signal.data }));
           while (candidateQueue.length > 0) {
@@ -225,7 +381,10 @@ export const CallModal: React.FC<CallModalProps> = ({
           } else {
             candidateQueue.push(signal.data);
           }
-        } else if (signal.type === 'END' || signal.type === 'REJECT') {
+        } else if (signal.type === 'REJECT') {
+          setConnectionStatus('कॉल अस्वीकार की गई • Call Declined');
+          setTimeout(() => cleanupAndClose(), 1500);
+        } else if (signal.type === 'END') {
           cleanupAndClose();
         }
       } catch (signalErr) {
@@ -236,6 +395,7 @@ export const CallModal: React.FC<CallModalProps> = ({
     window.addEventListener('samvaad:private_message', handleSignal);
 
     return () => {
+      isTerminated = true;
       window.removeEventListener('samvaad:private_message', handleSignal);
       cleanupAndClose();
     };
@@ -324,7 +484,9 @@ export const CallModal: React.FC<CallModalProps> = ({
   if (isMinimized) {
     if (call.type === 'VIDEO') {
       return (
-        <div className="fixed bottom-6 right-6 z-50 w-80 bg-[#191C3B] border-2 border-[#C59A58] rounded-3xl shadow-2xl overflow-hidden text-white animate-in fade-in slide-in-from-bottom-5 duration-200">
+        <>
+          <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
+          <div className="fixed bottom-6 right-6 z-50 w-80 bg-[#191C3B] border-2 border-[#C59A58] rounded-3xl shadow-2xl overflow-hidden text-white animate-in fade-in slide-in-from-bottom-5 duration-200">
           {/* Video Container Stage */}
           <div
             className="relative h-44 bg-black cursor-pointer group flex items-center justify-center overflow-hidden"
@@ -429,12 +591,15 @@ export const CallModal: React.FC<CallModalProps> = ({
             </button>
           </div>
         </div>
+        </>
       );
     }
 
     // Minimized Voice Call (Compact WhatsApp PiP Widget)
     return (
-      <div className="fixed bottom-6 right-6 z-50 w-76 bg-[#191C3B] border-2 border-[#C59A58] rounded-2xl shadow-2xl p-3 text-white animate-in fade-in slide-in-from-bottom-5 duration-200">
+      <>
+        <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
+        <div className="fixed bottom-6 right-6 z-50 w-76 bg-[#191C3B] border-2 border-[#C59A58] rounded-2xl shadow-2xl p-3 text-white animate-in fade-in slide-in-from-bottom-5 duration-200">
         <div className="flex items-center gap-3">
           {/* Avatar with soundwave pulse */}
           <div className="relative flex-shrink-0 cursor-pointer" onClick={onToggleMinimize}>
@@ -503,12 +668,15 @@ export const CallModal: React.FC<CallModalProps> = ({
           </div>
         </div>
       </div>
+      </>
     );
   }
 
   // 2. FULLSCREEN CALL SCREEN
   return (
-    <div className="fixed inset-0 bg-[#0F1123]/85 backdrop-blur-md flex items-center justify-center p-3 md:p-6 z-50">
+    <>
+      <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
+      <div className="fixed inset-0 bg-[#0F1123]/85 backdrop-blur-md flex items-center justify-center p-3 md:p-6 z-50">
       <div className="bg-[#191C3B] border border-[#C59A58]/30 rounded-3xl w-full max-w-4xl h-[85vh] overflow-hidden shadow-2xl flex flex-col text-white relative">
         {/* Top Header */}
         <header className="px-6 py-3.5 border-b border-white/10 flex items-center justify-between bg-black/20">
@@ -735,5 +903,6 @@ export const CallModal: React.FC<CallModalProps> = ({
         </footer>
       </div>
     </div>
+    </>
   );
 };

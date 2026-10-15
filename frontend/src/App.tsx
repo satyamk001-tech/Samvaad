@@ -123,12 +123,17 @@ const MainApp: React.FC = () => {
     }
   };
 
-  // Listen for global private notifications (incoming calls, new messages)
+  // Listen for global private notifications (incoming calls, new messages, call cancellations)
   useEffect(() => {
     const handlePrivateMessage = (e: any) => {
       const event = e.detail;
       if (event?.eventType === 'INCOMING_CALL') {
         setIncomingCall(event.data);
+      } else if (event?.eventType === 'CALL_SIGNAL') {
+        const signal = event.data;
+        if (signal?.type === 'END' || signal?.type === 'REJECT' || signal?.type === 'CANCEL') {
+          setIncomingCall((prev) => (prev && prev.id === signal.callId ? null : prev));
+        }
       } else if (event?.eventType === 'NEW_MESSAGE' || event?.eventType === 'CONVERSATION_UPDATE') {
         api.get<Conversation[]>('/conversations').then((data) => setConversations(data)).catch(console.error);
       }
@@ -170,35 +175,26 @@ const MainApp: React.FC = () => {
     }
   };
 
-  const handleAcceptIncomingCall = async () => {
+  const handleAcceptIncomingCall = () => {
     if (!incomingCall) return;
-    try {
-      await api.post(`/calls/${incomingCall.id}/accept`).catch(() => {});
-      stompService.send('/app/call.signal', {
-        callId: incomingCall.id,
-        targetUserId: incomingCall.caller.id,
-        type: 'ACCEPT',
-        data: null,
-      });
-      setActiveCall(incomingCall);
-      setIncomingCall(null);
-      setIsCallMinimized(false);
-    } catch (e) {
-      console.error('Failed to accept incoming call', e);
-    }
+    // Activate CallModal immediately; CallModal handles RTCPeerConnection setup and media capture before signaling ACCEPT
+    setActiveCall(incomingCall);
+    setIncomingCall(null);
+    setIsCallMinimized(false);
   };
 
   const handleDeclineIncomingCall = async () => {
     if (!incomingCall) return;
+    const declinedCall = incomingCall;
+    setIncomingCall(null);
     try {
-      await api.post(`/calls/${incomingCall.id}/reject`);
+      await api.post(`/calls/${declinedCall.id}/reject`).catch(() => {});
       stompService.send('/app/call.signal', {
-        callId: incomingCall.id,
-        targetUserId: incomingCall.caller.id,
+        callId: declinedCall.id,
+        targetUserId: declinedCall.caller.id,
         type: 'REJECT',
         data: null,
       });
-      setIncomingCall(null);
     } catch (e) {
       console.error('Failed to reject incoming call', e);
     }
