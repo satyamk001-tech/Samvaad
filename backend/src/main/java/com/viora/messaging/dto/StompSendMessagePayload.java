@@ -19,6 +19,16 @@ public record StompSendMessagePayload(
 
         UUID replyToMessageId,
 
+        Boolean isViewOnce,
+
+        Boolean isForwarded,
+
+        UUID forwardedFromId,
+
         @NotBlank(message = "Client temp ID is required for delivery ACK matching")
         String tempId
-) {}
+) {
+    public StompSendMessagePayload(UUID conversationId, String content, MessageType type, UUID replyToMessageId, String tempId) {
+        this(conversationId, content, type, replyToMessageId, false, false, null, tempId);
+    }
+}

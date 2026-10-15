@@ -24,4 +24,6 @@ public interface ConversationMemberRepository extends JpaRepository<Conversation
 
     @Query("SELECT COUNT(cm) > 0 FROM ConversationMember cm WHERE cm.conversation.id = :conversationId AND cm.user.id = :userId AND cm.role = 'ADMIN' AND cm.leftAt IS NULL")
     boolean isAdmin(@Param("conversationId") UUID conversationId, @Param("userId") UUID userId);
+
+    void deleteByUserId(UUID userId);
 }

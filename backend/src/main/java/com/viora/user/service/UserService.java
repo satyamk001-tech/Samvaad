@@ -15,9 +15,16 @@ import java.util.UUID;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public UserService(UserRepository userRepository, org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
+        this.userRepository = userRepository;
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
     public UserService(UserRepository userRepository) {
-        this.userRepository = userRepository;
+        this(userRepository, null);
     }
 
     @Transactional(readOnly = true)
@@ -59,8 +66,21 @@ public class UserService {
         if (request.statusMessage() != null) {
             user.setStatusMessage(request.statusMessage().trim());
         }
+        if (request.languagePreference() != null && !request.languagePreference().isBlank()) {
+            user.setLanguagePreference(request.languagePreference().trim());
+        }
 
         User updatedUser = userRepository.save(user);
         return UserDto.fromEntity(updatedUser);
+    }
+
+    @Transactional
+    public void deleteUserByUsername(String username) {
+        jdbcTemplate.update("DELETE FROM conversation_members WHERE user_id IN (SELECT id FROM users WHERE username = ?)", username);
+        jdbcTemplate.update("DELETE FROM refresh_tokens WHERE user_id IN (SELECT id FROM users WHERE username = ?)", username);
+        jdbcTemplate.update("DELETE FROM calls WHERE caller_id IN (SELECT id FROM users WHERE username = ?) OR receiver_id IN (SELECT id FROM users WHERE username = ?)", username, username);
+        jdbcTemplate.update("DELETE FROM message_status WHERE user_id IN (SELECT id FROM users WHERE username = ?)", username);
+        jdbcTemplate.update("DELETE FROM messages WHERE sender_id IN (SELECT id FROM users WHERE username = ?)", username);
+        jdbcTemplate.update("DELETE FROM users WHERE username = ?", username);
     }
 }

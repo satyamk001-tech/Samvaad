@@ -8,7 +8,10 @@ interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   login: (usernameOrEmail: string, password: string) => Promise<void>;
+  loginWithGoogle: (idToken: string, email: string, displayName: string, photoUrl?: string) => Promise<void>;
+  loginWithPhone: (phoneNumber: string, displayName?: string, idToken?: string) => Promise<void>;
   register: (username: string, email: string, password: string, displayName?: string) => Promise<void>;
+  reloadUser: () => Promise<void>;
   logout: () => void;
   loading: boolean;
 }
@@ -87,6 +90,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(data.user);
   };
 
+  const reloadUser = async () => {
+    if (token) {
+      try {
+        const currentUser = await api.get<User>('/auth/me');
+        setUser(currentUser);
+        localStorage.setItem('viora_user', JSON.stringify(currentUser));
+      } catch (e) {
+        console.error('Failed to reload user', e);
+      }
+    }
+  };
+
+  const loginWithGoogle = async (idToken: string, email: string, displayName: string, photoUrl?: string) => {
+    const data = await api.post<{ accessToken: string; refreshToken: string; user: User }>('/auth/google', {
+      idToken,
+      email,
+      displayName,
+      photoUrl,
+    });
+
+    localStorage.setItem('viora_access_token', data.accessToken);
+    localStorage.setItem('viora_refresh_token', data.refreshToken);
+    localStorage.setItem('viora_user', JSON.stringify(data.user));
+
+    setToken(data.accessToken);
+    setUser(data.user);
+  };
+
+  const loginWithPhone = async (phoneNumber: string, displayName?: string, idToken?: string) => {
+    const data = await api.post<{ accessToken: string; refreshToken: string; user: User }>('/auth/phone', {
+      phoneNumber,
+      displayName,
+      idToken,
+    });
+
+    localStorage.setItem('viora_access_token', data.accessToken);
+    localStorage.setItem('viora_refresh_token', data.refreshToken);
+    localStorage.setItem('viora_user', JSON.stringify(data.user));
+
+    setToken(data.accessToken);
+    setUser(data.user);
+  };
+
   const logout = () => {
     localStorage.removeItem('viora_access_token');
     localStorage.removeItem('viora_refresh_token');
@@ -103,7 +149,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         token,
         isAuthenticated: !!token && !!user,
         login,
+        loginWithGoogle,
+        loginWithPhone,
         register,
+        reloadUser,
         logout,
         loading,
       }}

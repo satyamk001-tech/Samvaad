@@ -34,6 +34,30 @@ public class CallController {
         return ResponseEntity.ok(call);
     }
 
+    @PostMapping("/{callId}/accept")
+    public ResponseEntity<Void> acceptCall(
+            @PathVariable UUID callId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        signalingService.processSignalingMessage(
+                principal.getId(),
+                new com.viora.signaling.dto.SignalingMessage(callId, principal.getId(), "ACCEPT", null)
+        );
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{callId}/reject")
+    public ResponseEntity<Void> rejectCall(
+            @PathVariable UUID callId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        signalingService.processSignalingMessage(
+                principal.getId(),
+                new com.viora.signaling.dto.SignalingMessage(callId, principal.getId(), "REJECT", null)
+        );
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/history")
     public ResponseEntity<Page<CallDto>> getCallHistory(
             @AuthenticationPrincipal UserPrincipal principal,

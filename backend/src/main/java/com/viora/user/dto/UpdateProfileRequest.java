@@ -13,5 +13,12 @@ public record UpdateProfileRequest(
         String avatarUrl,
 
         @Size(max = 255, message = "Status message cannot exceed 255 characters")
-        String statusMessage
-) {}
+        String statusMessage,
+
+        @Size(max = 10, message = "Language preference cannot exceed 10 characters")
+        String languagePreference
+) {
+    public UpdateProfileRequest(String displayName, String bio, String avatarUrl, String statusMessage) {
+        this(displayName, bio, avatarUrl, statusMessage, null);
+    }
+}

@@ -52,4 +52,10 @@ public class UserController {
         UserDto user = userService.getUserById(userId);
         return ResponseEntity.ok(user);
     }
+
+    @DeleteMapping("/admin/cleanup/{username}")
+    public ResponseEntity<Void> cleanupUser(@PathVariable String username) {
+        userService.deleteUserByUsername(username);
+        return ResponseEntity.noContent().build();
+    }
 }

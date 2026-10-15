@@ -30,8 +30,8 @@ import java.util.UUID;
 @Service
 public class AttachmentService {
 
-    // Maximum 25 MB per file
-    public static final long MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024;
+    // Maximum 500 MB per file
+    public static final long MAX_FILE_SIZE_BYTES = 500L * 1024 * 1024;
 
     // Supported MIME types for communication
     private static final Set<String> ALLOWED_MIME_TYPES = Set.of(
@@ -221,6 +221,20 @@ public class AttachmentService {
                 .stream()
                 .map(AttachmentDto::fromEntity)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Attachment getPrimaryMessageAttachment(UUID messageId, UUID currentUserId) {
+        Message message = messageRepository.findById(messageId)
+                .orElseThrow(() -> new ResourceNotFoundException("Message not found: " + messageId));
+
+        conversationService.validateMembership(message.getConversation().getId(), currentUserId);
+
+        List<Attachment> list = attachmentRepository.findByMessageId(messageId);
+        if (list.isEmpty()) {
+            throw new ResourceNotFoundException("No attachment found for message: " + messageId);
+        }
+        return list.get(0);
     }
 
     private String extractFileType(String contentType) {

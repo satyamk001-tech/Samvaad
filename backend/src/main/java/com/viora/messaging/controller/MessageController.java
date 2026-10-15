@@ -18,9 +18,14 @@ import java.util.UUID;
 public class MessageController {
 
     private final MessageService messageService;
+    private final com.viora.messaging.service.StompMessagingService stompMessagingService;
 
-    public MessageController(MessageService messageService) {
+    public MessageController(
+            MessageService messageService,
+            com.viora.messaging.service.StompMessagingService stompMessagingService
+    ) {
         this.messageService = messageService;
+        this.stompMessagingService = stompMessagingService;
     }
 
     @GetMapping("/conversations/{conversationId}/messages")
@@ -32,6 +37,16 @@ public class MessageController {
     ) {
         Page<MessageDto> messages = messageService.getConversationMessages(conversationId, principal.getId(), page, size);
         return ResponseEntity.ok(messages);
+    }
+
+    @PostMapping("/conversations/{conversationId}/messages")
+    public ResponseEntity<MessageDto> createMessage(
+            @PathVariable UUID conversationId,
+            @AuthenticationPrincipal UserPrincipal principal,
+            @Valid @RequestBody com.viora.messaging.dto.StompSendMessagePayload payload
+    ) {
+        MessageDto sent = stompMessagingService.processIncomingMessage(principal.getId(), payload);
+        return ResponseEntity.ok(sent);
     }
 
     @PutMapping("/messages/{messageId}")

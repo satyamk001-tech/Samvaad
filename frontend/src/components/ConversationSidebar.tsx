@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Conversation, User } from '../types';
-import { Search, Plus, Users, Shield } from 'lucide-react';
+import { Search, Plus, Users, Shield, Pin, Clock } from 'lucide-react';
 
 interface ConversationSidebarProps {
   conversations: Conversation[];
@@ -8,9 +9,11 @@ interface ConversationSidebarProps {
   onSelectConversation: (conversation: Conversation) => void;
   currentUser: User;
   onOpenNewChat: () => void;
+  onTogglePin?: (conversationId: string) => void;
+  pinnedIds?: string[];
 }
 
-type FilterCategory = 'ALL' | 'UNREAD' | 'GROUPS' | 'WORK' | 'FAMILY';
+type FilterCategory = 'ALL' | 'UNREAD' | 'GROUPS' | 'WORK' | 'PERSONAL';
 
 export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
   conversations,
@@ -18,39 +21,61 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
   onSelectConversation,
   currentUser,
   onOpenNewChat,
+  onTogglePin,
+  pinnedIds = [],
 }) => {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<FilterCategory>('ALL');
 
-  const filteredConversations = conversations.filter((c) => {
-    // 1. Search term match
-    let matchesSearch = true;
-    if (searchTerm.trim()) {
-      if (c.type === 'GROUP') {
-        matchesSearch = (c.title || 'Group').toLowerCase().includes(searchTerm.toLowerCase());
-      } else {
-        const other = c.members.find((m) => m.user.id !== currentUser.id)?.user;
-        const name = (other?.displayName || other?.username || 'Chat').toLowerCase();
-        matchesSearch = name.includes(searchTerm.toLowerCase());
+  // Check if a conversation is pinned
+  const isConvPinned = (c: Conversation) => pinnedIds.includes(c.id) || c.isPinned;
+
+  const filteredConversations = conversations
+    .filter((c) => {
+      // 1. Search term match
+      let matchesSearch = true;
+      if (searchTerm.trim()) {
+        if (c.type === 'GROUP') {
+          matchesSearch = (c.title || 'Group').toLowerCase().includes(searchTerm.toLowerCase());
+        } else {
+          const other = c.members.find((m) => m.user.id !== currentUser.id)?.user;
+          const name = (other?.displayName || other?.username || 'Chat').toLowerCase();
+          matchesSearch = name.includes(searchTerm.toLowerCase());
+        }
       }
-    }
 
-    if (!matchesSearch) return false;
+      if (!matchesSearch) return false;
 
-    // 2. Filter pill match
-    if (selectedFilter === 'GROUPS') {
-      return c.type === 'GROUP';
-    }
-    // All other filters default to true for demonstration
-    return true;
-  });
+      // 2. Filter tabs match
+      if (selectedFilter === 'GROUPS') {
+        return c.type === 'GROUP';
+      }
+      if (selectedFilter === 'PERSONAL') {
+        return c.type === 'DIRECT';
+      }
+      if (selectedFilter === 'WORK') {
+        return c.folderTag === 'WORK';
+      }
+      if (selectedFilter === 'UNREAD') {
+        return c.lastMessage && c.lastMessage.sender.id !== currentUser.id && c.lastMessage.status !== 'READ';
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      const aPinned = isConvPinned(a);
+      const bPinned = isConvPinned(b);
+      if (aPinned && !bPinned) return -1;
+      if (!aPinned && bPinned) return 1;
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
 
   const getConversationTitle = (c: Conversation) => {
     if (c.type === 'GROUP') {
-      return c.title || 'सामूहिक वार्ता • Group';
+      return c.title || t('groups') || 'Group';
     }
     const other = c.members.find((m) => m.user.id !== currentUser.id)?.user;
-    return other?.displayName || other?.username || 'वार्तालाप • Conversation';
+    return other?.displayName || other?.username || t('chats') || 'Conversation';
   };
 
   const getOtherUser = (c: Conversation) => {
@@ -65,24 +90,24 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
           <div>
             <div className="flex items-center gap-1.5">
               <h2 className="text-base font-bold text-[#191C3B] tracking-tight">
-                वार्तालाप
+                {t('chats') || 'वार्तालाप'}
               </h2>
               <span className="text-[11px] font-semibold text-[#686578] uppercase tracking-wider">
-                • CONVERSATIONS
+                • {t('messages') || 'MESSAGES'}
               </span>
             </div>
             <p className="text-[11px] text-[#686578]">
-              {conversations.length} सक्रिय संवाद सत्र • Active
+              {conversations.length} {t('activeConversations') || 'Active'}
             </p>
           </div>
 
           <button
             onClick={onOpenNewChat}
             className="h-8 px-3 rounded-xl bg-[#191C3B] text-white flex items-center gap-1.5 hover:bg-[#101226] transition-all shadow-sm shadow-[#191C3B]/10 text-xs font-medium"
-            title="नया संदेश • New Conversation"
+            title={`${t('newConversation') || 'New Conversation'}`}
           >
             <Plus className="w-3.5 h-3.5 text-[#C59A58]" />
-            <span>नया संदेश</span>
+            <span>{t('newConversation') || 'नया संदेश'}</span>
           </button>
         </div>
 
@@ -93,19 +118,19 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="खोजें or Search conversations..."
+            placeholder={t('searchPlaceholder') || 'खोजें or Search conversations...'}
             className="w-full bg-[#FAF7F2] border border-[#E8E2D5] rounded-xl pl-9 pr-3 py-1.5 text-xs text-[#191C3B] placeholder:text-[#9E9AA8] focus:outline-none focus:border-[#C59A58]"
           />
         </div>
 
-        {/* Filter Pills: All, Unread, Groups, Work, Family */}
+        {/* Filter Pills: All, Personal, Work, Groups, Unread */}
         <div className="flex items-center gap-1.5 mt-3 overflow-x-auto pb-0.5 no-scrollbar">
           {[
-            { id: 'ALL', label: 'सभी (All)' },
-            { id: 'UNREAD', label: 'अपठित (Unread)' },
-            { id: 'GROUPS', label: 'समूह (Groups)' },
-            { id: 'WORK', label: 'कार्य (Work)' },
-            { id: 'FAMILY', label: 'परिवार (Family)' },
+            { id: 'ALL', label: t('all') || 'सभी' },
+            { id: 'PERSONAL', label: 'व्यक्तिगत • Personal' },
+            { id: 'WORK', label: t('work') || 'कार्य • Work' },
+            { id: 'GROUPS', label: t('groups') || 'समूह • Groups' },
+            { id: 'UNREAD', label: t('unread') || 'अपठित • Unread' },
           ].map((pill) => (
             <button
               key={pill.id}
@@ -127,7 +152,7 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
         {filteredConversations.length === 0 ? (
           <div className="p-8 text-center text-[#686578] text-xs">
             <p className="font-medium">कोई वार्तालाप नहीं मिला</p>
-            <p className="text-[11px] text-[#9E9AA8] mt-1">No conversations matching search</p>
+            <p className="text-[11px] text-[#9E9AA8] mt-1">No conversations matching search or category</p>
           </div>
         ) : (
           filteredConversations.map((conv) => {
@@ -135,16 +160,17 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
             const title = getConversationTitle(conv);
             const otherUser = getOtherUser(conv);
             const isOnline = otherUser?.isOnline;
+            const pinned = isConvPinned(conv);
 
             return (
-              <button
+              <div
                 key={conv.id}
-                onClick={() => onSelectConversation(conv)}
-                className={`w-full p-3.5 flex items-start gap-3 text-left transition-all hover:bg-[#FAF7F2] ${
+                className={`w-full p-3 flex items-start gap-3 text-left transition-all hover:bg-[#FAF7F2] cursor-pointer group relative ${
                   isActive
                     ? 'bg-[#FDF8EE] border-l-4 border-[#C59A58]'
                     : 'bg-white'
                 }`}
+                onClick={() => onSelectConversation(conv)}
               >
                 {/* Indic Avatar */}
                 <div className="relative flex-shrink-0">
@@ -169,9 +195,14 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
                 {/* Details */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
-                    <h3 className="text-xs font-bold text-[#191C3B] truncate tracking-tight">
-                      {title}
-                    </h3>
+                    <div className="flex items-center gap-1.5 truncate">
+                      {pinned && (
+                        <Pin className="w-3 h-3 text-[#D97706] fill-[#D97706] flex-shrink-0" />
+                      )}
+                      <h3 className="text-xs font-bold text-[#191C3B] truncate tracking-tight">
+                        {title}
+                      </h3>
+                    </div>
                     <span className="text-[10px] text-[#9E9AA8] flex-shrink-0">
                       {new Date(conv.updatedAt).toLocaleTimeString([], {
                         hour: '2-digit',
@@ -185,19 +216,43 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
                       (conv.type === 'GROUP' ? 'नया समूह निर्मित हुआ' : 'बातचीत शुरू करें...')}
                   </p>
 
-                  <div className="mt-1 flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-[#B45309] bg-[#FDF8EE] px-1.5 py-0.5 rounded border border-[#EAD9BE]">
-                      <Shield className="w-2.5 h-2.5" />
-                      E2EE
-                    </span>
-                    {conv.type === 'GROUP' && (
-                      <span className="text-[9px] text-[#9E9AA8]">
-                        {conv.members.length} सदस्य
+                  <div className="mt-1 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-[#B45309] bg-[#FDF8EE] px-1.5 py-0.5 rounded border border-[#EAD9BE]">
+                        <Shield className="w-2.5 h-2.5" />
+                        E2EE
                       </span>
+                      {conv.disappearingSeconds && conv.disappearingSeconds > 0 && (
+                        <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200" title="संदेश स्वतः मिट जाएंगे">
+                          <Clock className="w-2.5 h-2.5" />
+                          {conv.disappearingSeconds >= 86400 ? `${Math.round(conv.disappearingSeconds / 86400)}d` : `${conv.disappearingSeconds}s`}
+                        </span>
+                      )}
+                      {conv.type === 'GROUP' && (
+                        <span className="text-[9px] text-[#9E9AA8]">
+                          {conv.members.length} सदस्य
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Pin/Unpin Action Button */}
+                    {onTogglePin && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onTogglePin(conv.id);
+                        }}
+                        className={`p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-100 ${
+                          pinned ? 'text-[#D97706] opacity-100' : 'text-gray-400'
+                        }`}
+                        title={pinned ? 'Unpin chat' : 'Pin chat (max 5)'}
+                      >
+                        <Pin className="w-3.5 h-3.5" />
+                      </button>
                     )}
                   </div>
                 </div>
-              </button>
+              </div>
             );
           })
         )}

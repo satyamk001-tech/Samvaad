@@ -42,6 +42,19 @@ public class Message {
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted = false;
 
+    @Column(name = "is_view_once", nullable = false)
+    private boolean isViewOnce = false;
+
+    @Column(name = "viewed_at")
+    private Instant viewedAt;
+
+    @Column(name = "is_forwarded", nullable = false)
+    private boolean isForwarded = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "forwarded_from_id")
+    private User forwardedFrom;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -52,7 +65,7 @@ public class Message {
 
     public Message() {}
 
-    public Message(UUID id, Conversation conversation, User sender, Message replyToMessage, String content, MessageType type, boolean isEdited, boolean isDeleted, Instant createdAt, Instant updatedAt) {
+    public Message(UUID id, Conversation conversation, User sender, Message replyToMessage, String content, MessageType type, boolean isEdited, boolean isDeleted, boolean isViewOnce, Instant viewedAt, boolean isForwarded, User forwardedFrom, Instant createdAt, Instant updatedAt) {
         this.id = id;
         this.conversation = conversation;
         this.sender = sender;
@@ -61,6 +74,10 @@ public class Message {
         this.type = type != null ? type : MessageType.TEXT;
         this.isEdited = isEdited;
         this.isDeleted = isDeleted;
+        this.isViewOnce = isViewOnce;
+        this.viewedAt = viewedAt;
+        this.isForwarded = isForwarded;
+        this.forwardedFrom = forwardedFrom;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -93,6 +110,18 @@ public class Message {
     public boolean isDeleted() { return isDeleted; }
     public void setDeleted(boolean deleted) { isDeleted = deleted; }
 
+    public boolean isViewOnce() { return isViewOnce; }
+    public void setViewOnce(boolean viewOnce) { isViewOnce = viewOnce; }
+
+    public Instant getViewedAt() { return viewedAt; }
+    public void setViewedAt(Instant viewedAt) { this.viewedAt = viewedAt; }
+
+    public boolean isForwarded() { return isForwarded; }
+    public void setForwarded(boolean forwarded) { isForwarded = forwarded; }
+
+    public User getForwardedFrom() { return forwardedFrom; }
+    public void setForwardedFrom(User forwardedFrom) { this.forwardedFrom = forwardedFrom; }
+
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 
@@ -108,6 +137,10 @@ public class Message {
         private MessageType type = MessageType.TEXT;
         private boolean isEdited = false;
         private boolean isDeleted = false;
+        private boolean isViewOnce = false;
+        private Instant viewedAt;
+        private boolean isForwarded = false;
+        private User forwardedFrom;
 
         public Builder id(UUID id) { this.id = id; return this; }
         public Builder conversation(Conversation conversation) { this.conversation = conversation; return this; }
@@ -117,9 +150,13 @@ public class Message {
         public Builder type(MessageType type) { this.type = type; return this; }
         public Builder isEdited(boolean isEdited) { this.isEdited = isEdited; return this; }
         public Builder isDeleted(boolean isDeleted) { this.isDeleted = isDeleted; return this; }
+        public Builder isViewOnce(boolean isViewOnce) { this.isViewOnce = isViewOnce; return this; }
+        public Builder viewedAt(Instant viewedAt) { this.viewedAt = viewedAt; return this; }
+        public Builder isForwarded(boolean isForwarded) { this.isForwarded = isForwarded; return this; }
+        public Builder forwardedFrom(User forwardedFrom) { this.forwardedFrom = forwardedFrom; return this; }
 
         public Message build() {
-            return new Message(id, conversation, sender, replyToMessage, content, type, isEdited, isDeleted, null, null);
+            return new Message(id, conversation, sender, replyToMessage, content, type, isEdited, isDeleted, isViewOnce, viewedAt, isForwarded, forwardedFrom, null, null);
         }
     }
 }

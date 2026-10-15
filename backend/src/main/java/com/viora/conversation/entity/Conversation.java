@@ -30,6 +30,9 @@ public class Conversation {
     @JoinColumn(name = "created_by")
     private User createdBy;
 
+    @Column(name = "disappearing_seconds")
+    private Integer disappearingSeconds;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -40,12 +43,13 @@ public class Conversation {
 
     public Conversation() {}
 
-    public Conversation(UUID id, ConversationType type, String title, String avatarUrl, User createdBy, Instant createdAt, Instant updatedAt) {
+    public Conversation(UUID id, ConversationType type, String title, String avatarUrl, User createdBy, Integer disappearingSeconds, Instant createdAt, Instant updatedAt) {
         this.id = id;
         this.type = type;
         this.title = title;
         this.avatarUrl = avatarUrl;
         this.createdBy = createdBy;
+        this.disappearingSeconds = disappearingSeconds;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -69,6 +73,9 @@ public class Conversation {
     public User getCreatedBy() { return createdBy; }
     public void setCreatedBy(User createdBy) { this.createdBy = createdBy; }
 
+    public Integer getDisappearingSeconds() { return disappearingSeconds; }
+    public void setDisappearingSeconds(Integer disappearingSeconds) { this.disappearingSeconds = disappearingSeconds; }
+
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 
@@ -81,15 +88,17 @@ public class Conversation {
         private String title;
         private String avatarUrl;
         private User createdBy;
+        private Integer disappearingSeconds;
 
         public Builder id(UUID id) { this.id = id; return this; }
         public Builder type(ConversationType type) { this.type = type; return this; }
         public Builder title(String title) { this.title = title; return this; }
         public Builder avatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; return this; }
         public Builder createdBy(User createdBy) { this.createdBy = createdBy; return this; }
+        public Builder disappearingSeconds(Integer disappearingSeconds) { this.disappearingSeconds = disappearingSeconds; return this; }
 
         public Conversation build() {
-            return new Conversation(id, type, title, avatarUrl, createdBy, null, null);
+            return new Conversation(id, type, title, avatarUrl, createdBy, disappearingSeconds, null, null);
         }
     }
 }

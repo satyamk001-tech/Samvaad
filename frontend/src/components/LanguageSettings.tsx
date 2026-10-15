@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Globe,
   Check,
@@ -7,6 +8,7 @@ import {
   Shield,
   Sparkles
 } from 'lucide-react';
+import { api } from '../services/api';
 
 interface LanguageOption {
   code: string;
@@ -19,25 +21,33 @@ interface LanguageOption {
 const INDIC_LANGUAGES: LanguageOption[] = [
   { code: 'hi', nativeName: 'हिन्दी', englishName: 'Hindi', speakers: '600M+', isPopular: true },
   { code: 'en', nativeName: 'English (India)', englishName: 'Indian English', speakers: '200M+', isPopular: true },
+  { code: 'pa', nativeName: 'ਪੰਜਾਬੀ', englishName: 'Punjabi', speakers: '35M+', isPopular: true },
   { code: 'bn', nativeName: 'বাংলা', englishName: 'Bangla', speakers: '100M+', isPopular: true },
-  { code: 'mr', nativeName: 'मराठी', englishName: 'Marathi', speakers: '90M+' },
-  { code: 'te', nativeName: 'తెలుగు', englishName: 'Telugu', speakers: '85M+' },
   { code: 'ta', nativeName: 'தமிழ்', englishName: 'Tamil', speakers: '75M+' },
+  { code: 'te', nativeName: 'తెలుగు', englishName: 'Telugu', speakers: '85M+' },
+  { code: 'mr', nativeName: 'मराठी', englishName: 'Marathi', speakers: '90M+' },
   { code: 'gu', nativeName: 'ગુજરાતી', englishName: 'Gujarati', speakers: '60M+' },
-  { code: 'ur', nativeName: 'اردو', englishName: 'Urdu', speakers: '50M+' },
   { code: 'kn', nativeName: 'ಕನ್ನಡ', englishName: 'Kannada', speakers: '45M+' },
-  { code: 'od', nativeName: 'ଓଡ଼ିଆ', englishName: 'Odia', speakers: '40M+' },
   { code: 'ml', nativeName: 'മലയാളം', englishName: 'Malayalam', speakers: '38M+' },
-  { code: 'pa', nativeName: 'ਪੰਜਾਬੀ', englishName: 'Punjabi', speakers: '35M+' },
-  { code: 'as', nativeName: 'অসমীয়া', englishName: 'Assamese', speakers: '15M+' },
-  { code: 'sa', nativeName: 'संस्कृतम्', englishName: 'Sanskrit', speakers: 'Classical' },
 ];
 
 export const LanguageSettings: React.FC = () => {
-  const [selectedLang, setSelectedLang] = useState('hi');
+  const { i18n } = useTranslation();
+  const [selectedLang, setSelectedLang] = useState(i18n.language || 'hi');
   const [transliterationEnabled, setTransliterationEnabled] = useState(true);
   const [bhashiniSTT, setBhashiniSTT] = useState(true);
   const [preserveOriginalScript, setPreserveOriginalScript] = useState(true);
+
+  const handleSelectLanguage = (code: string) => {
+    setSelectedLang(code);
+    i18n.changeLanguage(code);
+    localStorage.setItem('i18nextLng', code);
+    localStorage.setItem('samvaad_language', code);
+
+    api.put('/users/me', { languagePreference: code }).catch((err) => {
+      console.warn('Language preference sync notice:', err);
+    });
+  };
 
   return (
     <div className="flex-1 bg-[#FAF7F2] overflow-y-auto p-6 md:p-10 select-none">
@@ -87,11 +97,11 @@ export const LanguageSettings: React.FC = () => {
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {INDIC_LANGUAGES.map((lang) => {
-              const isSelected = selectedLang === lang.code;
+              const isSelected = (i18n.language || selectedLang) === lang.code;
               return (
                 <button
                   key={lang.code}
-                  onClick={() => setSelectedLang(lang.code)}
+                  onClick={() => handleSelectLanguage(lang.code)}
                   className={`p-4 rounded-2xl text-left transition-all border relative flex flex-col justify-between ${
                     isSelected
                       ? 'bg-[#191C3B] text-white border-[#191C3B] shadow-md shadow-[#191C3B]/10'

@@ -56,6 +56,22 @@ public class AttachmentController {
         return ResponseEntity.ok(attachments);
     }
 
+    @GetMapping(value = {"/messages/{messageId}/download", "/messages/{messageId}/raw"})
+    public ResponseEntity<Resource> downloadAttachmentByMessage(
+            @PathVariable UUID messageId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        Attachment metadata = attachmentService.getPrimaryMessageAttachment(messageId, principal.getId());
+        Resource resource = attachmentService.downloadAttachment(metadata.getId(), principal.getId());
+
+        String encodedFileName = URLEncoder.encode(metadata.getFileName(), StandardCharsets.UTF_8).replace("+", "%20");
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(metadata.getContentType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + encodedFileName + "\"")
+                .body(resource);
+    }
+
     @GetMapping("/{attachmentId}/download")
     public ResponseEntity<Resource> downloadAttachment(
             @PathVariable UUID attachmentId,

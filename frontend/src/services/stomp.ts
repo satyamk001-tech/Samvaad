@@ -101,6 +101,10 @@ class StompService {
     }
   }
 
+  public isConnected(): boolean {
+    return this.connected;
+  }
+
   public send(destination: string, body: any) {
     if (!this.connected || !this.client) {
       console.warn('[STOMP] Cannot send message, not connected');

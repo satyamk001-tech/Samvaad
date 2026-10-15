@@ -30,7 +30,7 @@ public class StompMessageController {
         this.messagingTemplate = messagingTemplate;
     }
 
-    @MessageMapping("/chat.sendMessage")
+    @MessageMapping({"/chat.sendMessage", "/chat.send"})
     public void sendMessage(@Valid @Payload StompSendMessagePayload payload, Principal principal) {
         UserPrincipal userPrincipal = extractUserPrincipal(principal);
         stompMessagingService.processIncomingMessage(userPrincipal.getId(), payload);
@@ -65,6 +65,20 @@ public class StompMessageController {
     public void handleRead(@Valid @Payload StompReceiptPayload payload, Principal principal) {
         UserPrincipal userPrincipal = extractUserPrincipal(principal);
         stompMessagingService.markRead(userPrincipal.getId(), payload);
+    }
+
+    @MessageMapping("/chat.react")
+    public void handleReaction(@Valid @Payload StompReactionPayload payload, Principal principal) {
+        UserPrincipal userPrincipal = extractUserPrincipal(principal);
+        stompMessagingService.toggleReaction(userPrincipal.getId(), payload);
+    }
+
+    @MessageMapping("/chat.viewOnce")
+    public void handleViewOnce(@Payload java.util.Map<String, String> payload, Principal principal) {
+        UserPrincipal userPrincipal = extractUserPrincipal(principal);
+        java.util.UUID conversationId = java.util.UUID.fromString(payload.get("conversationId"));
+        java.util.UUID messageId = java.util.UUID.fromString(payload.get("messageId"));
+        stompMessagingService.markViewedOnce(userPrincipal.getId(), conversationId, messageId);
     }
 
     private UserPrincipal extractUserPrincipal(Principal principal) {

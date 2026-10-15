@@ -95,8 +95,12 @@ public class SignalingService {
             throw new UnauthorizedException("User is not a participant in this call");
         }
 
-        User targetUser = userRepository.findById(message.targetUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("Target user not found: " + message.targetUserId()));
+        final UUID resolvedTargetId = (message.targetUserId() == null || message.targetUserId().equals(senderId))
+                ? (isCaller ? call.getReceiver().getId() : call.getCaller().getId())
+                : message.targetUserId();
+
+        User targetUser = userRepository.findById(resolvedTargetId)
+                .orElseThrow(() -> new ResourceNotFoundException("Target user not found: " + resolvedTargetId));
 
         String type = message.type().toUpperCase();
 

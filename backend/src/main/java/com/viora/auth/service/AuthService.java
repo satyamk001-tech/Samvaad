@@ -69,6 +69,82 @@ public class AuthService {
     }
 
     @Transactional
+    public AuthResponse googleLogin(GoogleAuthRequest request) {
+        String email = request.email().trim().toLowerCase();
+        
+        User user = userRepository.findByEmail(email).orElseGet(() -> {
+            String baseUsername = email.split("@")[0].replaceAll("[^a-zA-Z0-9]", "");
+            if (baseUsername.isBlank()) baseUsername = "user";
+            String candidateUsername = baseUsername;
+            int counter = 1;
+            while (userRepository.existsByUsername(candidateUsername)) {
+                candidateUsername = baseUsername + counter++;
+            }
+
+            User newUser = User.builder()
+                    .username(candidateUsername)
+                    .email(email)
+                    .passwordHash(passwordEncoder.encode(UUID.randomUUID().toString()))
+                    .displayName(request.displayName())
+                    .avatarUrl(request.avatarUrl())
+                    .isOnline(true)
+                    .lastSeenAt(Instant.now())
+                    .build();
+            newUser.setEmailVerified(true);
+            return userRepository.save(newUser);
+        });
+
+        user.setOnline(true);
+        user.setLastSeenAt(Instant.now());
+        if (request.avatarUrl() != null && (user.getAvatarUrl() == null || user.getAvatarUrl().isBlank())) {
+            user.setAvatarUrl(request.avatarUrl());
+        }
+        User savedUser = userRepository.save(user);
+
+        String accessToken = tokenProvider.generateAccessToken(savedUser.getId(), savedUser.getUsername());
+        String rawRefreshToken = tokenProvider.generateRefreshToken(savedUser.getId());
+        refreshTokenRepository.revokeAllUserTokens(savedUser);
+        saveRefreshToken(savedUser, rawRefreshToken);
+
+        return new AuthResponse(accessToken, rawRefreshToken, UserDto.fromEntity(savedUser));
+    }
+
+    @Transactional
+    public AuthResponse phoneLogin(PhoneAuthRequest request) {
+        String cleanPhone = request.phoneNumber().trim();
+        String formattedUsername = cleanPhone.startsWith("+") ? cleanPhone.substring(1) : cleanPhone;
+        String syntheticEmail = cleanPhone + "@samvaad.gov.in";
+
+        User user = userRepository.findByUsername(formattedUsername).orElseGet(() -> {
+            String defaultDisplay = (request.displayName() != null && !request.displayName().isBlank())
+                    ? request.displayName()
+                    : "User " + (cleanPhone.length() > 4 ? cleanPhone.substring(cleanPhone.length() - 4) : cleanPhone);
+
+            User newUser = User.builder()
+                    .username(formattedUsername)
+                    .email(syntheticEmail)
+                    .displayName(defaultDisplay)
+                    .passwordHash(passwordEncoder.encode(UUID.randomUUID().toString()))
+                    .isOnline(true)
+                    .lastSeenAt(Instant.now())
+                    .build();
+            newUser.setEmailVerified(true);
+            return userRepository.save(newUser);
+        });
+
+        user.setOnline(true);
+        user.setLastSeenAt(Instant.now());
+        User savedUser = userRepository.save(user);
+
+        String accessToken = tokenProvider.generateAccessToken(savedUser.getId(), savedUser.getUsername());
+        String rawRefreshToken = tokenProvider.generateRefreshToken(savedUser.getId());
+        refreshTokenRepository.revokeAllUserTokens(savedUser);
+        saveRefreshToken(savedUser, rawRefreshToken);
+
+        return new AuthResponse(accessToken, rawRefreshToken, UserDto.fromEntity(savedUser));
+    }
+
+    @Transactional
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByUsernameOrEmail(request.usernameOrEmail(), request.usernameOrEmail())
                 .orElseThrow(() -> new UnauthorizedException("Invalid username or password"));

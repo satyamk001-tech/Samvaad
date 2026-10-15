@@ -15,6 +15,8 @@ public record UserDto(
         String statusMessage,
         boolean isOnline,
         Instant lastSeenAt,
+        String languagePreference,
+        boolean emailVerified,
         Instant createdAt
 ) {
     public static UserDto fromEntity(User user) {
@@ -28,6 +30,8 @@ public record UserDto(
                 user.getStatusMessage(),
                 user.isOnline(),
                 user.getLastSeenAt(),
+                user.getLanguagePreference() != null ? user.getLanguagePreference() : "hi",
+                user.isEmailVerified(),
                 user.getCreatedAt()
         );
     }

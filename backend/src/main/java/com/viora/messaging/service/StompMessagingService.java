@@ -27,6 +27,7 @@ public class StompMessagingService {
     private final ConversationService conversationService;
     private final SimpMessagingTemplate messagingTemplate;
     private final com.viora.common.outbox.OutboxService outboxService;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
     public StompMessagingService(
             MessageRepository messageRepository,
@@ -35,7 +36,8 @@ public class StompMessagingService {
             UserRepository userRepository,
             ConversationService conversationService,
             SimpMessagingTemplate messagingTemplate,
-            com.viora.common.outbox.OutboxService outboxService
+            com.viora.common.outbox.OutboxService outboxService,
+            org.springframework.jdbc.core.JdbcTemplate jdbcTemplate
     ) {
         this.messageRepository = messageRepository;
         this.messageStatusRepository = messageStatusRepository;
@@ -44,6 +46,7 @@ public class StompMessagingService {
         this.conversationService = conversationService;
         this.messagingTemplate = messagingTemplate;
         this.outboxService = outboxService;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Transactional
@@ -64,6 +67,11 @@ public class StompMessagingService {
 
         MessageType messageType = payload.type() != null ? payload.type() : MessageType.TEXT;
 
+        User forwardedFrom = null;
+        if (Boolean.TRUE.equals(payload.isForwarded()) && payload.forwardedFromId() != null) {
+            forwardedFrom = userRepository.findById(payload.forwardedFromId()).orElse(null);
+        }
+
         Message message = Message.builder()
                 .conversation(conversation)
                 .sender(sender)
@@ -72,6 +80,9 @@ public class StompMessagingService {
                 .type(messageType)
                 .isEdited(false)
                 .isDeleted(false)
+                .isViewOnce(Boolean.TRUE.equals(payload.isViewOnce()))
+                .isForwarded(Boolean.TRUE.equals(payload.isForwarded()))
+                .forwardedFrom(forwardedFrom)
                 .build();
 
         Message savedMessage = messageRepository.save(message);
@@ -174,5 +185,66 @@ public class StompMessagingService {
                 "/queue/messages",
                 StompEventPayload.of("MESSAGE_READ", receiptAck)
         );
+    }
+
+    @Transactional
+    public void toggleReaction(UUID userId, StompReactionPayload payload) {
+        conversationService.validateMembership(payload.conversationId(), userId);
+
+        Message message = messageRepository.findById(payload.messageId())
+                .orElseThrow(() -> new ResourceNotFoundException("Message not found"));
+
+        Integer existing = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM message_reactions WHERE message_id = ? AND user_id = ? AND emoji = ?",
+                Integer.class,
+                message.getId(), userId, payload.emoji()
+        );
+
+        boolean added = false;
+        if (existing != null && existing > 0) {
+            jdbcTemplate.update(
+                    "DELETE FROM message_reactions WHERE message_id = ? AND user_id = ? AND emoji = ?",
+                    message.getId(), userId, payload.emoji()
+            );
+        } else {
+            jdbcTemplate.update(
+                    "INSERT INTO message_reactions (message_id, user_id, emoji) VALUES (?, ?, ?)",
+                    message.getId(), userId, payload.emoji()
+            );
+            added = true;
+        }
+
+        // Broadcast reaction event to conversation
+        messagingTemplate.convertAndSend(
+                "/topic/conversations." + payload.conversationId(),
+                StompEventPayload.of("REACTION", java.util.Map.of(
+                        "messageId", payload.messageId().toString(),
+                        "userId", userId.toString(),
+                        "emoji", payload.emoji(),
+                        "added", added
+                ))
+        );
+    }
+
+    @Transactional
+    public void markViewedOnce(UUID userId, UUID conversationId, UUID messageId) {
+        conversationService.validateMembership(conversationId, userId);
+
+        Message message = messageRepository.findById(messageId)
+                .orElseThrow(() -> new ResourceNotFoundException("Message not found"));
+
+        if (message.isViewOnce() && message.getViewedAt() == null) {
+            message.setViewedAt(Instant.now());
+            messageRepository.save(message);
+
+            messagingTemplate.convertAndSend(
+                    "/topic/conversations." + conversationId,
+                    StompEventPayload.of("MESSAGE_VIEWED_ONCE", java.util.Map.of(
+                            "messageId", messageId.toString(),
+                            "conversationId", conversationId.toString(),
+                            "viewedAt", message.getViewedAt().toString()
+                    ))
+            );
+        }
     }
 }

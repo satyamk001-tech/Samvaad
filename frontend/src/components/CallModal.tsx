@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Call, User } from '../types';
 import { stompService } from '../services/stomp';
 import {
@@ -7,36 +8,83 @@ import {
   MicOff,
   Video,
   VideoOff,
-  Shield,
-  MessageSquare,
+  Minimize2,
+  Maximize2,
   Sparkles,
   Subtitles,
+  ScreenShare,
+  Share2,
+  Check,
 } from 'lucide-react';
 
 interface CallModalProps {
   call: Call;
   currentUser: User;
   onEndCall: () => void;
+  isMinimized: boolean;
+  onToggleMinimize: () => void;
 }
 
 export const CallModal: React.FC<CallModalProps> = ({
   call,
   currentUser,
   onEndCall,
+  isMinimized,
+  onToggleMinimize,
 }) => {
+  const { t } = useTranslation();
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
-  const [subtitlesEnabled, setSubtitlesEnabled] = useState(true);
-  const callDuration = '02:14';
+  const [subtitlesEnabled, setSubtitlesEnabled] = useState(false);
+  const [secondsElapsed, setSecondsElapsed] = useState(0);
+  const [connectionStatus, setConnectionStatus] = useState<string>(t('outgoingCall') || 'कॉल किया जा रहा है... • Calling...');
+  const [hasRemoteStream, setHasRemoteStream] = useState(false);
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [callLinkCopied, setCallLinkCopied] = useState(false);
+  const screenStreamRef = useRef<MediaStream | null>(null);
 
-  const localVideoRef = useRef<HTMLVideoElement>(null);
-  const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const localVideoRef = useRef<HTMLVideoElement | null>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
+  const remoteStreamRef = useRef<MediaStream | null>(null);
 
   const isCaller = call.caller.id === currentUser.id;
   const peerUser = isCaller ? call.receiver : call.caller;
   const peerName = peerUser.displayName || peerUser.username;
+  const peerInitial = peerName.charAt(0).toUpperCase();
+
+  // Callback ref for remote video element (mounts in either minimized or full view)
+  const setRemoteVideoEl = useCallback((el: HTMLVideoElement | null) => {
+    remoteVideoRef.current = el;
+    if (el && remoteStreamRef.current) {
+      el.srcObject = remoteStreamRef.current;
+      el.play().catch(() => {});
+    }
+  }, []);
+
+  // Callback ref for local video element
+  const setLocalVideoEl = useCallback((el: HTMLVideoElement | null) => {
+    localVideoRef.current = el;
+    if (el && localStreamRef.current) {
+      el.srcObject = localStreamRef.current;
+      el.play().catch(() => {});
+    }
+  }, []);
+
+  // Duration timer
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSecondsElapsed((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatDuration = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
 
   useEffect(() => {
     let candidateQueue: RTCIceCandidateInit[] = [];
@@ -51,6 +99,16 @@ export const CallModal: React.FC<CallModalProps> = ({
       });
       peerConnectionRef.current = pc;
 
+      pc.oniceconnectionstatechange = () => {
+        if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
+          setConnectionStatus('जुड़ा हुआ • Connected');
+        } else if (pc.iceConnectionState === 'disconnected') {
+          setConnectionStatus('पुनः जुड़ रहा है • Reconnecting...');
+        } else if (pc.iceConnectionState === 'failed') {
+          setConnectionStatus('कनेक्शन पुनः प्रयास • Reconnecting');
+        }
+      };
+
       pc.onicecandidate = (event) => {
         if (event.candidate) {
           stompService.send('/app/call.signal', {
@@ -63,23 +121,44 @@ export const CallModal: React.FC<CallModalProps> = ({
       };
 
       pc.ontrack = (event) => {
-        if (remoteVideoRef.current && event.streams[0]) {
-          remoteVideoRef.current.srcObject = event.streams[0];
+        if (event.streams && event.streams[0]) {
+          remoteStreamRef.current = event.streams[0];
+          setHasRemoteStream(true);
+          setConnectionStatus('जुड़ा हुआ • Connected');
+          if (remoteVideoRef.current) {
+            remoteVideoRef.current.srcObject = event.streams[0];
+            remoteVideoRef.current.play().catch(() => {});
+          }
         }
       };
 
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-          video: call.type === 'VIDEO',
-        });
-        localStreamRef.current = stream;
-
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream;
+        let stream: MediaStream | null = null;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: call.type === 'VIDEO',
+          });
+        } catch (mediaErr) {
+          console.warn('Initial media access notice, attempting audio fallback:', mediaErr);
+          if (call.type === 'VIDEO') {
+            try {
+              stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+              setIsVideoOff(true);
+            } catch (audioErr) {
+              console.warn('Audio fallback also denied or unavailable', audioErr);
+            }
+          }
         }
 
-        stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+        if (stream) {
+          localStreamRef.current = stream;
+          if (localVideoRef.current) {
+            localVideoRef.current.srcObject = stream;
+            localVideoRef.current.play().catch(() => {});
+          }
+          stream.getTracks().forEach((track) => pc.addTrack(track, stream!));
+        }
 
         if (isCaller) {
           const offer = await pc.createOffer();
@@ -93,7 +172,7 @@ export const CallModal: React.FC<CallModalProps> = ({
           });
         }
       } catch (err) {
-        console.warn('Could not access media devices', err);
+        console.warn('Media setup notice', err);
       }
     }
 
@@ -123,23 +202,34 @@ export const CallModal: React.FC<CallModalProps> = ({
             type: 'ANSWER',
             data: answer.sdp,
           });
+        } else if (signal.type === 'ACCEPT' && isCaller) {
+          setConnectionStatus('स्वीकार किया गया • Accepted, Connecting...');
+          if (pc.localDescription) {
+            stompService.send('/app/call.signal', {
+              callId: call.id,
+              targetUserId: peerUser.id,
+              type: 'OFFER',
+              data: pc.localDescription.sdp,
+            });
+          }
         } else if (signal.type === 'ANSWER' && isCaller) {
           await pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: signal.data }));
           while (candidateQueue.length > 0) {
             const cand = candidateQueue.shift();
             if (cand) await pc.addIceCandidate(new RTCIceCandidate(cand));
           }
+          setConnectionStatus('जुड़ा हुआ • Connected');
         } else if (signal.type === 'ICE_CANDIDATE' && signal.data) {
           if (pc.remoteDescription && pc.remoteDescription.type) {
             await pc.addIceCandidate(new RTCIceCandidate(signal.data));
           } else {
             candidateQueue.push(signal.data);
           }
-        } else if (signal.type === 'END') {
+        } else if (signal.type === 'END' || signal.type === 'REJECT') {
           cleanupAndClose();
         }
       } catch (signalErr) {
-        console.error('Signaling error', signalErr);
+        console.error('Signaling processing notice:', signalErr);
       }
     };
 
@@ -152,8 +242,14 @@ export const CallModal: React.FC<CallModalProps> = ({
   }, [call.id, isCaller, peerUser.id, call.type]);
 
   const cleanupAndClose = () => {
-    localStreamRef.current?.getTracks().forEach((track) => track.stop());
-    peerConnectionRef.current?.close();
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => track.stop());
+      localStreamRef.current = null;
+    }
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.close();
+      peerConnectionRef.current = null;
+    }
     onEndCall();
   };
 
@@ -174,6 +270,8 @@ export const CallModal: React.FC<CallModalProps> = ({
         audioTrack.enabled = !audioTrack.enabled;
         setIsMuted(!audioTrack.enabled);
       }
+    } else {
+      setIsMuted(!isMuted);
     }
   };
 
@@ -184,13 +282,235 @@ export const CallModal: React.FC<CallModalProps> = ({
         videoTrack.enabled = !videoTrack.enabled;
         setIsVideoOff(!videoTrack.enabled);
       }
+    } else {
+      setIsVideoOff(!isVideoOff);
     }
   };
 
+  const toggleScreenShare = async () => {
+    try {
+      if (isScreenSharing) {
+        if (screenStreamRef.current) {
+          screenStreamRef.current.getTracks().forEach((track) => track.stop());
+          screenStreamRef.current = null;
+        }
+        setIsScreenSharing(false);
+      } else {
+        const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+        screenStreamRef.current = stream;
+        setIsScreenSharing(true);
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+          localVideoRef.current.play().catch(() => {});
+        }
+        stream.getVideoTracks()[0].onended = () => {
+          setIsScreenSharing(false);
+        };
+      }
+    } catch (err) {
+      console.warn('Screen share cancelled or unavailable', err);
+      setIsScreenSharing(false);
+    }
+  };
+
+  const copyCallLink = () => {
+    const link = `http://localhost:5173/?call=${call.id}`;
+    navigator.clipboard.writeText(link).catch(() => {});
+    setCallLinkCopied(true);
+    setTimeout(() => setCallLinkCopied(false), 2500);
+  };
+
+  // 1. FLOATING MINIMIZED CALL WINDOW (WhatsApp Picture-in-Picture Style)
+  if (isMinimized) {
+    if (call.type === 'VIDEO') {
+      return (
+        <div className="fixed bottom-6 right-6 z-50 w-80 bg-[#191C3B] border-2 border-[#C59A58] rounded-3xl shadow-2xl overflow-hidden text-white animate-in fade-in slide-in-from-bottom-5 duration-200">
+          {/* Video Container Stage */}
+          <div
+            className="relative h-44 bg-black cursor-pointer group flex items-center justify-center overflow-hidden"
+            onClick={onToggleMinimize}
+            title="क्लिक करके बड़ा करें • Tap to Maximize"
+          >
+            {hasRemoteStream ? (
+              <video
+                ref={setRemoteVideoEl}
+                autoPlay
+                playsInline
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="flex flex-col items-center gap-2">
+                <div className="relative">
+                  {peerUser.avatarUrl ? (
+                    <img
+                      src={peerUser.avatarUrl}
+                      alt={peerName}
+                      className="w-16 h-16 rounded-2xl object-cover border-2 border-[#C59A58]"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-2xl bg-[#252238] text-[#FAF7F2] font-serif font-black text-2xl flex items-center justify-center border-2 border-[#C59A58]">
+                      {peerInitial}
+                    </div>
+                  )}
+                  <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-[#191C3B] animate-pulse" />
+                </div>
+                <span className="text-[11px] font-semibold text-[#C59A58]">
+                  {connectionStatus}
+                </span>
+              </div>
+            )}
+
+            {/* Small Local Camera Preview in corner */}
+            {!isVideoOff && (
+              <div className="absolute bottom-2 right-2 w-20 aspect-video rounded-xl overflow-hidden border border-white/70 shadow-lg bg-black/60">
+                <video
+                  ref={setLocalVideoEl}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+
+            {/* Top Info Overlay */}
+            <div className="absolute top-2 left-2 right-2 flex items-center justify-between bg-black/50 backdrop-blur-xs px-2.5 py-1 rounded-xl">
+              <span className="text-xs font-bold truncate max-w-[140px] text-white">
+                {peerName}
+              </span>
+              <div className="flex items-center gap-1.5 font-mono text-[11px] text-[#C59A58] font-bold">
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                <span>{formatDuration(secondsElapsed)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom WhatsApp Control Strip */}
+          <div className="p-2.5 bg-[#101226] flex items-center justify-between border-t border-white/10">
+            <button
+              type="button"
+              onClick={toggleMute}
+              className={`p-2 rounded-xl text-xs transition-colors ${
+                isMuted ? 'bg-red-500/80 text-white' : 'bg-white/10 hover:bg-white/20 text-white'
+              }`}
+              title={isMuted ? 'अनम्यूट करें' : 'म्यूट करें'}
+            >
+              {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+            </button>
+
+            <button
+              type="button"
+              onClick={toggleVideo}
+              className={`p-2 rounded-xl text-xs transition-colors ${
+                isVideoOff ? 'bg-red-500/80 text-white' : 'bg-white/10 hover:bg-white/20 text-white'
+              }`}
+              title={isVideoOff ? 'कैमरा चालू करें' : 'कैमरा बंद करें'}
+            >
+              {isVideoOff ? <VideoOff className="w-4 h-4" /> : <Video className="w-4 h-4" />}
+            </button>
+
+            <button
+              type="button"
+              onClick={onToggleMinimize}
+              className="px-2.5 py-1.5 rounded-xl bg-[#C59A58]/20 hover:bg-[#C59A58]/30 text-[#C59A58] border border-[#C59A58]/40 flex items-center gap-1 text-[11px] font-bold"
+              title="बड़ा करें • Maximize"
+            >
+              <Maximize2 className="w-3.5 h-3.5" />
+              <span>बड़ा करें</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleEndCallClick}
+              className="p-2 rounded-xl bg-red-600 hover:bg-red-700 text-white transition-colors"
+              title="कॉल समाप्त करें • End Call"
+            >
+              <PhoneOff className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Minimized Voice Call (Compact WhatsApp PiP Widget)
+    return (
+      <div className="fixed bottom-6 right-6 z-50 w-76 bg-[#191C3B] border-2 border-[#C59A58] rounded-2xl shadow-2xl p-3 text-white animate-in fade-in slide-in-from-bottom-5 duration-200">
+        <div className="flex items-center gap-3">
+          {/* Avatar with soundwave pulse */}
+          <div className="relative flex-shrink-0 cursor-pointer" onClick={onToggleMinimize}>
+            {peerUser.avatarUrl ? (
+              <img
+                src={peerUser.avatarUrl}
+                alt={peerName}
+                className="w-11 h-11 rounded-xl object-cover border-2 border-[#C59A58]"
+              />
+            ) : (
+              <div className="w-11 h-11 rounded-xl bg-[#252238] text-white font-serif font-black text-lg flex items-center justify-center border-2 border-[#C59A58]">
+                {peerInitial}
+              </div>
+            )}
+            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-[#191C3B] animate-pulse" />
+          </div>
+
+          {/* Details */}
+          <div className="flex-1 min-w-0 cursor-pointer" onClick={onToggleMinimize}>
+            <p className="text-xs font-bold text-white truncate">{peerName}</p>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="font-mono text-[11px] text-[#C59A58] font-bold">
+                {formatDuration(secondsElapsed)}
+              </span>
+              <span className="text-[10px] text-white/50">• ध्वनि कॉल</span>
+            </div>
+            {/* Animated soundwaves */}
+            <div className="flex items-center gap-0.5 mt-1">
+              <span className="w-1 h-2 bg-emerald-400 rounded-full animate-pulse" />
+              <span className="w-1 h-3.5 bg-emerald-400 rounded-full animate-pulse delay-75" />
+              <span className="w-1 h-2 bg-emerald-400 rounded-full animate-pulse delay-150" />
+              <span className="w-1 h-1 bg-emerald-400 rounded-full animate-pulse delay-100" />
+            </div>
+          </div>
+
+          {/* Quick Action Controls */}
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={toggleMute}
+              className={`p-2 rounded-xl text-xs transition-colors ${
+                isMuted ? 'bg-red-500/80 text-white' : 'bg-white/10 hover:bg-white/20 text-white'
+              }`}
+              title={isMuted ? 'अनम्यूट करें' : 'म्यूट करें'}
+            >
+              {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+            </button>
+
+            <button
+              type="button"
+              onClick={onToggleMinimize}
+              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-[#C59A58] transition-colors"
+              title="बड़ा करें • Maximize Call"
+            >
+              <Maximize2 className="w-4 h-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={handleEndCallClick}
+              className="p-2 rounded-xl bg-red-600 hover:bg-red-700 text-white transition-colors"
+              title="कॉल समाप्त करें • Hang Up"
+            >
+              <PhoneOff className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. FULLSCREEN CALL SCREEN
   return (
     <div className="fixed inset-0 bg-[#0F1123]/85 backdrop-blur-md flex items-center justify-center p-3 md:p-6 z-50">
-      <div className="bg-[#191C3B] border border-[#C59A58]/30 rounded-3xl w-full max-w-5xl h-[85vh] overflow-hidden shadow-2xl flex flex-col text-white">
-        {/* Top Telemetry & Status Bar */}
+      <div className="bg-[#191C3B] border border-[#C59A58]/30 rounded-3xl w-full max-w-4xl h-[85vh] overflow-hidden shadow-2xl flex flex-col text-white relative">
+        {/* Top Header */}
         <header className="px-6 py-3.5 border-b border-white/10 flex items-center justify-between bg-black/20">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-xl bg-[#C59A58]/20 border border-[#C59A58] flex items-center justify-center text-white font-serif font-black text-sm">
@@ -200,11 +520,13 @@ export const CallModal: React.FC<CallModalProps> = ({
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-bold text-white tracking-tight">{peerName}</h3>
                 <span className="px-2 py-0.5 rounded-full text-[9px] font-semibold bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/40">
-                  VoLTE HD • 24ms
+                  {connectionStatus}
                 </span>
               </div>
               <p className="text-[10px] text-white/60">
-                {call.type === 'VIDEO' ? 'द्विपक्षीय वीडियो संवाद (Video Conference)' : 'सुरक्षित ध्वनि सत्र (Encrypted Audio)'}
+                {call.type === 'VIDEO'
+                  ? 'द्विपक्षीय वीडियो संवाद (Video Conference)'
+                  : 'सुरक्षित ध्वनि सत्र (Encrypted Audio)'}
               </p>
             </div>
           </div>
@@ -212,110 +534,122 @@ export const CallModal: React.FC<CallModalProps> = ({
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/10 text-xs font-mono">
               <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-              <span>{callDuration}</span>
+              <span>{formatDuration(secondsElapsed)}</span>
             </div>
 
-            <div className="hidden sm:flex items-center gap-1 text-[10px] text-[#C59A58] bg-[#C59A58]/10 px-2.5 py-1 rounded-lg border border-[#C59A58]/30">
-              <Shield className="w-3 h-3" />
-              <span>IN-STUN-NODE</span>
-            </div>
+            {/* Prominent WhatsApp-style Minimize Button */}
+            <button
+              type="button"
+              onClick={onToggleMinimize}
+              className="px-3 py-1.5 rounded-xl bg-[#C59A58]/20 hover:bg-[#C59A58]/30 text-[#C59A58] border border-[#C59A58]/40 flex items-center gap-1.5 text-xs font-semibold transition-all shadow-sm"
+              title="फ्लोटिंग विंडो में छोटा करें • Minimize Call to Floating PiP"
+            >
+              <Minimize2 className="w-4 h-4" />
+              <span>छोटा करें (Minimize)</span>
+            </button>
           </div>
         </header>
 
-        {/* Main Stage: Video Grid + Bhashini AI Subtitle & Live Translation Rail */}
-        <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
-          {/* Active Speaker Feed */}
-          <div className="flex-1 relative bg-black flex items-center justify-center overflow-hidden">
-            {call.type === 'VIDEO' ? (
-              <>
+        {/* Call Main Stage */}
+        <div className="flex-1 relative bg-black flex items-center justify-center overflow-hidden">
+          {call.type === 'VIDEO' ? (
+            <>
+              {hasRemoteStream ? (
                 <video
-                  ref={remoteVideoRef}
+                  ref={setRemoteVideoEl}
                   autoPlay
                   playsInline
                   className="w-full h-full object-cover"
                 />
-                {/* Local Picture-in-Picture */}
+              ) : (
+                <div className="flex flex-col items-center gap-4 text-center">
+                  <div className="relative">
+                    {peerUser.avatarUrl ? (
+                      <img
+                        src={peerUser.avatarUrl}
+                        alt={peerName}
+                        className="w-28 h-28 rounded-3xl object-cover border-4 border-[#C59A58] shadow-2xl"
+                      />
+                    ) : (
+                      <div className="w-28 h-28 rounded-3xl bg-[#252238] text-white font-serif font-black text-4xl flex items-center justify-center border-4 border-[#C59A58] shadow-2xl">
+                        {peerInitial}
+                      </div>
+                    )}
+                    <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border-4 border-black animate-pulse" />
+                  </div>
+                  <div>
+                    <p className="text-xl font-bold text-white">{peerName}</p>
+                    <p className="text-xs text-[#C59A58] mt-1">{connectionStatus}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Local PiP Preview in corner */}
+              {!isVideoOff && (
                 <div className="absolute bottom-4 right-4 w-36 md:w-48 aspect-video bg-neutral-900 rounded-2xl overflow-hidden border-2 border-[#C59A58]/60 shadow-xl">
                   <video
-                    ref={localVideoRef}
+                    ref={setLocalVideoEl}
                     autoPlay
                     playsInline
                     muted
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute bottom-1 left-2 text-[9px] font-semibold text-white/90 bg-black/40 px-1.5 py-0.5 rounded">
+                  <div className="absolute bottom-1 left-2 text-[9px] font-semibold text-white/90 bg-black/50 px-1.5 py-0.5 rounded">
                     आप (You)
                   </div>
                 </div>
-              </>
-            ) : (
-              <div className="flex flex-col items-center gap-4">
-                <div className="w-28 h-28 rounded-3xl bg-[#FAF7F2] text-[#191C3B] font-serif font-black text-4xl flex items-center justify-center border-4 border-[#C59A58] shadow-2xl">
-                  {peerName.charAt(0).toUpperCase()}
-                </div>
-                <div className="text-center">
-                  <p className="text-lg font-bold text-white">{peerName}</p>
-                  <p className="text-xs text-[#C59A58]">सुरक्षित ध्वनि संवाद सत्र चालू है</p>
-                </div>
-              </div>
-            )}
-
-            {/* Live Subtitle Strip (Screen 4: श्रुति एवं अनुवाद) */}
-            {subtitlesEnabled && (
-              <div className="absolute bottom-4 left-4 right-4 md:right-56 bg-black/75 backdrop-blur-md border border-white/20 p-3 rounded-2xl shadow-xl flex items-start gap-3 animate-in fade-in">
-                <div className="w-7 h-7 rounded-lg bg-[#C59A58] text-[#191C3B] flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Sparkles className="w-4 h-4" />
-                </div>
-                <div className="flex-1 text-xs">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="font-bold text-[#C59A58]">भाषिणी लाइव अनुवाद (Hindi ➔ English):</span>
-                    <span className="text-[9px] text-white/50">Confidence 98%</span>
+              )}
+            </>
+          ) : (
+            <div className="flex flex-col items-center gap-5">
+              <div className="relative">
+                {peerUser.avatarUrl ? (
+                  <img
+                    src={peerUser.avatarUrl}
+                    alt={peerName}
+                    className="w-32 h-32 rounded-3xl object-cover border-4 border-[#C59A58] shadow-2xl"
+                  />
+                ) : (
+                  <div className="w-32 h-32 rounded-3xl bg-[#FAF7F2] text-[#191C3B] font-serif font-black text-5xl flex items-center justify-center border-4 border-[#C59A58] shadow-2xl">
+                    {peerInitial}
                   </div>
-                  <p className="text-white/90 font-medium">
-                    "नमस्ते, क्या आप सम्मेलन के मसौदे को देख पा रहे हैं?"
-                  </p>
-                  <p className="text-[#C59A58]/90 text-[11px] italic mt-0.5">
-                    "Hello, are you able to review the conference draft?"
-                  </p>
-                </div>
+                )}
+                <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border-4 border-[#191C3B] animate-pulse" />
               </div>
-            )}
-          </div>
-
-          {/* Right In-Call Panel: Telemetry & Live Room Chat */}
-          <div className="w-full md:w-80 border-t md:border-t-0 md:border-l border-white/10 bg-[#141630] flex flex-col">
-            <div className="p-3 border-b border-white/10 flex items-center justify-between text-xs font-bold">
-              <span className="text-[#C59A58] flex items-center gap-1.5">
-                <MessageSquare className="w-3.5 h-3.5" /> सत्र चैट (Room Chat)
-              </span>
-              <span className="text-[10px] text-white/50">E2EE Protected</span>
-            </div>
-
-            <div className="flex-1 p-3 overflow-y-auto space-y-2 text-xs">
-              <div className="bg-white/5 p-2 rounded-xl border border-white/10">
-                <span className="text-[10px] font-bold text-[#C59A58] block">System</span>
-                <p className="text-white/80 text-[11px]">सुरक्षित सत्र स्थापित हुआ (AES-256 bit WebRTC DTLS-SRTP)</p>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-white tracking-tight">{peerName}</p>
+                <p className="text-xs text-[#C59A58] mt-1 font-medium">{connectionStatus}</p>
               </div>
-              <div className="bg-white/5 p-2 rounded-xl border border-white/10">
-                <span className="text-[10px] font-bold text-white block">{peerName}</span>
-                <p className="text-white/80 text-[11px]">ध्वनि स्पष्ट आ रही है।</p>
+
+              {/* Live soundwave activity */}
+              <div className="flex items-center gap-1.5 h-6">
+                <span className="w-1.5 h-3 bg-emerald-400 rounded-full animate-pulse" />
+                <span className="w-1.5 h-6 bg-emerald-400 rounded-full animate-pulse delay-75" />
+                <span className="w-1.5 h-4 bg-emerald-400 rounded-full animate-pulse delay-150" />
+                <span className="w-1.5 h-5 bg-emerald-400 rounded-full animate-pulse delay-100" />
+                <span className="w-1.5 h-2 bg-emerald-400 rounded-full animate-pulse delay-200" />
               </div>
             </div>
+          )}
 
-            {/* Quick in-call input */}
-            <div className="p-3 border-t border-white/10">
-              <input
-                type="text"
-                placeholder="सत्र में संदेश भेजें..."
-                className="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white placeholder:text-white/40 focus:outline-none focus:border-[#C59A58]"
-              />
+          {/* Subtitles Overlay */}
+          {subtitlesEnabled && (
+            <div className="absolute bottom-4 left-4 right-4 md:right-56 bg-black/80 backdrop-blur-md border border-white/20 p-3 rounded-2xl shadow-xl flex items-start gap-3">
+              <div className="w-7 h-7 rounded-lg bg-[#C59A58] text-[#191C3B] flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <div className="flex-1 text-xs">
+                <span className="font-bold text-[#C59A58] block mb-0.5">भाषिणी लाइव उपशीर्षक (Bhashini CC):</span>
+                <p className="text-white/90">"सुरक्षित चैनल सक्रिय है..."</p>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
-        {/* Bottom Control Dock (Screen 4 layout: Mute, Video, Audio, CC, Share, End) */}
+        {/* Bottom Control Dock */}
         <footer className="p-4 bg-black/40 border-t border-white/10 flex items-center justify-center gap-3">
           <button
+            type="button"
             onClick={toggleMute}
             className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all ${
               isMuted ? 'bg-red-500 text-white' : 'bg-white/10 hover:bg-white/20 text-white'
@@ -327,6 +661,7 @@ export const CallModal: React.FC<CallModalProps> = ({
 
           {call.type === 'VIDEO' && (
             <button
+              type="button"
               onClick={toggleVideo}
               className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all ${
                 isVideoOff ? 'bg-red-500 text-white' : 'bg-white/10 hover:bg-white/20 text-white'
@@ -338,6 +673,7 @@ export const CallModal: React.FC<CallModalProps> = ({
           )}
 
           <button
+            type="button"
             onClick={() => setSubtitlesEnabled(!subtitlesEnabled)}
             className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all ${
               subtitlesEnabled
@@ -349,11 +685,50 @@ export const CallModal: React.FC<CallModalProps> = ({
             <Subtitles className="w-5 h-5" />
           </button>
 
+          {/* Screen Sharing Toggle (WhatsApp/Discord Style) */}
+          <button
+            type="button"
+            onClick={toggleScreenShare}
+            className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all ${
+              isScreenSharing
+                ? 'bg-blue-600 text-white'
+                : 'bg-white/10 hover:bg-white/20 text-white'
+            }`}
+            title={isScreenSharing ? 'स्क्रीन साझा बंद करें' : 'स्क्रीन साझा करें (Share Screen)'}
+          >
+            <ScreenShare className="w-5 h-5" />
+          </button>
+
+          {/* Shareable Call Link (Instant Meet) */}
+          <button
+            type="button"
+            onClick={copyCallLink}
+            className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all ${
+              callLinkCopied
+                ? 'bg-emerald-600 text-white'
+                : 'bg-white/10 hover:bg-white/20 text-white'
+            }`}
+            title={callLinkCopied ? 'लिंक कॉपी हो गया!' : 'कॉल लिंक कॉपी करें (Share Call Link)'}
+          >
+            {callLinkCopied ? <Check className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
+          </button>
+
+          {/* Minimize button in bottom bar */}
+          <button
+            type="button"
+            onClick={onToggleMinimize}
+            className="w-11 h-11 rounded-2xl bg-white/10 hover:bg-white/20 text-[#C59A58] flex items-center justify-center transition-all"
+            title="कॉल छोटा करें (Floating PiP)"
+          >
+            <Minimize2 className="w-5 h-5" />
+          </button>
+
           {/* End Call Button */}
           <button
+            type="button"
             onClick={handleEndCallClick}
             className="w-12 h-11 rounded-2xl bg-red-600 hover:bg-red-700 text-white flex items-center justify-center shadow-lg shadow-red-600/30 transition-all font-bold"
-            title="कॉल समाप्त करें"
+            title="कॉल समाप्त करें • Hang Up"
           >
             <PhoneOff className="w-5 h-5" />
           </button>
