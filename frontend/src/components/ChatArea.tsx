@@ -88,16 +88,31 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
         const data = await api.get<{ content: Message[] }>(
           `/conversations/${conversation.id}/messages?page=0&size=50`
         );
-        setMessages((data.content || []).reverse());
+        const fetchedMessages = (data.content || []).reverse();
+        setMessages(fetchedMessages);
+
+        // Mark incoming unread messages as read
+        fetchedMessages.forEach((msg) => {
+          if (msg.sender.id !== currentUser.id && msg.status !== 'READ') {
+            stompService.send('/app/chat.delivered', {
+              messageId: msg.id,
+              conversationId: conversation.id,
+            });
+            stompService.send('/app/chat.read', {
+              messageId: msg.id,
+              conversationId: conversation.id,
+            });
+          }
+        });
       } catch (err) {
         console.error('Failed to load message history', err);
       }
     }
 
     loadHistory();
-  }, [conversation.id]);
+  }, [conversation.id, currentUser.id]);
 
-  // 2. Subscribe to STOMP conversation topic for live messages, typing signals, and reactions
+  // 2. Subscribe to STOMP conversation topic for live messages, typing signals, reactions, and tick statuses
   useEffect(() => {
     const topic = `/topic/conversations.${conversation.id}`;
 
@@ -111,7 +126,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
             }
             return m.id !== newMsg.id;
           });
-          return [...filtered, newMsg];
+          return [...filtered, { ...newMsg, status: newMsg.status || 'SENT' }];
         });
 
         if (newMsg.sender.id !== currentUser.id) {
@@ -161,11 +176,25 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
             return { ...m, reactions: currentReactions };
           })
         );
-      } else if (event.eventType === 'ACK' || event.eventType === 'DELIVERY_STATUS') {
-        const { messageId, status } = event.data;
-        setMessages((prev) =>
-          prev.map((m) => (m.id === messageId ? { ...m, status } : m))
-        );
+      } else if (
+        event.eventType === 'ACK' ||
+        event.eventType === 'DELIVERY_STATUS' ||
+        event.eventType === 'MESSAGE_DELIVERED' ||
+        event.eventType === 'MESSAGE_READ' ||
+        event.eventType === 'MESSAGE_ACK'
+      ) {
+        const messageId = event.data?.messageId || event.data?.id;
+        let status = event.data?.status;
+        if (!status) {
+          if (event.eventType === 'MESSAGE_READ') status = 'READ';
+          else if (event.eventType === 'MESSAGE_DELIVERED') status = 'DELIVERED';
+          else if (event.eventType === 'MESSAGE_ACK' || event.eventType === 'ACK') status = 'SENT';
+        }
+        if (messageId && status) {
+          setMessages((prev) =>
+            prev.map((m) => (m.id === messageId ? { ...m, status } : m))
+          );
+        }
       } else if (event.eventType === 'VIEW_ONCE_OPENED') {
         const { messageId, viewedAt } = event.data;
         setMessages((prev) =>
@@ -184,6 +213,32 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
       }
     });
 
+    // Also listen to private queue receipts for sent message updates
+    const handlePrivateReceipt = (e: any) => {
+      const event = e.detail;
+      if (!event) return;
+      if (
+        event.eventType === 'MESSAGE_DELIVERED' ||
+        event.eventType === 'MESSAGE_READ' ||
+        event.eventType === 'MESSAGE_ACK' ||
+        event.eventType === 'DELIVERY_STATUS'
+      ) {
+        const messageId = event.data?.messageId || event.data?.id;
+        let status = event.data?.status;
+        if (!status) {
+          if (event.eventType === 'MESSAGE_READ') status = 'READ';
+          else if (event.eventType === 'MESSAGE_DELIVERED') status = 'DELIVERED';
+          else if (event.eventType === 'MESSAGE_ACK') status = 'SENT';
+        }
+        if (messageId && status) {
+          setMessages((prev) =>
+            prev.map((m) => (m.id === messageId ? { ...m, status } : m))
+          );
+        }
+      }
+    };
+    window.addEventListener('samvaad:private_message', handlePrivateReceipt);
+
     // Also load starred message IDs for the user
     api.get<any[]>('/users/me/starred-messages').then((starred) => {
       setStarredMessageIds(new Set(starred.map((s) => s.messageId)));
@@ -191,6 +246,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
 
     return () => {
       stompService.unsubscribe(topic);
+      window.removeEventListener('samvaad:private_message', handlePrivateReceipt);
     };
   }, [conversation.id, currentUser.id, currentUser.username]);
 
@@ -565,20 +621,20 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
             if (!isMe) return null;
             if (msg.status === 'READ') {
               return (
-                <span title="Read (Double Blue)">
-                  <CheckCheck className="w-3.5 h-3.5 text-sky-400" />
+                <span title="देखा गया • Seen (Double Blue)" className="inline-flex items-center">
+                  <CheckCheck className="w-3.5 h-3.5 text-sky-400 stroke-[2.5]" />
                 </span>
               );
             } else if (msg.status === 'DELIVERED') {
               return (
-                <span title="Delivered (Double Gray)">
-                  <CheckCheck className="w-3.5 h-3.5 text-gray-300" />
+                <span title="पहुंचा • Delivered (Double Gray)" className="inline-flex items-center">
+                  <CheckCheck className="w-3.5 h-3.5 text-gray-300 stroke-[2]" />
                 </span>
               );
             }
             return (
-              <span title="Sent (Single Gray)">
-                <Check className="w-3.5 h-3.5 text-gray-300" />
+              <span title="भेजा गया • Sent (Single Gray)" className="inline-flex items-center">
+                <Check className="w-3.5 h-3.5 text-gray-300 stroke-[2]" />
               </span>
             );
           };

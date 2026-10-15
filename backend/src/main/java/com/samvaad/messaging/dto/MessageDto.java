@@ -1,10 +1,13 @@
 package com.samvaad.messaging.dto;
 
 import com.samvaad.messaging.entity.Message;
+import com.samvaad.messaging.entity.MessageStatusType;
 import com.samvaad.messaging.entity.MessageType;
 import com.samvaad.user.dto.UserDto;
 
 import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 public record MessageDto(
@@ -21,10 +24,16 @@ public record MessageDto(
         Instant viewedAt,
         boolean isForwarded,
         UserDto forwardedFrom,
+        MessageStatusType status,
+        List<ReactionSummaryDto> reactions,
         Instant createdAt,
         Instant updatedAt
 ) {
     public static MessageDto fromEntity(Message message) {
+        return fromEntity(message, MessageStatusType.SENT, Collections.emptyList());
+    }
+
+    public static MessageDto fromEntity(Message message, MessageStatusType status, List<ReactionSummaryDto> reactions) {
         String replySnippet = null;
         if (message.getReplyToMessage() != null) {
             String snippet = message.getReplyToMessage().getContent();
@@ -48,6 +57,8 @@ public record MessageDto(
                 message.getViewedAt(),
                 message.isForwarded(),
                 message.getForwardedFrom() != null ? UserDto.fromEntity(message.getForwardedFrom()) : null,
+                status != null ? status : MessageStatusType.SENT,
+                reactions != null ? reactions : Collections.emptyList(),
                 message.getCreatedAt(),
                 message.getUpdatedAt()
         );

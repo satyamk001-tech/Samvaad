@@ -99,7 +99,7 @@ public class StompMessagingService {
         conversation.setUpdatedAt(Instant.now());
         conversationRepository.save(conversation);
 
-        MessageDto messageDto = MessageDto.fromEntity(savedMessage);
+        MessageDto messageDto = MessageDto.fromEntity(savedMessage, MessageStatusType.SENT, java.util.List.of());
 
         // Record outbox event within the same database transaction
         outboxService.recordEvent(
@@ -156,6 +156,16 @@ public class StompMessagingService {
                 "/queue/messages",
                 StompEventPayload.of("MESSAGE_DELIVERED", receiptAck)
         );
+
+        // Broadcast to conversation topic so active chat area immediately reflects double tick
+        messagingTemplate.convertAndSend(
+                "/topic/conversations." + payload.conversationId(),
+                StompEventPayload.of("DELIVERY_STATUS", java.util.Map.of(
+                        "messageId", message.getId().toString(),
+                        "conversationId", payload.conversationId().toString(),
+                        "status", "DELIVERED"
+                ))
+        );
     }
 
     @Transactional
@@ -185,6 +195,16 @@ public class StompMessagingService {
                 "/queue/messages",
                 StompEventPayload.of("MESSAGE_READ", receiptAck)
         );
+
+        // Broadcast to conversation topic so active chat area immediately reflects double blue tick
+        messagingTemplate.convertAndSend(
+                "/topic/conversations." + payload.conversationId(),
+                StompEventPayload.of("DELIVERY_STATUS", java.util.Map.of(
+                        "messageId", message.getId().toString(),
+                        "conversationId", payload.conversationId().toString(),
+                        "status", "READ"
+                ))
+        );
     }
 
     @Transactional
@@ -193,6 +213,9 @@ public class StompMessagingService {
 
         Message message = messageRepository.findById(payload.messageId())
                 .orElseThrow(() -> new ResourceNotFoundException("Message not found"));
+
+        User reactingUser = userRepository.findById(userId).orElse(null);
+        String username = reactingUser != null ? reactingUser.getUsername() : "";
 
         Integer existing = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM message_reactions WHERE message_id = ? AND user_id = ? AND emoji = ?",
@@ -214,12 +237,14 @@ public class StompMessagingService {
             added = true;
         }
 
-        // Broadcast reaction event to conversation
+        // Broadcast reaction event to conversation with action and username
         messagingTemplate.convertAndSend(
                 "/topic/conversations." + payload.conversationId(),
                 StompEventPayload.of("REACTION", java.util.Map.of(
                         "messageId", payload.messageId().toString(),
                         "userId", userId.toString(),
+                        "username", username,
+                        "action", added ? "ADDED" : "REMOVED",
                         "emoji", payload.emoji(),
                         "added", added
                 ))
