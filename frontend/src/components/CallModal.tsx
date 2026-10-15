@@ -56,8 +56,6 @@ function createSyntheticMediaStream(displayName: string, isVideo: boolean): Medi
       if (ctx) {
         let frame = 0;
         const initial = (displayName || 'S').charAt(0).toUpperCase();
-        let animId: number;
-
         const draw = () => {
           frame++;
           // Sovereign gradient background
@@ -99,17 +97,17 @@ function createSyntheticMediaStream(displayName: string, isVideo: boolean): Medi
           ctx.font = '12px sans-serif';
           ctx.fillStyle = '#C59A58';
           ctx.fillText('संवाद वर्चुअल वीडियो • Samvaad Camera', 320, 338);
-
-          animId = requestAnimationFrame(draw);
         };
+
         draw();
+        const animInterval = setInterval(draw, 40); // 25 fps uninterrupted even when tab is in background
 
         const canvasStream = canvas.captureStream(25);
         const videoTrack = canvasStream.getVideoTracks()[0];
         if (videoTrack) {
           const origStop = videoTrack.stop.bind(videoTrack);
           videoTrack.stop = () => {
-            cancelAnimationFrame(animId);
+            clearInterval(animInterval);
             origStop();
           };
           stream.addTrack(videoTrack);
@@ -145,6 +143,8 @@ export const CallModal: React.FC<CallModalProps> = ({
   const [secondsElapsed, setSecondsElapsed] = useState(0);
   const [connectionStatus, setConnectionStatus] = useState<string>(t('outgoingCall') || 'कॉल किया जा रहा है... • Calling...');
   const [hasRemoteStream, setHasRemoteStream] = useState(false);
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [callLinkCopied, setCallLinkCopied] = useState(false);
   const screenStreamRef = useRef<MediaStream | null>(null);
@@ -178,6 +178,28 @@ export const CallModal: React.FC<CallModalProps> = ({
       el.play().catch(() => {});
     }
   }, []);
+
+  // Synchronize remote media stream to video and audio elements
+  useEffect(() => {
+    if (remoteStream) {
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = remoteStream;
+        remoteVideoRef.current.play().catch(() => {});
+      }
+      if (remoteAudioRef.current) {
+        remoteAudioRef.current.srcObject = remoteStream;
+        remoteAudioRef.current.play().catch(() => {});
+      }
+    }
+  }, [remoteStream]);
+
+  // Synchronize local media stream to local video element
+  useEffect(() => {
+    if (localStream && localVideoRef.current && !isVideoOff) {
+      localVideoRef.current.srcObject = localStream;
+      localVideoRef.current.play().catch(() => {});
+    }
+  }, [localStream, isVideoOff]);
 
   // Duration timer
   useEffect(() => {
@@ -213,6 +235,12 @@ export const CallModal: React.FC<CallModalProps> = ({
       pc.oniceconnectionstatechange = () => {
         if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
           setConnectionStatus('जुड़ा हुआ • Connected');
+          stompService.send('/app/call.signal', {
+            callId: call.id,
+            targetUserId: peerUser.id,
+            type: 'CONNECTED',
+            data: null,
+          });
         } else if (pc.iceConnectionState === 'disconnected') {
           setConnectionStatus('पुनः जुड़ रहा है • Reconnecting...');
         } else if (pc.iceConnectionState === 'failed') {
@@ -234,18 +262,35 @@ export const CallModal: React.FC<CallModalProps> = ({
       };
 
       pc.ontrack = (event) => {
+        if (!remoteStreamRef.current) {
+          remoteStreamRef.current = new MediaStream();
+        }
+
         if (event.streams && event.streams[0]) {
-          remoteStreamRef.current = event.streams[0];
-          setHasRemoteStream(true);
-          setConnectionStatus('जुड़ा हुआ • Connected');
-          if (remoteAudioRef.current) {
-            remoteAudioRef.current.srcObject = event.streams[0];
-            remoteAudioRef.current.play().catch(() => {});
+          event.streams[0].getTracks().forEach((track) => {
+            if (!remoteStreamRef.current!.getTracks().some((t) => t.id === track.id)) {
+              remoteStreamRef.current!.addTrack(track);
+            }
+          });
+        } else if (event.track) {
+          if (!remoteStreamRef.current.getTracks().some((t) => t.id === event.track.id)) {
+            remoteStreamRef.current.addTrack(event.track);
           }
-          if (remoteVideoRef.current) {
-            remoteVideoRef.current.srcObject = event.streams[0];
-            remoteVideoRef.current.play().catch(() => {});
-          }
+        }
+
+        const freshStream = new MediaStream(remoteStreamRef.current.getTracks());
+        remoteStreamRef.current = freshStream;
+        setRemoteStream(freshStream);
+        setHasRemoteStream(true);
+        setConnectionStatus('जुड़ा हुआ • Connected');
+
+        if (remoteAudioRef.current) {
+          remoteAudioRef.current.srcObject = freshStream;
+          remoteAudioRef.current.play().catch(() => {});
+        }
+        if (remoteVideoRef.current) {
+          remoteVideoRef.current.srcObject = freshStream;
+          remoteVideoRef.current.play().catch(() => {});
         }
       };
 
@@ -282,6 +327,7 @@ export const CallModal: React.FC<CallModalProps> = ({
 
         if (stream && !isTerminated) {
           localStreamRef.current = stream;
+          setLocalStream(stream);
           if (localVideoRef.current) {
             localVideoRef.current.srcObject = stream;
             localVideoRef.current.play().catch(() => {});
@@ -498,6 +544,7 @@ export const CallModal: React.FC<CallModalProps> = ({
                 ref={setRemoteVideoEl}
                 autoPlay
                 playsInline
+                muted
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -727,6 +774,7 @@ export const CallModal: React.FC<CallModalProps> = ({
                   ref={setRemoteVideoEl}
                   autoPlay
                   playsInline
+                  muted
                   className="w-full h-full object-cover"
                 />
               ) : (

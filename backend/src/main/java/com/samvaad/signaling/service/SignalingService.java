@@ -111,10 +111,16 @@ public class SignalingService {
             }
             case "ACCEPT" -> {
                 call.setStatus(CallStatus.ACCEPTED);
+                if (call.getStartedAt() == null) {
+                    call.setStartedAt(Instant.now());
+                }
                 callRepository.save(call);
             }
             case "CONNECTED" -> {
                 call.setStatus(CallStatus.CONNECTED);
+                if (call.getStartedAt() == null) {
+                    call.setStartedAt(Instant.now());
+                }
                 callRepository.save(call);
             }
             case "REJECT" -> {
