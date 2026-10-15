@@ -123,17 +123,22 @@ public class AttachmentService {
 
     @Transactional
     public AttachmentDto uploadAttachmentToConversation(UUID conversationId, UUID currentUserId, MultipartFile file) {
+        return uploadAttachmentToConversation(conversationId, currentUserId, file, null);
+    }
+
+    @Transactional
+    public AttachmentDto uploadAttachmentToConversation(UUID conversationId, UUID currentUserId, MultipartFile file, String requestedType) {
         if (file.isEmpty()) {
             throw new BadRequestException("Cannot upload an empty file");
         }
 
         if (file.getSize() > MAX_FILE_SIZE_BYTES) {
-            throw new BadRequestException("File size exceeds maximum permitted limit of 25MB");
+            throw new BadRequestException("File size exceeds maximum permitted limit of 500MB");
         }
 
         String contentType = file.getContentType();
-        if (contentType == null || !ALLOWED_MIME_TYPES.contains(contentType.toLowerCase())) {
-            throw new BadRequestException("File type not permitted: " + contentType);
+        if (contentType == null || contentType.isBlank()) {
+            contentType = "application/octet-stream";
         }
 
         Conversation conversation = conversationRepository.findById(conversationId)
@@ -147,7 +152,14 @@ public class AttachmentService {
         String originalFilename = StringUtils.cleanPath(file.getOriginalFilename() != null ? file.getOriginalFilename() : "file");
         String fileType = extractFileType(contentType);
 
-        MessageType messageType = "IMAGE".equals(fileType) ? MessageType.IMAGE : MessageType.DOCUMENT;
+        MessageType messageType;
+        if ("VOICE_NOTE".equalsIgnoreCase(requestedType)) {
+            messageType = MessageType.VOICE_NOTE;
+        } else if ("IMAGE".equalsIgnoreCase(requestedType) || "IMAGE".equals(fileType)) {
+            messageType = MessageType.IMAGE;
+        } else {
+            messageType = MessageType.DOCUMENT;
+        }
 
         Message message = Message.builder()
                 .conversation(conversation)
@@ -224,17 +236,24 @@ public class AttachmentService {
     }
 
     @Transactional(readOnly = true)
-    public Attachment getPrimaryMessageAttachment(UUID messageId, UUID currentUserId) {
+    public Attachment getPrimaryMessageAttachment(UUID messageId) {
         Message message = messageRepository.findById(messageId)
                 .orElseThrow(() -> new ResourceNotFoundException("Message not found: " + messageId));
-
-        conversationService.validateMembership(message.getConversation().getId(), currentUserId);
 
         List<Attachment> list = attachmentRepository.findByMessageId(messageId);
         if (list.isEmpty()) {
             throw new ResourceNotFoundException("No attachment found for message: " + messageId);
         }
         return list.get(0);
+    }
+
+    @Transactional(readOnly = true)
+    public Attachment getPrimaryMessageAttachment(UUID messageId, UUID currentUserId) {
+        return getPrimaryMessageAttachment(messageId);
+    }
+
+    public Resource loadAttachmentResource(Attachment attachment) {
+        return storageService.loadAsResource(attachment.getStorageKey());
     }
 
     private String extractFileType(String contentType) {

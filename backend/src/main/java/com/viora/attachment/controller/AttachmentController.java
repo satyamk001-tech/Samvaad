@@ -31,9 +31,10 @@ public class AttachmentController {
     public ResponseEntity<AttachmentDto> uploadAttachmentToConversation(
             @PathVariable UUID conversationId,
             @AuthenticationPrincipal UserPrincipal principal,
-            @RequestParam("file") MultipartFile file
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "type", required = false) String type
     ) {
-        AttachmentDto attachment = attachmentService.uploadAttachmentToConversation(conversationId, principal.getId(), file);
+        AttachmentDto attachment = attachmentService.uploadAttachmentToConversation(conversationId, principal.getId(), file, type);
         return ResponseEntity.ok(attachment);
     }
 
@@ -58,16 +59,16 @@ public class AttachmentController {
 
     @GetMapping(value = {"/messages/{messageId}/download", "/messages/{messageId}/raw"})
     public ResponseEntity<Resource> downloadAttachmentByMessage(
-            @PathVariable UUID messageId,
-            @AuthenticationPrincipal UserPrincipal principal
+            @PathVariable UUID messageId
     ) {
-        Attachment metadata = attachmentService.getPrimaryMessageAttachment(messageId, principal.getId());
-        Resource resource = attachmentService.downloadAttachment(metadata.getId(), principal.getId());
+        Attachment metadata = attachmentService.getPrimaryMessageAttachment(messageId);
+        Resource resource = attachmentService.loadAttachmentResource(metadata);
 
         String encodedFileName = URLEncoder.encode(metadata.getFileName(), StandardCharsets.UTF_8).replace("+", "%20");
+        String contentType = metadata.getContentType() != null ? metadata.getContentType() : "application/octet-stream";
 
         return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(metadata.getContentType()))
+                .contentType(MediaType.parseMediaType(contentType))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + encodedFileName + "\"")
                 .body(resource);
     }

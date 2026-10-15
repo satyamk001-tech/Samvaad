@@ -50,6 +50,8 @@ public class SecurityConfig {
                                 "/api/v1/auth/otp/**",
                                 "/api/v1/auth/refresh",
                                 "/api/v1/health",
+                                "/api/v1/attachments/messages/*/download",
+                                "/api/v1/attachments/messages/*/raw",
                                 "/actuator/**",
                                 "/ws/**"
                         ).permitAll()

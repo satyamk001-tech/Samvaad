@@ -264,6 +264,10 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
       formData.append('duration', durationSeconds.toString());
 
       await api.post(`/attachments/conversations/${conversation.id}`, formData);
+      const data = await api.get<{ content: Message[] }>(
+        `/conversations/${conversation.id}/messages?page=0&size=50`
+      );
+      setMessages((data.content || []).reverse());
     } catch (err) {
       console.error('Failed to upload voice note', err);
     } finally {
@@ -291,6 +295,10 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
       formData.append('type', isImg ? 'IMAGE' : 'DOCUMENT');
 
       await api.post(`/attachments/conversations/${conversation.id}`, formData);
+      const data = await api.get<{ content: Message[] }>(
+        `/conversations/${conversation.id}/messages?page=0&size=50`
+      );
+      setMessages((data.content || []).reverse());
     } catch (err) {
       console.error('Failed to upload attachment', err);
     } finally {

@@ -440,7 +440,7 @@ export const AuthModal: React.FC = () => {
             <>
               <div>
                 <label className="block text-xs font-semibold text-[#191C3B] mb-1">
-                  उपयोगकर्ता नाम (Username)
+                  उपयोगकर्ता नाम या ईमेल (Username or Email)
                 </label>
                 <div className="relative">
                   <UserIcon className="w-4 h-4 text-[#686578] absolute left-3.5 top-3" />
@@ -449,7 +449,7 @@ export const AuthModal: React.FC = () => {
                     required
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder="e.g. tarush or manik"
+                    placeholder="उपयोगकर्ता नाम या ईमेल दर्ज करें (e.g. tarush or user@example.com)"
                     className="w-full bg-[#FAF7F2] border border-[#E8E2D5] rounded-xl pl-10 pr-4 py-2 text-sm text-[#191C3B] placeholder:text-[#9E9AA8] focus:outline-none focus:border-[#C59A58] focus:ring-1 focus:ring-[#C59A58]"
                   />
                 </div>

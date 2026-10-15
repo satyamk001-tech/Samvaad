@@ -43,18 +43,24 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByUsername(request.username())) {
+        String cleanUsername = request.username().trim();
+        String cleanEmail = request.email().trim().toLowerCase();
+        String cleanDisplayName = (request.displayName() != null && !request.displayName().isBlank())
+                ? request.displayName().trim()
+                : cleanUsername;
+
+        if (userRepository.existsByUsernameIgnoreCase(cleanUsername)) {
             throw new BadRequestException("Username is already taken");
         }
-        if (userRepository.existsByEmail(request.email())) {
+        if (userRepository.existsByEmailIgnoreCase(cleanEmail)) {
             throw new BadRequestException("Email is already registered");
         }
 
         User user = User.builder()
-                .username(request.username())
-                .email(request.email())
+                .username(cleanUsername)
+                .email(cleanEmail)
                 .passwordHash(passwordEncoder.encode(request.password()))
-                .displayName(request.displayName())
+                .displayName(cleanDisplayName)
                 .isOnline(true)
                 .lastSeenAt(Instant.now())
                 .build();
@@ -72,12 +78,12 @@ public class AuthService {
     public AuthResponse googleLogin(GoogleAuthRequest request) {
         String email = request.email().trim().toLowerCase();
         
-        User user = userRepository.findByEmail(email).orElseGet(() -> {
+        User user = userRepository.findByEmailIgnoreCase(email).orElseGet(() -> {
             String baseUsername = email.split("@")[0].replaceAll("[^a-zA-Z0-9]", "");
             if (baseUsername.isBlank()) baseUsername = "user";
             String candidateUsername = baseUsername;
             int counter = 1;
-            while (userRepository.existsByUsername(candidateUsername)) {
+            while (userRepository.existsByUsernameIgnoreCase(candidateUsername)) {
                 candidateUsername = baseUsername + counter++;
             }
 
@@ -115,7 +121,7 @@ public class AuthService {
         String formattedUsername = cleanPhone.startsWith("+") ? cleanPhone.substring(1) : cleanPhone;
         String syntheticEmail = cleanPhone + "@samvaad.gov.in";
 
-        User user = userRepository.findByUsername(formattedUsername).orElseGet(() -> {
+        User user = userRepository.findByUsernameIgnoreCase(formattedUsername).orElseGet(() -> {
             String defaultDisplay = (request.displayName() != null && !request.displayName().isBlank())
                     ? request.displayName()
                     : "User " + (cleanPhone.length() > 4 ? cleanPhone.substring(cleanPhone.length() - 4) : cleanPhone);
@@ -146,11 +152,12 @@ public class AuthService {
 
     @Transactional
     public AuthResponse login(LoginRequest request) {
-        User user = userRepository.findByUsernameOrEmail(request.usernameOrEmail(), request.usernameOrEmail())
-                .orElseThrow(() -> new UnauthorizedException("Invalid username or password"));
+        String cleanIdentifier = request.usernameOrEmail() != null ? request.usernameOrEmail().trim() : "";
+        User user = userRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase(cleanIdentifier, cleanIdentifier)
+                .orElseThrow(() -> new UnauthorizedException("उपयोगकर्ता मौजूद नहीं है या क्रेडेंशियल्स अमान्य हैं • User does not exist or credentials are invalid"));
 
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-            throw new UnauthorizedException("Invalid username or password");
+            throw new UnauthorizedException("उपयोगकर्ता नाम या पासवर्ड अमान्य है • Invalid username or password");
         }
 
         user.setOnline(true);
