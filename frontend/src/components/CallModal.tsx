@@ -142,6 +142,7 @@ export const CallModal: React.FC<CallModalProps> = ({
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [subtitlesEnabled, setSubtitlesEnabled] = useState(false);
   const [secondsElapsed, setSecondsElapsed] = useState(0);
+  const [isConnected, setIsConnected] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<string>(t('outgoingCall') || 'कॉल किया जा रहा है... • Calling...');
   const [hasRemoteStream, setHasRemoteStream] = useState(false);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
@@ -202,13 +203,14 @@ export const CallModal: React.FC<CallModalProps> = ({
     }
   }, [localStream, isVideoOff]);
 
-  // Duration timer
+  // Duration timer: runs only after the call is actively connected
   useEffect(() => {
+    if (!isConnected) return;
     const timer = setInterval(() => {
       setSecondsElapsed((prev) => prev + 1);
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [isConnected]);
 
   const formatDuration = (secs: number) => {
     const m = Math.floor(secs / 60);
@@ -236,6 +238,7 @@ export const CallModal: React.FC<CallModalProps> = ({
       pc.oniceconnectionstatechange = () => {
         if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
           soundService.stopOutgoingRingback();
+          setIsConnected(true);
           setConnectionStatus('जुड़ा हुआ • Connected');
           stompService.send('/app/call.signal', {
             callId: call.id,
@@ -285,6 +288,7 @@ export const CallModal: React.FC<CallModalProps> = ({
         remoteStreamRef.current = freshStream;
         setRemoteStream(freshStream);
         setHasRemoteStream(true);
+        setIsConnected(true);
         soundService.stopOutgoingRingback();
         setConnectionStatus('जुड़ा हुआ • Connected');
 
@@ -342,6 +346,17 @@ export const CallModal: React.FC<CallModalProps> = ({
         if (isCaller) {
           setConnectionStatus(t('outgoingCall') || 'कॉल किया जा रहा है... • Calling...');
           soundService.startOutgoingRingback();
+
+          // After a brief initial dialing period, transition to Ringing if not already answered
+          setTimeout(() => {
+            if (!isTerminated) {
+              setConnectionStatus((prev) =>
+                prev.includes('Calling') || prev.includes('कॉल किया जा रहा')
+                  ? 'रिंग हो रहा है... • Ringing...'
+                  : prev
+              );
+            }
+          }, 1500);
         } else {
           // Receiver is mounted and ready: emit ACCEPT signal to caller and record in backend
           setConnectionStatus('स्वीकार किया जा रहा है • Connecting...');
@@ -369,7 +384,9 @@ export const CallModal: React.FC<CallModalProps> = ({
       if (!pc) return;
 
       try {
-        if (signal.type === 'ACCEPT' && isCaller) {
+        if (signal.type === 'RINGING' && isCaller) {
+          setConnectionStatus('रिंग हो रहा है... • Ringing...');
+        } else if (signal.type === 'ACCEPT' && isCaller) {
           soundService.stopOutgoingRingback();
           setConnectionStatus('स्वीकार किया गया • Connecting...');
           const offer = await pc.createOffer({
@@ -422,6 +439,7 @@ export const CallModal: React.FC<CallModalProps> = ({
           });
         } else if (signal.type === 'ANSWER' && isCaller) {
           soundService.stopOutgoingRingback();
+          setIsConnected(true);
           await pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: signal.data }));
           while (candidateQueue.length > 0) {
             const cand = candidateQueue.shift();
@@ -605,8 +623,8 @@ export const CallModal: React.FC<CallModalProps> = ({
                 {peerName}
               </span>
               <div className="flex items-center gap-1.5 font-mono text-[11px] text-[#C59A58] font-bold">
-                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                <span>{formatDuration(secondsElapsed)}</span>
+                <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-red-500 animate-pulse' : 'bg-amber-400 animate-pulse'}`} />
+                <span>{isConnected ? formatDuration(secondsElapsed) : (connectionStatus.includes('Ringing') || connectionStatus.includes('रिंग') ? 'रिंगिंग...' : 'कॉलिंग...')}</span>
               </div>
             </div>
           </div>
@@ -686,7 +704,7 @@ export const CallModal: React.FC<CallModalProps> = ({
             <p className="text-xs font-bold text-white truncate">{peerName}</p>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="font-mono text-[11px] text-[#C59A58] font-bold">
-                {formatDuration(secondsElapsed)}
+                {isConnected ? formatDuration(secondsElapsed) : (connectionStatus.includes('Ringing') || connectionStatus.includes('रिंग') ? 'रिंगिंग...' : 'कॉलिंग...')}
               </span>
               <span className="text-[10px] text-white/50">• ध्वनि कॉल</span>
             </div>
@@ -765,8 +783,8 @@ export const CallModal: React.FC<CallModalProps> = ({
 
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/10 text-xs font-mono">
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-              <span>{formatDuration(secondsElapsed)}</span>
+              <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-red-500 animate-pulse' : 'bg-amber-400 animate-pulse'}`} />
+              <span>{isConnected ? formatDuration(secondsElapsed) : (connectionStatus.includes('Ringing') || connectionStatus.includes('रिंग') ? 'रिंग हो रहा है...' : 'कॉल जा रहा है...')}</span>
             </div>
 
             {/* Prominent WhatsApp-style Minimize Button */}

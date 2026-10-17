@@ -1,13 +1,15 @@
 /**
  * Samvaad Telephony & WebRTC Audio Synthesizer
- * Generates authentic incoming ringtones and outgoing ringback tones using the Web Audio API.
+ * Generates authentic incoming chime ringtones and dual-pulse outgoing ringback tones ("ring-ring... ring-ring...")
+ * using the Web Audio API with dedicated master gain stages for instant, click-free silence.
  */
 class SoundService {
   private ctx: AudioContext | null = null;
   private incomingInterval: any = null;
   private outgoingInterval: any = null;
+  private incomingMasterGain: GainNode | null = null;
+  private outgoingMasterGain: GainNode | null = null;
   private activeOscillators: OscillatorNode[] = [];
-  private activeGains: GainNode[] = [];
 
   private getContext(): AudioContext | null {
     try {
@@ -37,31 +39,45 @@ class SoundService {
     const ctx = this.getContext();
     if (!ctx) return;
 
-    // Play initial burst immediately
-    this.playIncomingChimePhrase(ctx);
+    // Dedicated master gain stage for incoming chimes
+    this.incomingMasterGain = ctx.createGain();
+    this.incomingMasterGain.gain.setValueAtTime(1, ctx.currentTime);
+    this.incomingMasterGain.connect(ctx.destination);
 
-    // Repeat every 3 seconds
+    // Play initial phrase immediately
+    this.playIncomingChimePhrase(ctx, this.incomingMasterGain);
+
+    // Repeat every 3.0 seconds
     this.incomingInterval = setInterval(() => {
       const activeCtx = this.getContext();
-      if (activeCtx) {
-        this.playIncomingChimePhrase(activeCtx);
+      if (activeCtx && this.incomingMasterGain) {
+        this.playIncomingChimePhrase(activeCtx, this.incomingMasterGain);
       }
     }, 3000);
   }
 
   /**
-   * Stops the incoming call ringtone
+   * Stops the incoming call ringtone immediately
    */
   public stopIncomingRingtone(): void {
     if (this.incomingInterval) {
       clearInterval(this.incomingInterval);
       this.incomingInterval = null;
     }
+    if (this.incomingMasterGain) {
+      try {
+        if (this.ctx) {
+          this.incomingMasterGain.gain.setValueAtTime(0, this.ctx.currentTime);
+        }
+        this.incomingMasterGain.disconnect();
+      } catch {}
+      this.incomingMasterGain = null;
+    }
     this.cleanupActiveNodes();
   }
 
   /**
-   * Starts playing the outgoing ringback tone ("tuuuut... tuuuut...")
+   * Starts playing the outgoing ringback tone: authentic double-ring ("ring-ring... ring-ring...")
    */
   public startOutgoingRingback(): void {
     this.stopOutgoingRingback();
@@ -70,25 +86,39 @@ class SoundService {
     const ctx = this.getContext();
     if (!ctx) return;
 
-    // Play initial burst immediately
-    this.playOutgoingRingbackBurst(ctx);
+    // Dedicated master gain stage for outgoing ringback
+    this.outgoingMasterGain = ctx.createGain();
+    this.outgoingMasterGain.gain.setValueAtTime(1, ctx.currentTime);
+    this.outgoingMasterGain.connect(ctx.destination);
 
-    // Repeat cadence: 1.2s tone + 2.0s silence = 3.2s cycle
+    // Play initial double-pulse burst immediately
+    this.playOutgoingRingbackBurst(ctx, this.outgoingMasterGain);
+
+    // Repeat cadence: 0.4s pulse + 0.2s pause + 0.4s pulse + 2.0s silence = 3.0s cycle
     this.outgoingInterval = setInterval(() => {
       const activeCtx = this.getContext();
-      if (activeCtx) {
-        this.playOutgoingRingbackBurst(activeCtx);
+      if (activeCtx && this.outgoingMasterGain) {
+        this.playOutgoingRingbackBurst(activeCtx, this.outgoingMasterGain);
       }
-    }, 3200);
+    }, 3000);
   }
 
   /**
-   * Stops the outgoing ringback tone
+   * Stops the outgoing ringback tone immediately
    */
   public stopOutgoingRingback(): void {
     if (this.outgoingInterval) {
       clearInterval(this.outgoingInterval);
       this.outgoingInterval = null;
+    }
+    if (this.outgoingMasterGain) {
+      try {
+        if (this.ctx) {
+          this.outgoingMasterGain.gain.setValueAtTime(0, this.ctx.currentTime);
+        }
+        this.outgoingMasterGain.disconnect();
+      } catch {}
+      this.outgoingMasterGain = null;
     }
     this.cleanupActiveNodes();
   }
@@ -109,32 +139,30 @@ class SoundService {
       const gain = ctx.createGain();
 
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(480, now + i * 0.25);
+      osc.frequency.setValueAtTime(480, now + i * 0.22);
 
-      gain.gain.setValueAtTime(0, now + i * 0.25);
-      gain.gain.linearRampToValueAtTime(0.15, now + i * 0.25 + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.25 + 0.15);
+      gain.gain.setValueAtTime(0, now + i * 0.22);
+      gain.gain.linearRampToValueAtTime(0.15, now + i * 0.22 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.22 + 0.14);
 
       osc.connect(gain);
       gain.connect(ctx.destination);
 
-      osc.start(now + i * 0.25);
-      osc.stop(now + i * 0.25 + 0.18);
+      osc.start(now + i * 0.22);
+      osc.stop(now + i * 0.22 + 0.16);
     }
   }
 
   /**
    * Synthesizes a melodious 4-note smartphone chime phrase
    */
-  private playIncomingChimePhrase(ctx: AudioContext): void {
+  private playIncomingChimePhrase(ctx: AudioContext, masterGain: GainNode): void {
     const now = ctx.currentTime;
-    // Pleasant melodic notes: C5 (523Hz), E5 (659Hz), G5 (784Hz), C6 (1046Hz)
     const notes = [
       { freq: 523.25, time: 0.00, dur: 0.14 },
       { freq: 659.25, time: 0.16, dur: 0.14 },
       { freq: 783.99, time: 0.32, dur: 0.14 },
       { freq: 1046.50, time: 0.48, dur: 0.35 },
-      // Second decorative motif
       { freq: 659.25, time: 0.95, dur: 0.14 },
       { freq: 783.99, time: 1.11, dur: 0.14 },
       { freq: 1046.50, time: 1.27, dur: 0.14 },
@@ -149,19 +177,17 @@ class SoundService {
         osc.type = 'sine';
         osc.frequency.setValueAtTime(n.freq, now + n.time);
 
-        // Soft bell-like decay envelope
         gain.gain.setValueAtTime(0, now + n.time);
         gain.gain.linearRampToValueAtTime(0.25, now + n.time + 0.02);
         gain.gain.exponentialRampToValueAtTime(0.001, now + n.time + n.dur);
 
         osc.connect(gain);
-        gain.connect(ctx.destination);
+        gain.connect(masterGain);
 
         osc.start(now + n.time);
         osc.stop(now + n.time + n.dur + 0.05);
 
         this.activeOscillators.push(osc);
-        this.activeGains.push(gain);
       } catch (e) {
         console.warn('Error playing incoming chime note:', e);
       }
@@ -169,37 +195,46 @@ class SoundService {
   }
 
   /**
-   * Synthesizes a dual-tone PBX telephone ringback burst (440Hz + 480Hz)
+   * Synthesizes authentic double-pulse ringback burst ("ring-ring")
+   * Pulse 1: 0.0s - 0.4s
+   * Pause:   0.4s - 0.6s
+   * Pulse 2: 0.6s - 1.0s
    */
-  private playOutgoingRingbackBurst(ctx: AudioContext): void {
+  private playOutgoingRingbackBurst(ctx: AudioContext, masterGain: GainNode): void {
     const now = ctx.currentTime;
-    const duration = 1.2;
+    const pulses = [
+      { start: 0.0, dur: 0.4 },
+      { start: 0.6, dur: 0.4 },
+    ];
 
-    [440, 480].forEach((freq) => {
-      try {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
+    pulses.forEach((pulse) => {
+      [440, 480].forEach((freq) => {
+        try {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
 
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, now);
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + pulse.start);
 
-        // Smooth fade-in & fade-out to prevent audio pops
-        gain.gain.setValueAtTime(0, now);
-        gain.gain.linearRampToValueAtTime(0.12, now + 0.06);
-        gain.gain.setValueAtTime(0.12, now + duration - 0.06);
-        gain.gain.linearRampToValueAtTime(0.0001, now + duration);
+          const startTime = now + pulse.start;
+          const stopTime = startTime + pulse.dur;
 
-        osc.connect(gain);
-        gain.connect(ctx.destination);
+          gain.gain.setValueAtTime(0, startTime);
+          gain.gain.linearRampToValueAtTime(0.12, startTime + 0.04);
+          gain.gain.setValueAtTime(0.12, stopTime - 0.04);
+          gain.gain.linearRampToValueAtTime(0.0001, stopTime);
 
-        osc.start(now);
-        osc.stop(now + duration + 0.05);
+          osc.connect(gain);
+          gain.connect(masterGain);
 
-        this.activeOscillators.push(osc);
-        this.activeGains.push(gain);
-      } catch (e) {
-        console.warn('Error playing outgoing burst:', e);
-      }
+          osc.start(startTime);
+          osc.stop(stopTime + 0.02);
+
+          this.activeOscillators.push(osc);
+        } catch (e) {
+          console.warn('Error playing outgoing pulse:', e);
+        }
+      });
     });
   }
 
@@ -208,19 +243,9 @@ class SoundService {
       try {
         osc.stop();
         osc.disconnect();
-      } catch {
-        // already stopped
-      }
-    });
-    this.activeGains.forEach((g) => {
-      try {
-        g.disconnect();
-      } catch {
-        // already disconnected
-      }
+      } catch {}
     });
     this.activeOscillators = [];
-    this.activeGains = [];
   }
 }
 

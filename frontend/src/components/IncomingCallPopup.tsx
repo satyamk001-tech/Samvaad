@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Call } from '../types';
 import { Phone, Video, PhoneOff } from 'lucide-react';
 import { soundService } from '../services/soundService';
+import { stompService } from '../services/stomp';
 
 interface IncomingCallPopupProps {
   call: Call;
@@ -17,13 +18,22 @@ export const IncomingCallPopup: React.FC<IncomingCallPopupProps> = ({
   const callerName = call.caller.displayName || call.caller.username;
   const isVideo = call.type === 'VIDEO';
 
-  // Play ringing sound on mount and ensure clean stop on dismiss/action
+  // Play ringing sound on mount and signal to caller that receiver's device is actively ringing
   useEffect(() => {
     soundService.startIncomingRingtone();
+
+    // Signal RINGING to caller so caller UI updates to "Ringing..."
+    stompService.send('/app/call.signal', {
+      callId: call.id,
+      targetUserId: call.caller.id,
+      type: 'RINGING',
+      data: null,
+    });
+
     return () => {
       soundService.stopIncomingRingtone();
     };
-  }, []);
+  }, [call.id, call.caller.id]);
 
   const handleAcceptClick = () => {
     soundService.stopIncomingRingtone();
