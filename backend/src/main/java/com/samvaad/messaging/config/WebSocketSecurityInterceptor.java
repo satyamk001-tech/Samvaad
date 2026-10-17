@@ -75,15 +75,24 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
         }
 
         String destination = accessor.getDestination();
-        if (destination != null && destination.startsWith("/topic/conversations.")) {
+        if (destination == null || destination.isBlank()) {
+            throw new IllegalArgumentException("STOMP subscription failed: Missing destination");
+        }
+
+        UserPrincipal principal = extractUserPrincipal(userPrincipal);
+
+        if (destination.startsWith("/topic/conversations.")) {
             String conversationIdStr = destination.substring("/topic/conversations.".length());
             try {
                 UUID conversationId = UUID.fromString(conversationIdStr);
-                UserPrincipal principal = extractUserPrincipal(userPrincipal);
                 conversationService.validateMembership(conversationId, principal.getId());
             } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("STOMP subscription failed: Invalid conversation ID destination");
+                throw new IllegalArgumentException("STOMP subscription failed: Unauthorized or invalid conversation destination");
             }
+        } else if (destination.startsWith("/user/") || destination.startsWith("/user") || destination.startsWith("/topic/presence")) {
+            // Authorized destination: user private queues or public presence topic
+        } else {
+            throw new IllegalArgumentException("STOMP subscription failed: Unauthorized destination: " + destination);
         }
     }
 

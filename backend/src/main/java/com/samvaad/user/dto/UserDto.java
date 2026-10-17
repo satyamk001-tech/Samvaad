@@ -35,4 +35,25 @@ public record UserDto(
                 user.getCreatedAt()
         );
     }
+
+    public UserDto toPublicDto() {
+        return new UserDto(
+                id(),
+                username(),
+                null, // Redacted for privacy: email and synthetic phone emails are never leaked to other users
+                displayName(),
+                bio(),
+                avatarUrl(),
+                statusMessage(),
+                isOnline(),
+                lastSeenAt(),
+                languagePreference(),
+                emailVerified(),
+                createdAt()
+        );
+    }
+
+    public static UserDto toPublicDto(User user) {
+        return fromEntity(user).toPublicDto();
+    }
 }

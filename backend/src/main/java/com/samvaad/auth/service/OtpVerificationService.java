@@ -60,8 +60,7 @@ public class OtpVerificationService {
         return Map.of(
                 "message", "OTP sent successfully to " + cleanTarget,
                 "expiresInSeconds", 600,
-                "resendWaitSeconds", 60,
-                "previewCode", otpCode
+                "resendWaitSeconds", 60
         );
     }
 

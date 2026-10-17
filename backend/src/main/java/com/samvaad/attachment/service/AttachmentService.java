@@ -236,20 +236,17 @@ public class AttachmentService {
     }
 
     @Transactional(readOnly = true)
-    public Attachment getPrimaryMessageAttachment(UUID messageId) {
+    public Attachment getPrimaryMessageAttachment(UUID messageId, UUID currentUserId) {
         Message message = messageRepository.findById(messageId)
                 .orElseThrow(() -> new ResourceNotFoundException("Message not found: " + messageId));
+
+        conversationService.validateMembership(message.getConversation().getId(), currentUserId);
 
         List<Attachment> list = attachmentRepository.findByMessageId(messageId);
         if (list.isEmpty()) {
             throw new ResourceNotFoundException("No attachment found for message: " + messageId);
         }
         return list.get(0);
-    }
-
-    @Transactional(readOnly = true)
-    public Attachment getPrimaryMessageAttachment(UUID messageId, UUID currentUserId) {
-        return getPrimaryMessageAttachment(messageId);
     }
 
     public Resource loadAttachmentResource(Attachment attachment) {

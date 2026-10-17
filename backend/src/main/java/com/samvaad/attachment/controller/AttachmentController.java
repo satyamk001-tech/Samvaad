@@ -59,9 +59,10 @@ public class AttachmentController {
 
     @GetMapping(value = {"/messages/{messageId}/download", "/messages/{messageId}/raw"})
     public ResponseEntity<Resource> downloadAttachmentByMessage(
-            @PathVariable UUID messageId
+            @PathVariable UUID messageId,
+            @AuthenticationPrincipal UserPrincipal principal
     ) {
-        Attachment metadata = attachmentService.getPrimaryMessageAttachment(messageId);
+        Attachment metadata = attachmentService.getPrimaryMessageAttachment(messageId, principal.getId());
         Resource resource = attachmentService.loadAttachmentResource(metadata);
 
         String encodedFileName = URLEncoder.encode(metadata.getFileName(), StandardCharsets.UTF_8).replace("+", "%20");

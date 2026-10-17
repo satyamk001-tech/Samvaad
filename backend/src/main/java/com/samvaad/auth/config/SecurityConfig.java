@@ -41,6 +41,11 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .headers(headers -> headers
+                        .frameOptions(frame -> frame.deny())
+                        .contentTypeOptions(content -> {})
+                        .httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31536000))
+                )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/v1/auth/register",
@@ -50,9 +55,8 @@ public class SecurityConfig {
                                 "/api/v1/auth/otp/**",
                                 "/api/v1/auth/refresh",
                                 "/api/v1/health",
-                                "/api/v1/attachments/messages/*/download",
-                                "/api/v1/attachments/messages/*/raw",
-                                "/actuator/**",
+                                "/actuator/health",
+                                "/actuator/info",
                                 "/ws/**"
                         ).permitAll()
                         .anyRequest().authenticated()

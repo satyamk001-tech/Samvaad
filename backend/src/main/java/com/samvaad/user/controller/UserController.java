@@ -6,6 +6,7 @@ import com.samvaad.user.dto.UserDto;
 import com.samvaad.user.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,23 +38,39 @@ public class UserController {
         return ResponseEntity.ok(updatedUser);
     }
 
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteMyAccount(@AuthenticationPrincipal UserPrincipal principal) {
+        userService.deleteUserById(principal.getId());
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/search")
     public ResponseEntity<List<UserDto>> searchUsers(
             @RequestParam(value = "query", required = false) String query,
             @RequestParam(value = "q", required = false) String q
     ) {
         String effectiveQuery = (query != null && !query.isBlank()) ? query : q;
-        List<UserDto> users = userService.searchUsers(effectiveQuery);
+        List<UserDto> users = userService.searchUsers(effectiveQuery)
+                .stream()
+                .map(UserDto::toPublicDto)
+                .toList();
         return ResponseEntity.ok(users);
     }
 
     @GetMapping("/{userId}")
-    public ResponseEntity<UserDto> getUserProfile(@PathVariable UUID userId) {
+    public ResponseEntity<UserDto> getUserProfile(
+            @PathVariable UUID userId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
         UserDto user = userService.getUserById(userId);
-        return ResponseEntity.ok(user);
+        if (principal != null && userId.equals(principal.getId())) {
+            return ResponseEntity.ok(user);
+        }
+        return ResponseEntity.ok(user.toPublicDto());
     }
 
     @DeleteMapping("/admin/cleanup/{username}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> cleanupUser(@PathVariable String username) {
         userService.deleteUserByUsername(username);
         return ResponseEntity.noContent().build();

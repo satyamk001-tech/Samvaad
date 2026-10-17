@@ -83,4 +83,17 @@ public class UserService {
         jdbcTemplate.update("DELETE FROM messages WHERE sender_id IN (SELECT id FROM users WHERE username = ?)", username);
         jdbcTemplate.update("DELETE FROM users WHERE username = ?", username);
     }
+
+    @Transactional
+    public void deleteUserById(UUID userId) {
+        jdbcTemplate.update("DELETE FROM conversation_members WHERE user_id = ?", userId);
+        jdbcTemplate.update("DELETE FROM refresh_tokens WHERE user_id = ?", userId);
+        jdbcTemplate.update("DELETE FROM calls WHERE caller_id = ? OR receiver_id = ?", userId, userId);
+        jdbcTemplate.update("DELETE FROM message_status WHERE user_id = ?", userId);
+        jdbcTemplate.update("DELETE FROM messages WHERE sender_id = ?", userId);
+        jdbcTemplate.update("DELETE FROM user_pinned_conversations WHERE user_id = ?", userId);
+        jdbcTemplate.update("DELETE FROM user_starred_messages WHERE user_id = ?", userId);
+        jdbcTemplate.update("DELETE FROM sovereign_vault_docs WHERE user_id = ?", userId);
+        jdbcTemplate.update("DELETE FROM users WHERE id = ?", userId);
+    }
 }

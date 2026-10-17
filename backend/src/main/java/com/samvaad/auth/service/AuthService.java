@@ -25,20 +25,34 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
+    private final LoginAttemptService loginAttemptService;
     private final long refreshExpirationMs;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public AuthService(
             UserRepository userRepository,
             RefreshTokenRepository refreshTokenRepository,
             PasswordEncoder passwordEncoder,
             JwtTokenProvider tokenProvider,
+            LoginAttemptService loginAttemptService,
             @Value("${samvaad.jwt.refresh-expiration-ms:604800000}") long refreshExpirationMs
     ) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenProvider = tokenProvider;
+        this.loginAttemptService = loginAttemptService;
         this.refreshExpirationMs = refreshExpirationMs;
+    }
+
+    public AuthService(
+            UserRepository userRepository,
+            RefreshTokenRepository refreshTokenRepository,
+            PasswordEncoder passwordEncoder,
+            JwtTokenProvider tokenProvider,
+            long refreshExpirationMs
+    ) {
+        this(userRepository, refreshTokenRepository, passwordEncoder, tokenProvider, new LoginAttemptService(), refreshExpirationMs);
     }
 
     @Transactional
@@ -153,12 +167,19 @@ public class AuthService {
     @Transactional
     public AuthResponse login(LoginRequest request) {
         String cleanIdentifier = request.usernameOrEmail() != null ? request.usernameOrEmail().trim() : "";
-        User user = userRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase(cleanIdentifier, cleanIdentifier)
-                .orElseThrow(() -> new UnauthorizedException("उपयोगकर्ता मौजूद नहीं है या क्रेडेंशियल्स अमान्य हैं • User does not exist or credentials are invalid"));
+        if (loginAttemptService.isBlocked(cleanIdentifier)) {
+            throw new BadRequestException("अत्यधिक विफल प्रयासों के कारण खाता अस्थायी रूप से 15 मिनट के लिए लॉक है • Account temporarily locked due to too many failed attempts. Please try again in 15 minutes.");
+        }
 
-        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+        User user = userRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase(cleanIdentifier, cleanIdentifier)
+                .orElse(null);
+
+        if (user == null || !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            loginAttemptService.loginFailed(cleanIdentifier);
             throw new UnauthorizedException("उपयोगकर्ता नाम या पासवर्ड अमान्य है • Invalid username or password");
         }
+
+        loginAttemptService.loginSucceeded(cleanIdentifier);
 
         user.setOnline(true);
         user.setLastSeenAt(Instant.now());

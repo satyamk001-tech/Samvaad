@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Conversation, Message, User } from '../types';
 import { stompService } from '../services/stomp';
 import { api } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { VoiceNoteRecorder } from './VoiceNoteRecorder';
 import { VoiceNotePlayer } from './VoiceNotePlayer';
 import { MessageEmojiPicker } from './MessageEmojiPicker';
@@ -48,8 +49,13 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   onToggleDossier,
 }) => {
   const { t } = useTranslation();
+  const { token } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
+
+  const getAttachmentUrl = (messageId: string) => {
+    return `/api/v1/attachments/messages/${messageId}/download${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+  };
   const [isTyping, setIsTyping] = useState(false);
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
   const [uploading, setUploading] = useState(false);
@@ -787,7 +793,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
                   ) : (
                     <div className="space-y-1">
                       <img
-                        src={`/api/v1/attachments/messages/${msg.id}/download`}
+                        src={getAttachmentUrl(msg.id)}
                         alt="View Once Attachment"
                         className="rounded-xl max-h-64 object-cover border border-[#E8E2D5]"
                       />
@@ -798,7 +804,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
                   /* Voice Note Message Rendering with Transcription */
                   <div className="space-y-2">
                     <VoiceNotePlayer
-                      src={`/api/v1/attachments/messages/${msg.id}/download`}
+                      src={getAttachmentUrl(msg.id)}
                       isMe={isMe}
                     />
                     {transcriptions[msg.id] && (
@@ -817,7 +823,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
                 ) : isImage ? (
                   <div className="space-y-1">
                     <img
-                      src={`/api/v1/attachments/messages/${msg.id}/download`}
+                      src={getAttachmentUrl(msg.id)}
                       alt="Attachment"
                       className="rounded-xl max-h-64 object-cover border border-[#E8E2D5]"
                     />
@@ -830,7 +836,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
                       <p className="font-semibold truncate">{msg.content || 'दस्तावेज़ • Document'}</p>
                     </div>
                     <a
-                      href={`/api/v1/attachments/messages/${msg.id}/download`}
+                      href={getAttachmentUrl(msg.id)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-1.5 rounded-lg bg-white/20 hover:bg-white/30 transition-all"

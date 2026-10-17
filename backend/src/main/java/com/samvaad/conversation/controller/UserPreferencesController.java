@@ -1,6 +1,8 @@
 package com.samvaad.conversation.controller;
 
 import com.samvaad.auth.security.UserPrincipal;
+import com.samvaad.common.exception.ResourceNotFoundException;
+import com.samvaad.conversation.service.ConversationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -13,9 +15,11 @@ import java.util.*;
 public class UserPreferencesController {
 
     private final JdbcTemplate jdbcTemplate;
+    private final ConversationService conversationService;
 
-    public UserPreferencesController(JdbcTemplate jdbcTemplate) {
+    public UserPreferencesController(JdbcTemplate jdbcTemplate, ConversationService conversationService) {
         this.jdbcTemplate = jdbcTemplate;
+        this.conversationService = conversationService;
     }
 
     // --- PINNED CONVERSATIONS ---
@@ -34,6 +38,8 @@ public class UserPreferencesController {
             @PathVariable UUID conversationId,
             @AuthenticationPrincipal UserPrincipal principal
     ) {
+        conversationService.validateMembership(conversationId, principal.getId());
+
         Integer count = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM user_pinned_conversations WHERE user_id = ? AND conversation_id = ?",
                 Integer.class,
@@ -102,6 +108,26 @@ public class UserPreferencesController {
             @RequestParam(required = false) UUID conversationId,
             @AuthenticationPrincipal UserPrincipal principal
     ) {
+        UUID convId = conversationId;
+        if (convId == null) {
+            try {
+                convId = jdbcTemplate.queryForObject(
+                        "SELECT conversation_id FROM messages WHERE id = ?",
+                        UUID.class,
+                        messageId
+                );
+            } catch (Exception e) {
+                throw new ResourceNotFoundException("Message not found: " + messageId);
+            }
+        }
+
+        if (convId == null) {
+            throw new ResourceNotFoundException("Message or conversation not found: " + messageId);
+        }
+
+        // Enforce conversation membership so unauthorized users cannot exfiltrate private messages
+        conversationService.validateMembership(convId, principal.getId());
+
         Integer count = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM user_starred_messages WHERE user_id = ? AND message_id = ?",
                 Integer.class,
@@ -116,15 +142,6 @@ public class UserPreferencesController {
             );
             isStarred = false;
         } else {
-            UUID convId = conversationId;
-            if (convId == null) {
-                convId = jdbcTemplate.queryForObject(
-                        "SELECT conversation_id FROM messages WHERE id = ?",
-                        UUID.class,
-                        messageId
-                );
-            }
-
             jdbcTemplate.update(
                     "INSERT INTO user_starred_messages (user_id, message_id, conversation_id) VALUES (?, ?, ?)",
                     principal.getId(), messageId, convId
@@ -142,6 +159,8 @@ public class UserPreferencesController {
             @RequestBody Map<String, Integer> payload,
             @AuthenticationPrincipal UserPrincipal principal
     ) {
+        conversationService.validateMembership(conversationId, principal.getId());
+
         Integer seconds = payload.get("seconds"); // null or seconds (86400, 604800, 7776000)
         jdbcTemplate.update(
                 "UPDATE conversations SET disappearing_seconds = ? WHERE id = ?",
@@ -157,6 +176,8 @@ public class UserPreferencesController {
             @RequestBody Map<String, String> payload,
             @AuthenticationPrincipal UserPrincipal principal
     ) {
+        conversationService.validateMembership(conversationId, principal.getId());
+
         String tag = payload.getOrDefault("folderTag", "ALL"); // ALL, PERSONAL, WORK, GROUPS
         jdbcTemplate.update(
                 "UPDATE conversation_members SET folder_tag = ? WHERE conversation_id = ? AND user_id = ?",
