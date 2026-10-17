@@ -12,8 +12,21 @@ class StompService {
   public connect(token: string) {
     if (this.client && this.connected) return;
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const brokerUrl = `${protocol}//${window.location.host}/ws`;
+    const wsBaseUrl = import.meta.env.VITE_WS_BASE_URL;
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+    let brokerUrl: string;
+
+    if (wsBaseUrl) {
+      brokerUrl = wsBaseUrl.endsWith('/ws') ? wsBaseUrl : `${wsBaseUrl.replace(/\/+$/, '')}/ws`;
+    } else if (apiBaseUrl) {
+      const cleanApi = apiBaseUrl.replace(/\/+$/, '');
+      const wsProtocol = cleanApi.startsWith('https') ? 'wss' : 'ws';
+      const cleanHost = cleanApi.replace(/^https?:\/\//, '');
+      brokerUrl = `${wsProtocol}://${cleanHost}/ws`;
+    } else {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      brokerUrl = `${protocol}//${window.location.host}/ws`;
+    }
 
     this.client = new Client({
       brokerURL: brokerUrl,
