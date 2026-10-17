@@ -30,7 +30,9 @@ import {
   IndianRupee,
   X,
   Volume2,
+  Palette,
 } from 'lucide-react';
+import { ChatWallpaperModal, ChatWallpaperConfig } from './ChatWallpaperModal';
 
 interface ChatAreaProps {
   conversation: Conversation;
@@ -64,6 +66,67 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   const [summaryText, setSummaryText] = useState<string | null>(null);
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [hinglishSuggestion, setHinglishSuggestion] = useState<string | null>(null);
+
+  // Per-conversation custom wallpaper state
+  const [isWallpaperModalOpen, setIsWallpaperModalOpen] = useState(false);
+  const [wallpaperConfig, setWallpaperConfig] = useState<ChatWallpaperConfig | null>(() => {
+    try {
+      const convSaved = localStorage.getItem(`samvaad_wallpaper_${conversation.id}`);
+      if (convSaved) return JSON.parse(convSaved);
+      const globalSaved = localStorage.getItem('samvaad_wallpaper_global');
+      if (globalSaved) return JSON.parse(globalSaved);
+    } catch {}
+    return null;
+  });
+
+  // Reload wallpaper when active conversation changes
+  useEffect(() => {
+    try {
+      const convSaved = localStorage.getItem(`samvaad_wallpaper_${conversation.id}`);
+      if (convSaved) {
+        setWallpaperConfig(JSON.parse(convSaved));
+      } else {
+        const globalSaved = localStorage.getItem('samvaad_wallpaper_global');
+        if (globalSaved) setWallpaperConfig(JSON.parse(globalSaved));
+        else setWallpaperConfig(null);
+      }
+    } catch {
+      setWallpaperConfig(null);
+    }
+  }, [conversation.id]);
+
+  const handleSaveWallpaper = (config: ChatWallpaperConfig) => {
+    try {
+      if (config.applyToAll) {
+        localStorage.setItem('samvaad_wallpaper_global', JSON.stringify(config));
+      } else {
+        localStorage.setItem(`samvaad_wallpaper_${conversation.id}`, JSON.stringify(config));
+      }
+    } catch {}
+    setWallpaperConfig(config);
+    setIsWallpaperModalOpen(false);
+  };
+
+  const handleResetWallpaper = () => {
+    try {
+      localStorage.removeItem(`samvaad_wallpaper_${conversation.id}`);
+      const globalSaved = localStorage.getItem('samvaad_wallpaper_global');
+      if (globalSaved) {
+        setWallpaperConfig(JSON.parse(globalSaved));
+      } else {
+        setWallpaperConfig(null);
+      }
+    } catch {}
+    setIsWallpaperModalOpen(false);
+  };
+
+  const getActiveWallpaperCss = (): string => {
+    if (!wallpaperConfig) return '#FAF7F2';
+    if (wallpaperConfig.type === 'CUSTOM_URL' || wallpaperConfig.type === 'CUSTOM_DATA') {
+      return `url("${wallpaperConfig.value}") center/cover no-repeat fixed`;
+    }
+    return wallpaperConfig.value || '#FAF7F2';
+  };
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<any>(null);
@@ -564,6 +627,15 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
             <span className="hidden sm:inline">AI सारांश</span>
           </button>
 
+          {/* Chat Wallpaper Customizer Button */}
+          <button
+            onClick={() => setIsWallpaperModalOpen(true)}
+            className="w-9 h-9 rounded-xl bg-[#FAF7F2] border border-[#E8E2D5] hover:border-[#C59A58] text-[#191C3B] flex items-center justify-center transition-all"
+            title="चैट वॉलपेपर बदलें • Change Chat Wallpaper"
+          >
+            <Palette className="w-4 h-4 text-[#C59A58]" />
+          </button>
+
           <button
             onClick={() => onInitiateCall('AUDIO')}
             className="w-9 h-9 rounded-xl bg-[#FAF7F2] border border-[#E8E2D5] hover:border-[#C59A58] text-[#191C3B] flex items-center justify-center transition-all"
@@ -605,7 +677,19 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
       )}
 
       {/* 2. Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
+      <div
+        className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 relative transition-all"
+        style={{
+          background: getActiveWallpaperCss(),
+        }}
+      >
+        {/* Readability Dimming Overlay */}
+        {wallpaperConfig?.overlayOpacity && wallpaperConfig.overlayOpacity > 0 ? (
+          <div
+            className="absolute inset-0 bg-black pointer-events-none transition-opacity"
+            style={{ opacity: wallpaperConfig.overlayOpacity }}
+          />
+        ) : null}
         {messages.map((msg) => {
           const isMe = msg.sender.id === currentUser.id;
           const isVoiceNote = msg.type === 'VOICE_NOTE';
@@ -1056,6 +1140,18 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Per-Conversation Chat Wallpaper Modal */}
+      {isWallpaperModalOpen && (
+        <ChatWallpaperModal
+          conversationId={conversation.id}
+          conversationTitle={getTitle()}
+          currentWallpaper={wallpaperConfig}
+          onSave={handleSaveWallpaper}
+          onReset={handleResetWallpaper}
+          onClose={() => setIsWallpaperModalOpen(false)}
+        />
       )}
     </div>
   );

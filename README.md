@@ -32,6 +32,19 @@ Samvaad is an enterprise-grade, sovereign, high-concurrency real-time communicat
   * **"View Once" Photos & Audio:** One-time reveal media that self-destructs immediately after closing.
 * 📁 **Chat Folders / Custom Tabs:**
   * Categorize conversations instantly: **सभी (All)**, **व्यक्तिगत (Personal)**, **कार्य (Work)**, **समूह (Groups)**, **अपठित (Unread)**.
+* ⭕ **24h Ephemeral Status & Stories (WhatsApp & Telegram style):**
+  * Dedicated **Status (स्थिति)** navigation icon and horizontal stories carousel above conversations.
+  * Post text statuses with 6 vibrant sovereign gradient themes or upload photo stories with captions.
+  * Full-screen immersive story viewer with animated progress timer bars, tap navigation, pause-on-hold, and status deletion.
+* 🎨 **Per-Conversation Chat Wallpapers & Themes:**
+  * Customize chat backgrounds individually per friend, family member, or group.
+  * 7 handcrafted sovereign presets (Classic Sovereign Ivory, Chat Doodle, Midnight Galaxy, Royal Indic Mandala, Misty Forest, Sunset Twilight, Ocean Depths).
+  * Upload custom images from device or paste web links with built-in readability dimming slider (0%–75%).
+  * Option to apply exclusively to active conversation or set as global default.
+* 👤 **Sovereign Avatar Studio & Generative Personas:**
+  * Integrated Avatar Studio with DiceBear vector engines (`Adventurer`, `Bottts`, `Fun Emoji`, `Lorelei`).
+  * 🎲 Live AI Randomizer generates unique vector avatars on the fly from custom seed phrases.
+  * Local photo file upload with client-side image processing, external URL support, and instant profile persistence.
 * 💬 **Quote-Reply & Forwarding:**
   * Quote-reply with live snippet preview banners.
   * Forwarded messages carry a styled `प्रेषित (Forwarded)` tag.

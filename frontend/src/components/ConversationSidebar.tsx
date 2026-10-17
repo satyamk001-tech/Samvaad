@@ -11,6 +11,7 @@ interface ConversationSidebarProps {
   onOpenNewChat: () => void;
   onTogglePin?: (conversationId: string) => void;
   pinnedIds?: string[];
+  onOpenStatus?: () => void;
 }
 
 type FilterCategory = 'ALL' | 'UNREAD' | 'GROUPS' | 'WORK' | 'PERSONAL';
@@ -23,6 +24,7 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
   onOpenNewChat,
   onTogglePin,
   pinnedIds = [],
+  onOpenStatus,
 }) => {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
@@ -122,6 +124,88 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
             className="w-full bg-[#FAF7F2] border border-[#E8E2D5] rounded-xl pl-9 pr-3 py-1.5 text-xs text-[#191C3B] placeholder:text-[#9E9AA8] focus:outline-none focus:border-[#C59A58]"
           />
         </div>
+
+        {/* WhatsApp & Telegram Style Stories / Status Bar */}
+        {onOpenStatus && (
+          <div className="flex items-center gap-2.5 mt-3 overflow-x-auto pb-1 no-scrollbar border-b border-[#E8E2D5] pb-2.5">
+            {/* My Status Button */}
+            <div
+              onClick={onOpenStatus}
+              className="flex flex-col items-center gap-1 cursor-pointer group flex-shrink-0"
+              title="मेरी स्थिति • My Status"
+            >
+              <div className="relative">
+                {currentUser.avatarUrl ? (
+                  <img
+                    src={currentUser.avatarUrl}
+                    alt={currentUser.displayName || currentUser.username}
+                    className="w-11 h-11 rounded-full object-cover border-2 border-emerald-500 group-hover:scale-105 transition-transform"
+                  />
+                ) : (
+                  <div className="w-11 h-11 rounded-full bg-[#191C3B] text-white font-serif font-black text-sm flex items-center justify-center border-2 border-emerald-500 group-hover:scale-105 transition-transform">
+                    {(currentUser.displayName || currentUser.username).charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#191C3B] text-[#C59A58] border border-white flex items-center justify-center font-bold text-[10px]">
+                  +
+                </span>
+              </div>
+              <span className="text-[10px] font-semibold text-[#191C3B] max-w-[48px] truncate text-center">
+                मेरी स्थिति
+              </span>
+            </div>
+
+            {/* Contact Story Circles */}
+            <div
+              onClick={onOpenStatus}
+              className="flex flex-col items-center gap-1 cursor-pointer group flex-shrink-0"
+              title="संवाद टीम • Status"
+            >
+              <div className="p-0.5 rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 group-hover:scale-105 transition-transform">
+                <div className="w-10 h-10 rounded-full bg-[#191C3B] text-white flex items-center justify-center font-bold text-xs border border-white">
+                  सं
+                </div>
+              </div>
+              <span className="text-[10px] font-semibold text-[#191C3B] max-w-[48px] truncate text-center">
+                संवाद HQ
+              </span>
+            </div>
+
+            <div
+              onClick={onOpenStatus}
+              className="flex flex-col items-center gap-1 cursor-pointer group flex-shrink-0"
+              title="Arjun Verma • Status"
+            >
+              <div className="p-0.5 rounded-full bg-gradient-to-tr from-cyan-400 to-blue-600 group-hover:scale-105 transition-transform">
+                <img
+                  src="https://api.dicebear.com/7.x/adventurer/svg?seed=Arjun"
+                  alt="Arjun"
+                  className="w-10 h-10 rounded-full object-cover bg-white"
+                />
+              </div>
+              <span className="text-[10px] font-semibold text-[#191C3B] max-w-[48px] truncate text-center">
+                Arjun
+              </span>
+            </div>
+
+            <div
+              onClick={onOpenStatus}
+              className="flex flex-col items-center gap-1 cursor-pointer group flex-shrink-0"
+              title="Priya Sharma • Status"
+            >
+              <div className="p-0.5 rounded-full bg-gradient-to-tr from-pink-500 to-rose-500 group-hover:scale-105 transition-transform">
+                <img
+                  src="https://api.dicebear.com/7.x/lorelei/svg?seed=Priya"
+                  alt="Priya"
+                  className="w-10 h-10 rounded-full object-cover bg-white"
+                />
+              </div>
+              <span className="text-[10px] font-semibold text-[#191C3B] max-w-[48px] truncate text-center">
+                Priya
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Filter Pills: All, Personal, Work, Groups, Unread */}
         <div className="flex items-center gap-1.5 mt-3 overflow-x-auto pb-0.5 no-scrollbar">

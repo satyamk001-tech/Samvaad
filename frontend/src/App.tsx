@@ -13,6 +13,8 @@ import { IncomingCallPopup } from './components/IncomingCallPopup';
 import { CallHistoryModal } from './components/CallHistoryModal';
 import { ProfileMenu } from './components/ProfileMenu';
 import { SettingsModal, SettingsSection } from './components/SettingsModal';
+import { StatusModal } from './components/StatusModal';
+import { AvatarStudioModal } from './components/AvatarStudioModal';
 import { Call, Conversation } from './types';
 import { api } from './services/api';
 import { stompService } from './services/stomp';
@@ -26,7 +28,8 @@ import {
   Languages,
   Shield,
   Plus,
-  Check
+  Check,
+  CircleDashed,
 } from 'lucide-react';
 
 type NavView = 'CHATS' | 'CALLS' | 'CONTACTS' | 'VAULT' | 'LANGUAGE';
@@ -63,6 +66,10 @@ const MainApp: React.FC = () => {
 
   // Settings & Profile modal state
   const [activeSettingsSection, setActiveSettingsSection] = useState<SettingsSection | null>(null);
+  // Status / Stories modal state
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  // Avatar Studio modal state
+  const [isAvatarStudioOpen, setIsAvatarStudioOpen] = useState(false);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -305,13 +312,24 @@ const MainApp: React.FC = () => {
           </button>
 
           {/* User Display Pill */}
-          <div className="flex items-center gap-2 pl-2 border-l border-[#E8E2D5]">
-            <div
-              className="w-8 h-8 rounded-xl bg-[#191C3B] text-white font-serif font-bold text-xs flex items-center justify-center border border-[#C59A58]"
-              title={user.displayName || user.username}
-            >
-              {(user.displayName || user.username).charAt(0).toUpperCase()}
-            </div>
+          <div
+            onClick={() => setIsAvatarStudioOpen(true)}
+            className="flex items-center gap-2 pl-2 border-l border-[#E8E2D5] cursor-pointer hover:opacity-85 transition-opacity"
+            title="अवतार स्टूडियो • Open Avatar Studio"
+          >
+            {user.avatarUrl ? (
+              <img
+                src={user.avatarUrl}
+                alt={user.displayName || user.username}
+                className="w-8 h-8 rounded-xl object-cover border border-[#C59A58]"
+              />
+            ) : (
+              <div
+                className="w-8 h-8 rounded-xl bg-[#191C3B] text-white font-serif font-bold text-xs flex items-center justify-center border border-[#C59A58]"
+              >
+                {(user.displayName || user.username).charAt(0).toUpperCase()}
+              </div>
+            )}
             <div className="hidden lg:block text-left leading-tight">
               <span className="text-xs font-bold text-[#191C3B] block truncate max-w-[100px]">
                 {user.displayName || user.username}
@@ -363,6 +381,16 @@ const MainApp: React.FC = () => {
                     {conversations.length}
                   </span>
                 )}
+              </button>
+
+              {/* Status / Stories (WhatsApp & Telegram style) */}
+              <button
+                onClick={() => setIsStatusModalOpen(true)}
+                className="w-10 h-10 md:w-11 md:h-11 rounded-2xl flex flex-col items-center justify-center text-[#686578] hover:text-[#191C3B] hover:bg-[#FAF7F2] transition-all relative group"
+                title="स्थिति एवं अपडेट • Status & Stories"
+              >
+                <CircleDashed className="w-5 h-5 text-[#C59A58] group-hover:rotate-45 transition-transform" />
+                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white" />
               </button>
 
               {/* Calls History */}
@@ -434,6 +462,7 @@ const MainApp: React.FC = () => {
               currentUser={user}
               onTogglePin={handleTogglePin}
               pinnedIds={pinnedIds}
+              onOpenStatus={() => setIsStatusModalOpen(true)}
             />
           )}
 
@@ -529,6 +558,23 @@ const MainApp: React.FC = () => {
           currentUser={user}
           onClose={() => setIsNewChatOpen(false)}
           onConversationCreated={handleConversationCreated}
+        />
+      )}
+
+      {/* WhatsApp & Telegram Style Status Stories Modal */}
+      {isStatusModalOpen && (
+        <StatusModal
+          currentUser={user}
+          onClose={() => setIsStatusModalOpen(false)}
+        />
+      )}
+
+      {/* Sovereign Avatar Studio Modal */}
+      {isAvatarStudioOpen && (
+        <AvatarStudioModal
+          currentUser={user}
+          onUserUpdated={() => reloadUser()}
+          onClose={() => setIsAvatarStudioOpen(false)}
         />
       )}
     </div>

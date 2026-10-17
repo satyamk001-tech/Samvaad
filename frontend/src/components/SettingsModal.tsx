@@ -20,7 +20,10 @@ import {
   Save,
   Moon,
   Sun,
-  Laptop
+  Laptop,
+  Sparkles,
+  Dices,
+  Upload,
 } from 'lucide-react';
 
 export type SettingsSection =
@@ -403,48 +406,129 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
             {/* 3. CHANGE AVATAR */}
             {activeSection === 'CHANGE_AVATAR' && (
-              <div className="space-y-4 max-w-lg">
-                <div className="flex items-center gap-4">
+              <div className="space-y-5 max-w-lg">
+                <div className="flex items-center gap-4 p-4 bg-[#FAF7F2] border border-[#E8E2D5] rounded-2xl">
                   {avatarUrl ? (
                     <img
                       src={avatarUrl}
                       alt="Avatar Preview"
-                      className="w-16 h-16 rounded-2xl object-cover border-2 border-[#C59A58]"
+                      className="w-18 h-18 rounded-2xl object-cover border-2 border-[#C59A58] bg-white shadow-sm"
                     />
                   ) : (
-                    <div className="w-16 h-16 rounded-2xl bg-[#191C3B] text-white flex items-center justify-center font-bold text-xl">
+                    <div className="w-18 h-18 rounded-2xl bg-[#191C3B] text-white flex items-center justify-center font-serif font-black text-2xl border-2 border-[#C59A58] shadow-sm">
                       {currentUser.username.charAt(0).toUpperCase()}
                     </div>
                   )}
                   <div>
-                    <h4 className="text-xs font-bold text-[#191C3B]">प्रोफ़ाइल चित्र (Avatar)</h4>
-                    <p className="text-[11px] text-[#686578]">
-                      Enter a public image URL or avatar link
+                    <h4 className="text-sm font-bold text-[#191C3B]">प्रोफ़ाइल चित्र (Avatar Studio)</h4>
+                    <p className="text-xs text-[#686578]">
+                      चयनित AI अवतार चुनें, रैंडमाइज़ करें या डिवाइस से फोटो अपलोड करें
                     </p>
+                    {avatarUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setAvatarUrl('')}
+                        className="text-[11px] text-red-600 hover:underline mt-1 block font-medium"
+                      >
+                        अवतार हटाएँ (Remove Avatar)
+                      </button>
+                    )}
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-[#191C3B] mb-1">
-                    छवि URL (Image URL)
+                {/* 1-Click Vector Presets */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-[#191C3B] uppercase tracking-wider flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-[#C59A58]" />
+                      <span>चयनित अवतार (Curated Presets)</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const seeds = ['Arya', 'Vikram', 'Meera', 'Rishi', 'Kavya', 'Indra', 'Tara', 'Veer', 'Bharat'];
+                        const rnd = seeds[Math.floor(Math.random() * seeds.length)] + Math.floor(Math.random() * 500);
+                        setAvatarUrl(`https://api.dicebear.com/7.x/adventurer/svg?seed=${rnd}&backgroundColor=b6e3f4,c0aede,ffd5dc`);
+                      }}
+                      className="text-xs text-[#191C3B] font-bold flex items-center gap-1 hover:text-[#C59A58] transition-colors"
+                    >
+                      <Dices className="w-3.5 h-3.5 text-[#C59A58]" />
+                      <span>रैंडम रोल (Roll AI)</span>
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { url: 'https://api.dicebear.com/7.x/adventurer/svg?seed=SamvaadRishi&backgroundColor=b6e3f4,c0aede', label: 'विद्वान' },
+                      { url: 'https://api.dicebear.com/7.x/adventurer/svg?seed=BharatPioneer&backgroundColor=ffd5dc,ffdfbf', label: 'अन्वेषक' },
+                      { url: 'https://api.dicebear.com/7.x/lorelei/svg?seed=Aaradhya&backgroundColor=c0aede,d1d4f9', label: 'शालीन' },
+                      { url: 'https://api.dicebear.com/7.x/lorelei/svg?seed=Vikramaditya&backgroundColor=b6e3f4,ffd5dc', label: 'राजसी' },
+                      { url: 'https://api.dicebear.com/7.x/bottts/svg?seed=AryabhataBot&backgroundColor=c0aede', label: 'बोट' },
+                      { url: 'https://api.dicebear.com/7.x/bottts/svg?seed=SovereignAI&backgroundColor=ffd5dc', label: 'प्रज्ञान' },
+                      { url: 'https://api.dicebear.com/7.x/fun-emoji/svg?seed=SmilingJoy&backgroundColor=ffd5dc', label: 'प्रसन्न' },
+                      { url: 'https://api.dicebear.com/7.x/fun-emoji/svg?seed=CoolChamp&backgroundColor=b6e3f4', label: 'उत्साही' },
+                    ].map((p, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setAvatarUrl(p.url)}
+                        className={`p-1.5 rounded-xl border flex flex-col items-center justify-center transition-all ${
+                          avatarUrl === p.url
+                            ? 'border-[#C59A58] bg-[#FDF8EE] ring-2 ring-[#C59A58] scale-105'
+                            : 'border-[#E8E2D5] bg-[#FAF7F2] hover:bg-white'
+                        }`}
+                      >
+                        <img src={p.url} alt={p.label} className="w-10 h-10 object-contain rounded-lg" />
+                        <span className="text-[10px] font-semibold text-[#191C3B] mt-0.5 truncate max-w-full">{p.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Local Photo Upload & URL */}
+                <div className="space-y-3 pt-2 border-t border-[#E8E2D5]">
+                  <label className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-dashed border-[#C59A58] rounded-xl bg-[#FAF7F2] hover:bg-[#FDF8EE] text-[#191C3B] text-xs font-semibold cursor-pointer transition-all">
+                    <Upload className="w-4 h-4 text-[#C59A58]" />
+                    <span>डिवाइस से तस्वीर चुनें (Upload Photo from Device)</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (ev) => {
+                            if (ev.target?.result) setAvatarUrl(ev.target.result as string);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="hidden"
+                    />
                   </label>
-                  <input
-                    type="url"
-                    value={avatarUrl}
-                    onChange={(e) => setAvatarUrl(e.target.value)}
-                    placeholder="https://example.com/photo.jpg"
-                    className="w-full bg-[#FAF7F2] border border-[#E8E2D5] rounded-xl px-4 py-2.5 text-xs text-[#191C3B] focus:outline-none focus:border-[#C59A58]"
-                  />
+
+                  <div>
+                    <label className="block text-xs font-semibold text-[#191C3B] mb-1">
+                      या छवि URL (or Image URL):
+                    </label>
+                    <input
+                      type="url"
+                      value={avatarUrl.startsWith('data:') ? '' : avatarUrl}
+                      onChange={(e) => setAvatarUrl(e.target.value)}
+                      placeholder="https://example.com/photo.jpg"
+                      className="w-full bg-[#FAF7F2] border border-[#E8E2D5] rounded-xl px-4 py-2 text-xs text-[#191C3B] focus:outline-none focus:border-[#C59A58]"
+                    />
+                  </div>
                 </div>
 
                 <button
                   type="button"
                   onClick={handleSaveProfile}
                   disabled={saving}
-                  className="px-5 py-2.5 bg-[#191C3B] text-white rounded-xl text-xs font-semibold hover:bg-[#101226] transition-all flex items-center gap-2"
+                  className="px-6 py-2.5 bg-[#191C3B] text-white rounded-xl text-xs font-semibold hover:bg-[#101226] transition-all flex items-center gap-2 shadow-sm"
                 >
                   <Save className="w-4 h-4 text-[#C59A58]" />
-                  <span>{saving ? 'सहेजा जा रहा है...' : 'अपडेट करें • Update Picture'}</span>
+                  <span>{saving ? 'सहेजा जा रहा है...' : 'अवतार सहेजें • Save Avatar'}</span>
                 </button>
               </div>
             )}
