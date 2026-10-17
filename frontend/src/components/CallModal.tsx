@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Call, User } from '../types';
 import { stompService } from '../services/stomp';
 import { api } from '../services/api';
+import { soundService } from '../services/soundService';
 import {
   PhoneOff,
   Mic,
@@ -234,6 +235,7 @@ export const CallModal: React.FC<CallModalProps> = ({
 
       pc.oniceconnectionstatechange = () => {
         if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
+          soundService.stopOutgoingRingback();
           setConnectionStatus('जुड़ा हुआ • Connected');
           stompService.send('/app/call.signal', {
             callId: call.id,
@@ -244,6 +246,7 @@ export const CallModal: React.FC<CallModalProps> = ({
         } else if (pc.iceConnectionState === 'disconnected') {
           setConnectionStatus('पुनः जुड़ रहा है • Reconnecting...');
         } else if (pc.iceConnectionState === 'failed') {
+          soundService.stopOutgoingRingback();
           setConnectionStatus('पुनः प्रयास • Reconnecting');
         }
       };
@@ -282,6 +285,7 @@ export const CallModal: React.FC<CallModalProps> = ({
         remoteStreamRef.current = freshStream;
         setRemoteStream(freshStream);
         setHasRemoteStream(true);
+        soundService.stopOutgoingRingback();
         setConnectionStatus('जुड़ा हुआ • Connected');
 
         if (remoteAudioRef.current) {
@@ -337,6 +341,7 @@ export const CallModal: React.FC<CallModalProps> = ({
 
         if (isCaller) {
           setConnectionStatus(t('outgoingCall') || 'कॉल किया जा रहा है... • Calling...');
+          soundService.startOutgoingRingback();
         } else {
           // Receiver is mounted and ready: emit ACCEPT signal to caller and record in backend
           setConnectionStatus('स्वीकार किया जा रहा है • Connecting...');
@@ -365,6 +370,7 @@ export const CallModal: React.FC<CallModalProps> = ({
 
       try {
         if (signal.type === 'ACCEPT' && isCaller) {
+          soundService.stopOutgoingRingback();
           setConnectionStatus('स्वीकार किया गया • Connecting...');
           const offer = await pc.createOffer({
             offerToReceiveAudio: true,
@@ -415,6 +421,7 @@ export const CallModal: React.FC<CallModalProps> = ({
             });
           });
         } else if (signal.type === 'ANSWER' && isCaller) {
+          soundService.stopOutgoingRingback();
           await pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: signal.data }));
           while (candidateQueue.length > 0) {
             const cand = candidateQueue.shift();
@@ -428,9 +435,13 @@ export const CallModal: React.FC<CallModalProps> = ({
             candidateQueue.push(signal.data);
           }
         } else if (signal.type === 'REJECT') {
+          soundService.stopOutgoingRingback();
+          soundService.playCallEndedTone();
           setConnectionStatus('कॉल अस्वीकार की गई • Call Declined');
           setTimeout(() => cleanupAndClose(), 1500);
         } else if (signal.type === 'END') {
+          soundService.stopOutgoingRingback();
+          soundService.playCallEndedTone();
           cleanupAndClose();
         }
       } catch (signalErr) {
@@ -442,12 +453,15 @@ export const CallModal: React.FC<CallModalProps> = ({
 
     return () => {
       isTerminated = true;
+      soundService.stopOutgoingRingback();
       window.removeEventListener('samvaad:private_message', handleSignal);
       cleanupAndClose();
     };
   }, [call.id, isCaller, peerUser.id, call.type]);
 
   const cleanupAndClose = () => {
+    soundService.stopOutgoingRingback();
+    soundService.stopIncomingRingtone();
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((track) => track.stop());
       localStreamRef.current = null;
@@ -460,6 +474,9 @@ export const CallModal: React.FC<CallModalProps> = ({
   };
 
   const handleEndCallClick = () => {
+    soundService.stopOutgoingRingback();
+    soundService.stopIncomingRingtone();
+    soundService.playCallEndedTone();
     stompService.send('/app/call.signal', {
       callId: call.id,
       targetUserId: peerUser.id,

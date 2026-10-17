@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Call } from '../types';
 import { Phone, Video, PhoneOff } from 'lucide-react';
+import { soundService } from '../services/soundService';
 
 interface IncomingCallPopupProps {
   call: Call;
@@ -15,6 +16,25 @@ export const IncomingCallPopup: React.FC<IncomingCallPopupProps> = ({
 }) => {
   const callerName = call.caller.displayName || call.caller.username;
   const isVideo = call.type === 'VIDEO';
+
+  // Play ringing sound on mount and ensure clean stop on dismiss/action
+  useEffect(() => {
+    soundService.startIncomingRingtone();
+    return () => {
+      soundService.stopIncomingRingtone();
+    };
+  }, []);
+
+  const handleAcceptClick = () => {
+    soundService.stopIncomingRingtone();
+    onAccept();
+  };
+
+  const handleDeclineClick = () => {
+    soundService.stopIncomingRingtone();
+    soundService.playCallEndedTone();
+    onDecline();
+  };
 
   return (
     <div className="fixed top-6 right-6 z-60 bg-[#191C3B] border-2 border-[#C59A58] rounded-3xl shadow-2xl p-5 w-80 text-white animate-bounce-short">
@@ -43,7 +63,7 @@ export const IncomingCallPopup: React.FC<IncomingCallPopupProps> = ({
       <div className="flex items-center gap-3 mt-4">
         <button
           type="button"
-          onClick={onDecline}
+          onClick={handleDeclineClick}
           className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-md transition-all"
         >
           <PhoneOff className="w-4 h-4" />
@@ -52,7 +72,7 @@ export const IncomingCallPopup: React.FC<IncomingCallPopupProps> = ({
 
         <button
           type="button"
-          onClick={onAccept}
+          onClick={handleAcceptClick}
           className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-md transition-all animate-pulse"
         >
           {isVideo ? <Video className="w-4 h-4" /> : <Phone className="w-4 h-4" />}

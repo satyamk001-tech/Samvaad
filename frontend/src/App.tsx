@@ -16,6 +16,7 @@ import { SettingsModal, SettingsSection } from './components/SettingsModal';
 import { Call, Conversation } from './types';
 import { api } from './services/api';
 import { stompService } from './services/stomp';
+import { soundService } from './services/soundService';
 import {
   MessageSquare,
   Phone,
@@ -132,6 +133,7 @@ const MainApp: React.FC = () => {
       } else if (event?.eventType === 'CALL_SIGNAL') {
         const signal = event.data;
         if (signal?.type === 'END' || signal?.type === 'REJECT' || signal?.type === 'CANCEL') {
+          soundService.stopIncomingRingtone();
           setIncomingCall((prev) => (prev && prev.id === signal.callId ? null : prev));
         }
       } else if (event?.eventType === 'NEW_MESSAGE' || event?.eventType === 'CONVERSATION_UPDATE') {
@@ -177,6 +179,7 @@ const MainApp: React.FC = () => {
 
   const handleAcceptIncomingCall = () => {
     if (!incomingCall) return;
+    soundService.stopIncomingRingtone();
     // Activate CallModal immediately; CallModal handles RTCPeerConnection setup and media capture before signaling ACCEPT
     setActiveCall(incomingCall);
     setIncomingCall(null);
@@ -185,6 +188,8 @@ const MainApp: React.FC = () => {
 
   const handleDeclineIncomingCall = async () => {
     if (!incomingCall) return;
+    soundService.stopIncomingRingtone();
+    soundService.playCallEndedTone();
     const declinedCall = incomingCall;
     setIncomingCall(null);
     try {
