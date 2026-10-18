@@ -2,6 +2,11 @@
 
 > **"Har baat, ek saath."**
 
+### 🌐 Live Production Deployment
+* **Live Web App**: [https://samvaad-wheat.vercel.app](https://samvaad-wheat.vercel.app)
+* **Backend API & WebSocket**: [https://samvaad-l9lg.onrender.com](https://samvaad-l9lg.onrender.com)
+* **Database**: PostgreSQL 16 (Supabase IPv4 Pooler)
+
 Samvaad is an enterprise-grade, sovereign, high-concurrency real-time communication platform built with modern Java 25 backend architecture, React 18 + Vite frontend, PostgreSQL persistence, Redis presence tracking, Apache Kafka event streaming, STOMP WebSockets, WebRTC voice/video calling with screen sharing, DigiLocker E2EE sovereign document vault, in-chat UPI instant payments, and the Bhashini Indic AI translation engine.
 
 ![Samvaad Chat Interface & Dossier](docs/screens/samvaad_chat_dossier.png)
