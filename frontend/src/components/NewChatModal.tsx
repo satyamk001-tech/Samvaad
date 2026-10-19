@@ -23,12 +23,14 @@ export const NewChatModal: React.FC<NewChatModalProps> = ({
 
   useEffect(() => {
     async function searchUsers() {
+      if (!searchQuery.trim() || searchQuery.trim().length < 2) {
+        setSearchResults([]);
+        return;
+      }
       try {
-        const url = searchQuery.trim()
-          ? `/users/search?q=${encodeURIComponent(searchQuery.trim())}`
-          : '/users/search';
+        const url = `/users/search?q=${encodeURIComponent(searchQuery.trim())}`;
         const users = await api.get<User[]>(url);
-        setSearchResults(users.filter((u) => u.id !== currentUser.id));
+        setSearchResults((users || []).filter((u) => u.id !== currentUser.id));
       } catch (err) {
         console.error('Search failed', err);
       }

@@ -35,11 +35,17 @@ class MessageServiceTest {
     @Mock
     private ConversationService conversationService;
 
+    @Mock
+    private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+
+    @Mock
+    private org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
+
     private MessageService messageService;
 
     @BeforeEach
     void setUp() {
-        messageService = new MessageService(messageRepository, conversationService);
+        messageService = new MessageService(messageRepository, conversationService, jdbcTemplate, messagingTemplate);
     }
 
     @Test

@@ -49,6 +49,9 @@ class SignalingServiceTest {
     @Mock
     private SimpMessagingTemplate messagingTemplate;
 
+    @Mock
+    private com.samvaad.user.repository.UserBlockRepository userBlockRepository;
+
     @InjectMocks
     private SignalingService signalingService;
 

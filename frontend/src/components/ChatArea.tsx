@@ -32,14 +32,24 @@ import {
   X,
   Volume2,
   Palette,
+  MapPin,
+  Trash2,
+  MoreVertical,
+  UserX,
+  UserCheck,
+  AlertCircle,
+  ArrowLeft,
 } from 'lucide-react';
 import { ChatWallpaperModal, ChatWallpaperConfig } from './ChatWallpaperModal';
+import { API_BASE } from '../services/api';
 
 interface ChatAreaProps {
   conversation: Conversation;
   currentUser: User;
   onInitiateCall: (type: 'AUDIO' | 'VIDEO') => void;
   onToggleDossier?: () => void;
+  onDeleteConversation?: (conversationId: string) => void;
+  onBack?: () => void;
 }
 
 export const ChatArea: React.FC<ChatAreaProps> = ({
@@ -47,6 +57,8 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   currentUser,
   onInitiateCall,
   onToggleDossier,
+  onDeleteConversation,
+  onBack,
 }) => {
   const { t } = useTranslation();
   const { token } = useAuth();
@@ -54,7 +66,128 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   const [inputText, setInputText] = useState('');
 
   const getAttachmentUrl = (messageId: string) => {
-    return `/api/v1/attachments/messages/${messageId}/download${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+    return `${API_BASE}/attachments/messages/${messageId}/download${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+  };
+
+  const [showMenu, setShowMenu] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
+
+  useEffect(() => {
+    const other = conversation.members.find((m) => m.user.id !== currentUser.id)?.user;
+    if (other) {
+      api.get<User[]>('/users/blocked').then((blockedList) => {
+        setIsBlocked((blockedList || []).some((u) => u.id === other.id));
+      }).catch(() => {});
+    }
+  }, [conversation.id, currentUser.id]);
+
+  const handleToggleBlock = async () => {
+    const other = conversation.members.find((m) => m.user.id !== currentUser.id)?.user;
+    if (!other) return;
+    try {
+      if (isBlocked) {
+        await api.delete(`/users/${other.id}/block`);
+        setIsBlocked(false);
+      } else {
+        if (!window.confirm(`क्या आप ${other.displayName || other.username} को ब्लॉक करना चाहते हैं?`)) return;
+        await api.post(`/users/${other.id}/block`);
+        setIsBlocked(true);
+      }
+      setShowMenu(false);
+    } catch (err) {
+      console.error('Failed to toggle block', err);
+    }
+  };
+
+  const handleDeleteConversation = async () => {
+    if (!window.confirm('क्या आप इस चैट को अपने इनबॉक्स से हटाना चाहते हैं? (Remove conversation?)')) return;
+    try {
+      await api.delete(`/conversations/${conversation.id}`);
+      if (onDeleteConversation) {
+        onDeleteConversation(conversation.id);
+      } else {
+        window.location.reload();
+      }
+    } catch (err) {
+      console.error('Failed to delete conversation', err);
+    }
+  };
+
+  const handleAcceptRequest = async () => {
+    try {
+      await api.post(`/conversations/${conversation.id}/accept`);
+      conversation.status = 'ACCEPTED';
+      setMessages((prev) => [...prev]);
+    } catch (err) {
+      console.error('Failed to accept request', err);
+    }
+  };
+
+  const handleRejectRequest = async () => {
+    try {
+      await api.post(`/conversations/${conversation.id}/reject`);
+      if (onDeleteConversation) {
+        onDeleteConversation(conversation.id);
+      }
+    } catch (err) {
+      console.error('Failed to reject request', err);
+    }
+  };
+
+  const handleUnsendMessage = async (messageId: string) => {
+    if (!window.confirm('क्या आप यह संदेश सभी के लिए वापस लेना चाहते हैं? (Unsend message for everyone?)')) return;
+    try {
+      await api.delete(`/messages/${messageId}`);
+      setMessages((prev) =>
+        prev.map((m) => (m.id === messageId ? { ...m, isDeleted: true, content: 'This message was deleted' } : m))
+      );
+    } catch (err) {
+      console.error('Failed to unsend message', err);
+    }
+  };
+
+  const handleShareLocation = () => {
+    if (!navigator.geolocation) {
+      alert('स्थान सेवा आपके ब्राउज़र पर समर्थित नहीं है।');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude.toFixed(6);
+        const lon = pos.coords.longitude.toFixed(6);
+        const locContent = `${lat},${lon};Lat: ${lat}, Long: ${lon}`;
+        const tempId = `temp-${Date.now()}`;
+        const newMsg: Message = {
+          id: tempId,
+          conversationId: conversation.id,
+          sender: currentUser,
+          content: locContent,
+          type: 'LOCATION',
+          isEdited: false,
+          isDeleted: false,
+          status: 'SENT',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        setMessages((prev) => [...prev, newMsg]);
+
+        const payload = {
+          conversationId: conversation.id,
+          content: locContent,
+          type: 'LOCATION' as const,
+          tempId,
+        };
+        if (stompService.isConnected()) {
+          stompService.send('/app/chat.send', payload);
+        } else {
+          api.post(`/conversations/${conversation.id}/messages`, payload).catch(console.error);
+        }
+      },
+      (err) => {
+        alert('स्थान प्राप्त करने में असमर्थ: ' + err.message);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
   };
   const [isTyping, setIsTyping] = useState(false);
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
@@ -269,6 +402,20 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
         setMessages((prev) =>
           prev.map((m) => (m.id === messageId ? { ...m, viewedAt } : m))
         );
+      } else if (event.eventType === 'MESSAGE_DELETED') {
+        const deletedId = event.data?.messageId || event.data?.id;
+        if (deletedId) {
+          setMessages((prev) =>
+            prev.map((m) => (m.id === deletedId ? { ...m, isDeleted: true, content: 'This message was deleted' } : m))
+          );
+        }
+      } else if (event.eventType === 'MESSAGE_EDITED') {
+        const editedMsg = event.data;
+        if (editedMsg && editedMsg.id) {
+          setMessages((prev) =>
+            prev.map((m) => (m.id === editedMsg.id ? { ...m, content: editedMsg.content, isEdited: true } : m))
+          );
+        }
       } else if (event.eventType === 'TYPING') {
         const { username, isTyping } = event.data;
         if (username !== currentUser.username) {
@@ -603,8 +750,17 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
     <div className="flex-1 flex flex-col h-full bg-[#FAF7F2] overflow-hidden">
       {/* 1. Header Bar */}
       <header className="h-16 px-6 bg-[#FFFFFF] border-b border-[#E8E2D5] flex items-center justify-between z-10 shadow-xs flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-[#191C3B] text-white flex items-center justify-center font-serif font-black text-base border border-[#C59A58] shadow-xs">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="md:hidden p-1.5 -ml-2 rounded-xl text-[#191C3B] hover:bg-gray-100 transition-colors"
+              title="वापस जाएं • Back"
+            >
+              <ArrowLeft className="w-5 h-5 text-[#191C3B]" />
+            </button>
+          )}
+          <div className="w-10 h-10 rounded-2xl bg-[#191C3B] text-white flex items-center justify-center font-serif font-black text-base border border-[#C59A58] shadow-xs flex-shrink-0">
             {getTitle().charAt(0).toUpperCase()}
           </div>
           <div>
@@ -665,8 +821,72 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
               <Info className="w-4 h-4" />
             </button>
           )}
+
+          {/* More options menu (Block, Delete chat) */}
+          <div className="relative">
+            <button
+              onClick={() => setShowMenu((prev) => !prev)}
+              className="w-9 h-9 rounded-xl bg-[#FAF7F2] border border-[#E8E2D5] hover:border-[#C59A58] text-[#686578] hover:text-[#191C3B] flex items-center justify-center transition-all"
+              title="अधिक विकल्प • More Options"
+            >
+              <MoreVertical className="w-4 h-4" />
+            </button>
+            {showMenu && (
+              <div className="absolute right-0 top-11 w-48 bg-white border border-[#E8E2D5] rounded-2xl shadow-xl z-50 py-1.5 animate-in fade-in zoom-in-95 text-xs">
+                {conversation.type === 'DIRECT' && (
+                  <button
+                    onClick={handleToggleBlock}
+                    className={`w-full px-3.5 py-2 text-left flex items-center gap-2 hover:bg-gray-50 font-medium ${isBlocked ? 'text-green-600' : 'text-red-600'}`}
+                  >
+                    {isBlocked ? <UserCheck className="w-4 h-4" /> : <UserX className="w-4 h-4" />}
+                    <span>{isBlocked ? 'अनब्लॉक करें (Unblock)' : 'ब्लॉक करें (Block User)'}</span>
+                  </button>
+                )}
+                <button
+                  onClick={handleDeleteConversation}
+                  className="w-full px-3.5 py-2 text-left flex items-center gap-2 text-red-600 hover:bg-red-50 font-medium"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>चैट हटाएं (Delete Chat)</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
+
+      {/* 1.5 Pending Message Request Banner */}
+      {conversation.status === 'PENDING' && conversation.requestedToId === currentUser.id && (
+        <div className="bg-amber-50 border-b border-amber-200 px-6 py-2.5 flex items-center justify-between gap-4 z-10 flex-shrink-0">
+          <div className="flex items-center gap-2 text-amber-900 text-xs">
+            <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+            <span>
+              <strong>संदेश अनुरोध (Message Request):</strong> यह उपयोगकर्ता आपसे संपर्क करना चाहता है।
+            </span>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={handleAcceptRequest}
+              className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-colors"
+            >
+              स्वीकार करें (Accept)
+            </button>
+            <button
+              onClick={handleRejectRequest}
+              className="px-3 py-1.5 rounded-xl bg-red-100 hover:bg-red-200 text-red-800 font-bold text-xs transition-colors"
+            >
+              अस्वीकार करें (Decline)
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Blocked User Banner */}
+      {isBlocked && (
+        <div className="bg-red-50 border-b border-red-200 px-6 py-2 text-center text-xs text-red-700 font-semibold flex-shrink-0">
+          🚫 आपने इस उपयोगकर्ता को ब्लॉक कर दिया है। आप संदेश या कॉल नहीं कर सकते।
+        </div>
+      )}
 
       {/* Disappearing Messages Notice Banner */}
       {conversation.disappearingSeconds && conversation.disappearingSeconds > 0 && (
@@ -845,6 +1065,35 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
                       <Download className="w-3.5 h-3.5" />
                     </a>
                   </div>
+                ) : msg.type === 'LOCATION' ? (
+                  <div className="space-y-2 p-2.5 rounded-xl bg-black/5">
+                    <div className="flex items-center gap-2 text-[#D97706] font-bold text-xs">
+                      <MapPin className="w-4 h-4 text-[#D97706] animate-bounce" />
+                      <span>स्थान साझा किया गया • Location Shared</span>
+                    </div>
+                    <p className="text-xs opacity-90 break-words">{msg.content}</p>
+                    {(() => {
+                      const coords = msg.content.split(';')[0]?.split(',');
+                      if (coords && coords.length === 2) {
+                        const lat = parseFloat(coords[0]);
+                        const lng = parseFloat(coords[1]);
+                        if (!isNaN(lat) && !isNaN(lng)) {
+                          return (
+                            <a
+                              href={`https://www.google.com/maps?q=${lat},${lng}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#D97706] hover:bg-[#B45309] text-white font-semibold text-[11px] shadow-xs transition-colors"
+                            >
+                              <MapPin className="w-3.5 h-3.5" />
+                              <span>गूगल मैप्स पर देखें (Open in Maps)</span>
+                            </a>
+                          );
+                        }
+                      }
+                      return null;
+                    })()}
+                  </div>
                 ) : (
                   /* Text Message Content + Live Bhashini Translation */
                   <div className="space-y-1">
@@ -876,7 +1125,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
                 </div>
               </div>
 
-              {/* Hover Action Bar: Quote-Reply, Star, Bhashini Translate */}
+              {/* Hover Action Bar: Quote-Reply, Star, Bhashini Translate, Unsend */}
               <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 mt-1 px-1">
                 <button
                   onClick={() => setReplyingTo(msg)}
@@ -901,6 +1150,15 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
                     title="भाषिणी 1-टैप अनुवाद"
                   >
                     <Languages className="w-3 h-3 text-indigo-600" />
+                  </button>
+                )}
+                {isMe && !msg.isDeleted && (
+                  <button
+                    onClick={() => handleUnsendMessage(msg.id)}
+                    className="p-1 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-500 text-[10px] flex items-center gap-0.5"
+                    title="संदेश वापस लें (Unsend for everyone)"
+                  >
+                    <Trash2 className="w-3 h-3" />
                   </button>
                 )}
               </div>
@@ -1021,6 +1279,16 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
             title="संलग्नक जोड़ें • Attach File (up to 2GB)"
           >
             <Paperclip className="w-4 h-4" />
+          </button>
+
+          {/* Location Sharing Button */}
+          <button
+            type="button"
+            onClick={handleShareLocation}
+            className="w-10 h-10 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 flex items-center justify-center transition-all flex-shrink-0"
+            title="वर्तमान स्थान साझा करें • Share Current Location"
+          >
+            <MapPin className="w-4 h-4 text-amber-600" />
           </button>
 
           {/* Voice Note Recorder (Inline Mic trigger + waveform preview) */}

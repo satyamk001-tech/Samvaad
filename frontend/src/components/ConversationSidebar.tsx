@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Conversation, User } from '../types';
 import { Search, Plus, Users, Shield, Pin, Clock } from 'lucide-react';
+import { api } from '../services/api';
 
 interface ConversationSidebarProps {
   conversations: Conversation[];
@@ -14,7 +15,7 @@ interface ConversationSidebarProps {
   onOpenStatus?: () => void;
 }
 
-type FilterCategory = 'ALL' | 'UNREAD' | 'GROUPS' | 'WORK' | 'PERSONAL';
+type FilterCategory = 'ALL' | 'UNREAD' | 'GROUPS' | 'WORK' | 'PERSONAL' | 'REQUESTS';
 
 export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
   conversations,
@@ -29,6 +30,13 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<FilterCategory>('ALL');
+  const [requests, setRequests] = useState<Conversation[]>([]);
+
+  useEffect(() => {
+    api.get<Conversation[]>('/conversations/requests').then((reqs) => {
+      setRequests(reqs || []);
+    }).catch(() => {});
+  }, []);
 
   // Check if a conversation is pinned
   const isConvPinned = (c: Conversation) => pinnedIds.includes(c.id) || c.isPinned;
@@ -85,7 +93,7 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
   };
 
   return (
-    <aside className="w-80 md:w-96 bg-[#FFFFFF] border-r border-[#E8E2D5] flex flex-col h-full z-10 select-none">
+    <aside className="w-full bg-[#FFFFFF] border-r border-[#E8E2D5] flex flex-col h-full z-10 select-none">
       {/* 1. Header with Sovereign Badge and New Chat Button */}
       <div className="p-4 border-b border-[#E8E2D5] bg-[#FFFFFF]">
         <div className="flex items-center justify-between mb-2">
@@ -207,10 +215,11 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
           </div>
         )}
 
-        {/* Filter Pills: All, Personal, Work, Groups, Unread */}
+        {/* Filter Pills: All, Requests, Personal, Work, Groups, Unread */}
         <div className="flex items-center gap-1.5 mt-3 overflow-x-auto pb-0.5 no-scrollbar">
           {[
             { id: 'ALL', label: t('all') || 'सभी' },
+            { id: 'REQUESTS', label: `अनुरोध • Requests ${requests.length > 0 ? `(${requests.length})` : ''}` },
             { id: 'PERSONAL', label: 'व्यक्तिगत • Personal' },
             { id: 'WORK', label: t('work') || 'कार्य • Work' },
             { id: 'GROUPS', label: t('groups') || 'समूह • Groups' },
@@ -233,13 +242,13 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
 
       {/* 2. Conversations List */}
       <div className="flex-1 overflow-y-auto divide-y divide-[#E8E2D5]/40">
-        {filteredConversations.length === 0 ? (
+        {(selectedFilter === 'REQUESTS' ? requests : filteredConversations).length === 0 ? (
           <div className="p-8 text-center text-[#686578] text-xs">
-            <p className="font-medium">कोई वार्तालाप नहीं मिला</p>
-            <p className="text-[11px] text-[#9E9AA8] mt-1">No conversations matching search or category</p>
+            <p className="font-medium">{selectedFilter === 'REQUESTS' ? 'कोई नया संदेश अनुरोध नहीं है' : 'कोई वार्तालाप नहीं मिला'}</p>
+            <p className="text-[11px] text-[#9E9AA8] mt-1">{selectedFilter === 'REQUESTS' ? 'No pending message requests' : 'No conversations matching search or category'}</p>
           </div>
         ) : (
-          filteredConversations.map((conv) => {
+          (selectedFilter === 'REQUESTS' ? requests : filteredConversations).map((conv) => {
             const isActive = activeConversation?.id === conv.id;
             const title = getConversationTitle(conv);
             const otherUser = getOtherUser(conv);

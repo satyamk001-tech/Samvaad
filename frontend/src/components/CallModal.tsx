@@ -528,6 +528,47 @@ export const CallModal: React.FC<CallModalProps> = ({
     }
   };
 
+  const [floatingPos, setFloatingPos] = useState<{ x: number; y: number } | null>(null);
+  const dragStartRef = useRef<{ startX: number; startY: number; origX: number; origY: number; moved: boolean } | null>(null);
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if ((e.target as HTMLElement).closest('button')) return;
+    const currentX = floatingPos ? floatingPos.x : (window.innerWidth - 340);
+    const currentY = floatingPos ? floatingPos.y : (window.innerHeight - 260);
+    dragStartRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      origX: currentX,
+      origY: currentY,
+      moved: false,
+    };
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!dragStartRef.current) return;
+    const dx = e.clientX - dragStartRef.current.startX;
+    const dy = e.clientY - dragStartRef.current.startY;
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
+      dragStartRef.current.moved = true;
+    }
+    const targetWidth = call.type === 'VIDEO' ? 320 : 304;
+    const targetHeight = call.type === 'VIDEO' ? 240 : 100;
+    const newX = Math.max(10, Math.min(window.innerWidth - targetWidth - 10, dragStartRef.current.origX + dx));
+    const newY = Math.max(10, Math.min(window.innerHeight - targetHeight - 10, dragStartRef.current.origY + dy));
+    setFloatingPos({ x: newX, y: newY });
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (dragStartRef.current && !dragStartRef.current.moved) {
+      onToggleMinimize();
+    }
+    dragStartRef.current = null;
+    try {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {}
+  };
+
   const toggleScreenShare = async () => {
     try {
       if (isScreenSharing) {
@@ -535,16 +576,52 @@ export const CallModal: React.FC<CallModalProps> = ({
           screenStreamRef.current.getTracks().forEach((track) => track.stop());
           screenStreamRef.current = null;
         }
+        if (peerConnectionRef.current && localStreamRef.current) {
+          const videoTrack = localStreamRef.current.getVideoTracks()[0];
+          const sender = peerConnectionRef.current.getSenders().find((s) => s.track?.kind === 'video');
+          if (sender && videoTrack) {
+            await sender.replaceTrack(videoTrack);
+          }
+          if (localVideoRef.current) {
+            localVideoRef.current.srcObject = localStreamRef.current;
+            localVideoRef.current.play().catch(() => {});
+          }
+        }
         setIsScreenSharing(false);
       } else {
         const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
         screenStreamRef.current = stream;
+        const screenTrack = stream.getVideoTracks()[0];
+
+        if (peerConnectionRef.current && screenTrack) {
+          const sender = peerConnectionRef.current.getSenders().find((s) => s.track?.kind === 'video');
+          if (sender) {
+            await sender.replaceTrack(screenTrack);
+          }
+        }
+
         setIsScreenSharing(true);
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = stream;
           localVideoRef.current.play().catch(() => {});
         }
-        stream.getVideoTracks()[0].onended = () => {
+
+        screenTrack.onended = async () => {
+          if (screenStreamRef.current) {
+            screenStreamRef.current.getTracks().forEach((t) => t.stop());
+            screenStreamRef.current = null;
+          }
+          if (peerConnectionRef.current && localStreamRef.current) {
+            const videoTrack = localStreamRef.current.getVideoTracks()[0];
+            const sender = peerConnectionRef.current.getSenders().find((s) => s.track?.kind === 'video');
+            if (sender && videoTrack) {
+              await sender.replaceTrack(videoTrack);
+            }
+            if (localVideoRef.current) {
+              localVideoRef.current.srcObject = localStreamRef.current;
+              localVideoRef.current.play().catch(() => {});
+            }
+          }
           setIsScreenSharing(false);
         };
       }
@@ -555,7 +632,8 @@ export const CallModal: React.FC<CallModalProps> = ({
   };
 
   const copyCallLink = () => {
-    const link = `http://localhost:5173/?call=${call.id}`;
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://samvaad-wheat.vercel.app';
+    const link = `${origin}/?call=${call.id}`;
     navigator.clipboard.writeText(link).catch(() => {});
     setCallLinkCopied(true);
     setTimeout(() => setCallLinkCopied(false), 2500);
@@ -567,12 +645,22 @@ export const CallModal: React.FC<CallModalProps> = ({
       return (
         <>
           <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
-          <div className="fixed bottom-6 right-6 z-50 w-80 bg-[#191C3B] border-2 border-[#C59A58] rounded-3xl shadow-2xl overflow-hidden text-white animate-in fade-in slide-in-from-bottom-5 duration-200">
+          <div
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            style={{
+              left: floatingPos ? `${floatingPos.x}px` : undefined,
+              top: floatingPos ? `${floatingPos.y}px` : undefined,
+              bottom: floatingPos ? undefined : '1.5rem',
+              right: floatingPos ? undefined : '1.5rem',
+            }}
+            className="fixed z-50 w-80 bg-[#191C3B] border-2 border-[#C59A58] rounded-3xl shadow-2xl overflow-hidden text-white cursor-grab active:cursor-grabbing touch-none select-none animate-in fade-in slide-in-from-bottom-5 duration-200"
+          >
           {/* Video Container Stage */}
           <div
-            className="relative h-44 bg-black cursor-pointer group flex items-center justify-center overflow-hidden"
-            onClick={onToggleMinimize}
-            title="क्लिक करके बड़ा करें • Tap to Maximize"
+            className="relative h-44 bg-black group flex items-center justify-center overflow-hidden"
+            title="खींचकर स्थानांतरित करें अथवा क्लिक करके बड़ा करें • Drag or Tap to Maximize"
           >
             {hasRemoteStream ? (
               <video
@@ -681,7 +769,18 @@ export const CallModal: React.FC<CallModalProps> = ({
     return (
       <>
         <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
-        <div className="fixed bottom-6 right-6 z-50 w-76 bg-[#191C3B] border-2 border-[#C59A58] rounded-2xl shadow-2xl p-3 text-white animate-in fade-in slide-in-from-bottom-5 duration-200">
+        <div
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          style={{
+            left: floatingPos ? `${floatingPos.x}px` : undefined,
+            top: floatingPos ? `${floatingPos.y}px` : undefined,
+            bottom: floatingPos ? undefined : '1.5rem',
+            right: floatingPos ? undefined : '1.5rem',
+          }}
+          className="fixed z-50 w-76 bg-[#191C3B] border-2 border-[#C59A58] rounded-2xl shadow-2xl p-3 text-white cursor-grab active:cursor-grabbing touch-none select-none animate-in fade-in slide-in-from-bottom-5 duration-200"
+        >
         <div className="flex items-center gap-3">
           {/* Avatar with soundwave pulse */}
           <div className="relative flex-shrink-0 cursor-pointer" onClick={onToggleMinimize}>

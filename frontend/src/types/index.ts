@@ -44,11 +44,13 @@ export interface Conversation {
   pinOrder?: number;
   disappearingSeconds?: number | null;
   folderTag?: 'ALL' | 'PERSONAL' | 'WORK' | 'GROUPS' | 'UNREAD';
+  status?: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+  requestedToId?: UUID;
   createdAt: string;
   updatedAt: string;
 }
 
-export type MessageType = 'TEXT' | 'IMAGE' | 'DOCUMENT' | 'AUDIO' | 'VIDEO' | 'VOICE_NOTE';
+export type MessageType = 'TEXT' | 'IMAGE' | 'DOCUMENT' | 'AUDIO' | 'VIDEO' | 'VOICE_NOTE' | 'LOCATION';
 export type MessageStatusType = 'SENT' | 'DELIVERED' | 'READ';
 
 export interface MessageReaction {

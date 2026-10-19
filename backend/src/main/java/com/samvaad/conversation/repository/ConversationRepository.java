@@ -18,9 +18,22 @@ public interface ConversationRepository extends JpaRepository<Conversation, UUID
         SELECT c FROM Conversation c
         JOIN ConversationMember cm ON c.id = cm.conversation.id
         WHERE cm.user.id = :userId AND cm.leftAt IS NULL
+          AND (c.status IS NULL OR c.status = 'ACCEPTED')
+          AND c.id NOT IN (SELECT udc.conversation.id FROM UserDeletedConversation udc WHERE udc.user.id = :userId)
         ORDER BY c.updatedAt DESC
     """)
     List<Conversation> findAllByUserId(@Param("userId") UUID userId);
+
+    @Query("""
+        SELECT c FROM Conversation c
+        JOIN ConversationMember cm ON c.id = cm.conversation.id
+        WHERE cm.user.id = :userId AND cm.leftAt IS NULL
+          AND c.status = 'PENDING'
+          AND c.requestedTo.id = :userId
+          AND c.id NOT IN (SELECT udc.conversation.id FROM UserDeletedConversation udc WHERE udc.user.id = :userId)
+        ORDER BY c.updatedAt DESC
+    """)
+    List<Conversation> findPendingRequestsByUserId(@Param("userId") UUID userId);
 
     @Query("""
         SELECT c FROM Conversation c

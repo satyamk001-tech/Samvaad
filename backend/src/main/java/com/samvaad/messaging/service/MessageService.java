@@ -6,6 +6,7 @@ import com.samvaad.conversation.service.ConversationService;
 import com.samvaad.messaging.dto.EditMessageRequest;
 import com.samvaad.messaging.dto.MessageDto;
 import com.samvaad.messaging.dto.ReactionSummaryDto;
+import com.samvaad.messaging.dto.StompEventPayload;
 import com.samvaad.messaging.entity.Message;
 import com.samvaad.messaging.entity.MessageStatusType;
 import com.samvaad.messaging.repository.MessageRepository;
@@ -14,6 +15,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,23 +27,18 @@ public class MessageService {
     private final MessageRepository messageRepository;
     private final ConversationService conversationService;
     private final JdbcTemplate jdbcTemplate;
+    private final SimpMessagingTemplate messagingTemplate;
 
-    @org.springframework.beans.factory.annotation.Autowired
     public MessageService(
             MessageRepository messageRepository,
             ConversationService conversationService,
-            JdbcTemplate jdbcTemplate
+            JdbcTemplate jdbcTemplate,
+            SimpMessagingTemplate messagingTemplate
     ) {
         this.messageRepository = messageRepository;
         this.conversationService = conversationService;
         this.jdbcTemplate = jdbcTemplate;
-    }
-
-    public MessageService(
-            MessageRepository messageRepository,
-            ConversationService conversationService
-    ) {
-        this(messageRepository, conversationService, null);
+        this.messagingTemplate = messagingTemplate;
     }
 
     @Transactional
@@ -172,7 +169,16 @@ public class MessageService {
         message.setEdited(true);
 
         Message updatedMessage = messageRepository.save(message);
-        return MessageDto.fromEntity(updatedMessage, MessageStatusType.SENT, List.of());
+        MessageDto updatedDto = MessageDto.fromEntity(updatedMessage, MessageStatusType.SENT, List.of());
+
+        if (messagingTemplate != null) {
+            messagingTemplate.convertAndSend(
+                    "/topic/conversations." + updatedMessage.getConversation().getId(),
+                    StompEventPayload.of("MESSAGE_EDITED", updatedDto)
+            );
+        }
+
+        return updatedDto;
     }
 
     @Transactional
@@ -189,5 +195,16 @@ public class MessageService {
 
         message.setDeleted(true);
         messageRepository.save(message);
+
+        // Broadcast real-time unsend / delete event to all conversation participants
+        if (messagingTemplate != null) {
+            messagingTemplate.convertAndSend(
+                    "/topic/conversations." + message.getConversation().getId(),
+                    StompEventPayload.of("MESSAGE_DELETED", Map.of(
+                            "messageId", messageId.toString(),
+                            "conversationId", message.getConversation().getId().toString()
+                    ))
+            );
+        }
     }
 }

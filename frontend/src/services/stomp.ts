@@ -23,6 +23,8 @@ class StompService {
       const wsProtocol = cleanApi.startsWith('https') ? 'wss' : 'ws';
       const cleanHost = cleanApi.replace(/^https?:\/\//, '');
       brokerUrl = `${wsProtocol}://${cleanHost}/ws`;
+    } else if (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
+      brokerUrl = 'wss://samvaad-l9lg.onrender.com/ws';
     } else {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       brokerUrl = `${protocol}//${window.location.host}/ws`;

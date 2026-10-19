@@ -5,6 +5,7 @@ public enum MessageType {
     IMAGE,
     DOCUMENT,
     VOICE_NOTE,
+    LOCATION,
     SYSTEM,
     CALL_LOG
 }

@@ -31,23 +31,30 @@ public class SignalingService {
     private final UserRepository userRepository;
     private final ConversationRepository conversationRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final com.samvaad.user.repository.UserBlockRepository userBlockRepository;
 
     public SignalingService(
             CallRepository callRepository,
             UserRepository userRepository,
             ConversationRepository conversationRepository,
-            SimpMessagingTemplate messagingTemplate
+            SimpMessagingTemplate messagingTemplate,
+            com.samvaad.user.repository.UserBlockRepository userBlockRepository
     ) {
         this.callRepository = callRepository;
         this.userRepository = userRepository;
         this.conversationRepository = conversationRepository;
         this.messagingTemplate = messagingTemplate;
+        this.userBlockRepository = userBlockRepository;
     }
 
     @Transactional
     public CallDto initiateCall(UUID callerId, InitiateCallRequest request) {
         if (callerId.equals(request.receiverId())) {
             throw new BadRequestException("Cannot call yourself");
+        }
+
+        if (userBlockRepository.isBlockedEitherWay(callerId, request.receiverId())) {
+            throw new BadRequestException("Cannot initiate call: blocked by privacy restrictions.");
         }
 
         User caller = userRepository.findById(callerId)

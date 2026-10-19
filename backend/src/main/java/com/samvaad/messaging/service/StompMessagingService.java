@@ -28,6 +28,8 @@ public class StompMessagingService {
     private final SimpMessagingTemplate messagingTemplate;
     private final com.samvaad.common.outbox.OutboxService outboxService;
     private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+    private final com.samvaad.conversation.repository.ConversationMemberRepository memberRepository;
+    private final com.samvaad.user.repository.UserBlockRepository userBlockRepository;
 
     public StompMessagingService(
             MessageRepository messageRepository,
@@ -37,7 +39,9 @@ public class StompMessagingService {
             ConversationService conversationService,
             SimpMessagingTemplate messagingTemplate,
             com.samvaad.common.outbox.OutboxService outboxService,
-            org.springframework.jdbc.core.JdbcTemplate jdbcTemplate
+            org.springframework.jdbc.core.JdbcTemplate jdbcTemplate,
+            com.samvaad.conversation.repository.ConversationMemberRepository memberRepository,
+            com.samvaad.user.repository.UserBlockRepository userBlockRepository
     ) {
         this.messageRepository = messageRepository;
         this.messageStatusRepository = messageStatusRepository;
@@ -47,6 +51,8 @@ public class StompMessagingService {
         this.messagingTemplate = messagingTemplate;
         this.outboxService = outboxService;
         this.jdbcTemplate = jdbcTemplate;
+        this.memberRepository = memberRepository;
+        this.userBlockRepository = userBlockRepository;
     }
 
     @Transactional
@@ -59,6 +65,19 @@ public class StompMessagingService {
 
         Conversation conversation = conversationRepository.findById(payload.conversationId())
                 .orElseThrow(() -> new ResourceNotFoundException("Conversation not found"));
+
+        if (conversation.getType() == com.samvaad.conversation.entity.ConversationType.DIRECT && memberRepository != null && userBlockRepository != null) {
+            var members = memberRepository.findByConversationIdAndLeftAtIsNull(conversation.getId());
+            if (members != null) {
+                for (var m : members) {
+                    if (m.getUser() != null && !m.getUser().getId().equals(senderId)) {
+                        if (userBlockRepository.isBlockedEitherWay(senderId, m.getUser().getId())) {
+                            throw new com.samvaad.common.exception.BadRequestException("Cannot send message: blocked by user or privacy restrictions.");
+                        }
+                    }
+                }
+            }
+        }
 
         Message replyTo = null;
         if (payload.replyToMessageId() != null) {

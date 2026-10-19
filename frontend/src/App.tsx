@@ -71,6 +71,37 @@ const MainApp: React.FC = () => {
   // Avatar Studio modal state
   const [isAvatarStudioOpen, setIsAvatarStudioOpen] = useState(false);
 
+  // Desktop Resizable Sidebar state
+  const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('samvaad_sidebar_width');
+      if (saved) return Math.min(550, Math.max(260, parseInt(saved, 10)));
+    } catch {}
+    return 360;
+  });
+  const isResizingRef = useRef(false);
+
+  const startResizing = (e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizingRef.current = true;
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      if (!isResizingRef.current) return;
+      const navWidth = window.innerWidth >= 768 ? 80 : 64;
+      const newWidth = Math.min(550, Math.max(260, moveEvent.clientX - navWidth));
+      setSidebarWidth(newWidth);
+      try {
+        localStorage.setItem('samvaad_sidebar_width', newWidth.toString());
+      } catch {}
+    };
+    const onMouseUp = () => {
+      isResizingRef.current = false;
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  };
+
   // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -451,19 +482,39 @@ const MainApp: React.FC = () => {
         </aside>
 
         {/* Middle Master-Detail Panels */}
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex overflow-hidden relative">
           {/* Conversation List / Views */}
           {activeView === 'CHATS' && (
-            <ConversationSidebar
-              conversations={conversations}
-              activeConversation={activeConversation}
-              onSelectConversation={setActiveConversation}
-              onOpenNewChat={() => setIsNewChatOpen(true)}
-              currentUser={user}
-              onTogglePin={handleTogglePin}
-              pinnedIds={pinnedIds}
-              onOpenStatus={() => setIsStatusModalOpen(true)}
-            />
+            <div
+              className={`h-full flex-shrink-0 flex ${
+                activeConversation ? 'hidden md:flex' : 'w-full md:w-auto'
+              }`}
+              style={{
+                width: typeof window !== 'undefined' && window.innerWidth >= 768 ? `${sidebarWidth}px` : undefined,
+              }}
+            >
+              <div className="flex-1 h-full overflow-hidden">
+                <ConversationSidebar
+                  conversations={conversations}
+                  activeConversation={activeConversation}
+                  onSelectConversation={setActiveConversation}
+                  onOpenNewChat={() => setIsNewChatOpen(true)}
+                  currentUser={user}
+                  onTogglePin={handleTogglePin}
+                  pinnedIds={pinnedIds}
+                  onOpenStatus={() => setIsStatusModalOpen(true)}
+                />
+              </div>
+
+              {/* Draggable vertical divider for desktop sidebar */}
+              <div
+                onMouseDown={startResizing}
+                className="hidden md:flex w-1 hover:w-1.5 bg-[#E8E2D5] hover:bg-[#C59A58] cursor-col-resize transition-all select-none z-20 items-center justify-center group flex-shrink-0"
+                title="खींचकर चौड़ाई बदलें • Drag to resize sidebar"
+              >
+                <div className="w-0.5 h-8 bg-gray-300 group-hover:bg-[#C59A58] rounded-full" />
+              </div>
+            </div>
           )}
 
           {activeView === 'LANGUAGE' && (
@@ -474,14 +525,21 @@ const MainApp: React.FC = () => {
 
           {/* Active Chat Conversation View */}
           {activeConversation ? (
-            <ChatArea
-              conversation={activeConversation}
-              currentUser={user}
-              onInitiateCall={handleInitiateCall}
-              onToggleDossier={() => setShowDossier(!showDossier)}
-            />
+            <div className={`flex-1 h-full overflow-hidden flex flex-col ${!activeConversation ? 'hidden md:flex' : 'flex'}`}>
+              <ChatArea
+                conversation={activeConversation}
+                currentUser={user}
+                onInitiateCall={handleInitiateCall}
+                onToggleDossier={() => setShowDossier(!showDossier)}
+                onBack={() => setActiveConversation(null)}
+                onDeleteConversation={(deletedId) => {
+                  setActiveConversation(null);
+                  setConversations((prev) => prev.filter((c) => c.id !== deletedId));
+                }}
+              />
+            </div>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center bg-[#FAF7F2] p-8 text-center">
+            <div className="hidden md:flex flex-1 flex-col items-center justify-center bg-[#FAF7F2] p-8 text-center">
               <div className="w-20 h-20 rounded-3xl bg-[#191C3B] text-[#FAF7F2] flex items-center justify-center font-serif font-black text-4xl mb-4 border border-[#C59A58]/30 shadow-xl">
                 सं
               </div>

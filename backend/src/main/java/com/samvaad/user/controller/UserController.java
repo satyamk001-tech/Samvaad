@@ -11,6 +11,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -55,6 +56,30 @@ public class UserController {
                 .map(UserDto::toPublicDto)
                 .toList();
         return ResponseEntity.ok(users);
+    }
+
+    @PostMapping("/{userId}/block")
+    public ResponseEntity<Map<String, String>> blockUser(
+            @PathVariable UUID userId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        userService.blockUser(principal.getId(), userId);
+        return ResponseEntity.ok(Map.of("message", "User blocked successfully"));
+    }
+
+    @DeleteMapping("/{userId}/block")
+    public ResponseEntity<Map<String, String>> unblockUser(
+            @PathVariable UUID userId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        userService.unblockUser(principal.getId(), userId);
+        return ResponseEntity.ok(Map.of("message", "User unblocked successfully"));
+    }
+
+    @GetMapping("/blocked")
+    public ResponseEntity<List<UserDto>> getBlockedUsers(@AuthenticationPrincipal UserPrincipal principal) {
+        List<UserDto> blocked = userService.getBlockedUsers(principal.getId());
+        return ResponseEntity.ok(blocked);
     }
 
     @GetMapping("/{userId}")

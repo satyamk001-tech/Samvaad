@@ -59,6 +59,12 @@ class StompMessagingServiceTest {
     @Mock
     private com.samvaad.common.outbox.OutboxService outboxService;
 
+    @Mock
+    private com.samvaad.conversation.repository.ConversationMemberRepository memberRepository;
+
+    @Mock
+    private com.samvaad.user.repository.UserBlockRepository userBlockRepository;
+
     @InjectMocks
     private StompMessagingService stompMessagingService;
 

@@ -37,11 +37,23 @@ class ConversationServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private com.samvaad.user.repository.UserBlockRepository userBlockRepository;
+
+    @Mock
+    private com.samvaad.conversation.repository.UserDeletedConversationRepository userDeletedConversationRepository;
+
     private ConversationService conversationService;
 
     @BeforeEach
     void setUp() {
-        conversationService = new ConversationService(conversationRepository, memberRepository, userRepository);
+        conversationService = new ConversationService(
+                conversationRepository,
+                memberRepository,
+                userRepository,
+                userBlockRepository,
+                userDeletedConversationRepository
+        );
     }
 
     @Test

@@ -10,6 +10,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -28,6 +29,12 @@ public class ConversationController {
         return ResponseEntity.ok(conversations);
     }
 
+    @GetMapping("/requests")
+    public ResponseEntity<List<ConversationDto>> getPendingRequests(@AuthenticationPrincipal UserPrincipal principal) {
+        List<ConversationDto> requests = conversationService.getPendingRequests(principal.getId());
+        return ResponseEntity.ok(requests);
+    }
+
     @GetMapping("/{conversationId}")
     public ResponseEntity<ConversationDto> getConversationById(
             @PathVariable UUID conversationId,
@@ -44,6 +51,33 @@ public class ConversationController {
     ) {
         ConversationDto conversation = conversationService.createOrGetDirectConversation(principal.getId(), request.recipientId());
         return ResponseEntity.status(HttpStatus.CREATED).body(conversation);
+    }
+
+    @PostMapping("/{conversationId}/accept")
+    public ResponseEntity<ConversationDto> acceptRequest(
+            @PathVariable UUID conversationId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        ConversationDto conversation = conversationService.acceptRequest(conversationId, principal.getId());
+        return ResponseEntity.ok(conversation);
+    }
+
+    @PostMapping("/{conversationId}/reject")
+    public ResponseEntity<ConversationDto> rejectRequest(
+            @PathVariable UUID conversationId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        ConversationDto conversation = conversationService.rejectRequest(conversationId, principal.getId());
+        return ResponseEntity.ok(conversation);
+    }
+
+    @DeleteMapping("/{conversationId}")
+    public ResponseEntity<Map<String, String>> deleteConversation(
+            @PathVariable UUID conversationId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        conversationService.deleteConversationForUser(conversationId, principal.getId());
+        return ResponseEntity.ok(Map.of("message", "Conversation removed from your inbox"));
     }
 
     @PostMapping("/group")

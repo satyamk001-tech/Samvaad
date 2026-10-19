@@ -33,6 +33,13 @@ public class Conversation {
     @Column(name = "disappearing_seconds")
     private Integer disappearingSeconds;
 
+    @Column(length = 20)
+    private String status = "ACCEPTED";
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "requested_to_id")
+    private User requestedTo;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -43,13 +50,15 @@ public class Conversation {
 
     public Conversation() {}
 
-    public Conversation(UUID id, ConversationType type, String title, String avatarUrl, User createdBy, Integer disappearingSeconds, Instant createdAt, Instant updatedAt) {
+    public Conversation(UUID id, ConversationType type, String title, String avatarUrl, User createdBy, Integer disappearingSeconds, String status, User requestedTo, Instant createdAt, Instant updatedAt) {
         this.id = id;
         this.type = type;
         this.title = title;
         this.avatarUrl = avatarUrl;
         this.createdBy = createdBy;
         this.disappearingSeconds = disappearingSeconds;
+        this.status = status != null ? status : "ACCEPTED";
+        this.requestedTo = requestedTo;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -76,6 +85,12 @@ public class Conversation {
     public Integer getDisappearingSeconds() { return disappearingSeconds; }
     public void setDisappearingSeconds(Integer disappearingSeconds) { this.disappearingSeconds = disappearingSeconds; }
 
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public User getRequestedTo() { return requestedTo; }
+    public void setRequestedTo(User requestedTo) { this.requestedTo = requestedTo; }
+
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 
@@ -89,6 +104,8 @@ public class Conversation {
         private String avatarUrl;
         private User createdBy;
         private Integer disappearingSeconds;
+        private String status = "ACCEPTED";
+        private User requestedTo;
 
         public Builder id(UUID id) { this.id = id; return this; }
         public Builder type(ConversationType type) { this.type = type; return this; }
@@ -96,9 +113,11 @@ public class Conversation {
         public Builder avatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; return this; }
         public Builder createdBy(User createdBy) { this.createdBy = createdBy; return this; }
         public Builder disappearingSeconds(Integer disappearingSeconds) { this.disappearingSeconds = disappearingSeconds; return this; }
+        public Builder status(String status) { this.status = status; return this; }
+        public Builder requestedTo(User requestedTo) { this.requestedTo = requestedTo; return this; }
 
         public Conversation build() {
-            return new Conversation(id, type, title, avatarUrl, createdBy, disappearingSeconds, null, null);
+            return new Conversation(id, type, title, avatarUrl, createdBy, disappearingSeconds, status, requestedTo, null, null);
         }
     }
 }

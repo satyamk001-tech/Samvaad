@@ -13,6 +13,8 @@ public record ConversationDto(
         String title,
         String avatarUrl,
         List<ConversationMemberDto> members,
+        String status,
+        UUID requestedToId,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -23,6 +25,8 @@ public record ConversationDto(
                 conversation.getTitle(),
                 conversation.getAvatarUrl(),
                 members,
+                conversation.getStatus() != null ? conversation.getStatus() : "ACCEPTED",
+                conversation.getRequestedTo() != null ? conversation.getRequestedTo().getId() : null,
                 conversation.getCreatedAt(),
                 conversation.getUpdatedAt()
         );
