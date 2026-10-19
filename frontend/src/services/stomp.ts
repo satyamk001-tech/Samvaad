@@ -12,14 +12,14 @@ class StompService {
   public connect(token: string) {
     if (this.client && this.connected) return;
 
-    const wsBaseUrl = import.meta.env.VITE_WS_BASE_URL;
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+    const wsBaseUrl = import.meta.env.VITE_WS_URL || import.meta.env.VITE_WS_BASE_URL;
+    const apiBaseUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL;
     let brokerUrl: string;
 
     if (wsBaseUrl) {
       brokerUrl = wsBaseUrl.endsWith('/ws') ? wsBaseUrl : `${wsBaseUrl.replace(/\/+$/, '')}/ws`;
     } else if (apiBaseUrl) {
-      const cleanApi = apiBaseUrl.replace(/\/+$/, '');
+      const cleanApi = apiBaseUrl.replace(/\/api\/v1\/?$/, '').replace(/\/+$/, '');
       const wsProtocol = cleanApi.startsWith('https') ? 'wss' : 'ws';
       const cleanHost = cleanApi.replace(/^https?:\/\//, '');
       brokerUrl = `${wsProtocol}://${cleanHost}/ws`;
