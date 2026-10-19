@@ -57,8 +57,12 @@ public class PresenceService {
      * @param username the authenticated user's username (for broadcast payload)
      */
     public void markOnline(UUID userId, String username) {
-        String key = presenceKey(userId);
-        redisTemplate.opsForValue().set(key, "1", Duration.ofSeconds(PRESENCE_TTL_SECONDS));
+        try {
+            String key = presenceKey(userId);
+            redisTemplate.opsForValue().set(key, "1", Duration.ofSeconds(PRESENCE_TTL_SECONDS));
+        } catch (Exception ex) {
+            log.debug("Redis unavailable for presence key: {}", ex.getMessage());
+        }
         persistOnlineStatus(userId, true);
         broadcast(userId, username, true);
         log.debug("User {} marked ONLINE", userId);
@@ -73,7 +77,11 @@ public class PresenceService {
      * @param username the authenticated user's username (for broadcast payload)
      */
     public void markOffline(UUID userId, String username) {
-        redisTemplate.delete(presenceKey(userId));
+        try {
+            redisTemplate.delete(presenceKey(userId));
+        } catch (Exception ex) {
+            log.debug("Redis unavailable for presence key delete: {}", ex.getMessage());
+        }
         Instant lastSeen = persistOnlineStatus(userId, false);
         broadcastOffline(userId, username, lastSeen);
         log.debug("User {} marked OFFLINE", userId);
@@ -85,17 +93,27 @@ public class PresenceService {
      * @param userId the authenticated user's ID
      */
     public void refreshHeartbeat(UUID userId) {
-        redisTemplate.expire(presenceKey(userId), Duration.ofSeconds(PRESENCE_TTL_SECONDS));
+        try {
+            redisTemplate.expire(presenceKey(userId), Duration.ofSeconds(PRESENCE_TTL_SECONDS));
+        } catch (Exception ex) {
+            log.debug("Redis unavailable for presence heartbeat: {}", ex.getMessage());
+        }
     }
 
     /**
      * Returns {@code true} if the given user's Redis presence key exists.
+     * Fallbacks to checking database if Redis is unavailable.
      *
      * @param userId the user to check
      */
     public boolean isOnline(UUID userId) {
-        Boolean exists = redisTemplate.hasKey(presenceKey(userId));
-        return Boolean.TRUE.equals(exists);
+        try {
+            Boolean exists = redisTemplate.hasKey(presenceKey(userId));
+            if (exists != null) return exists;
+        } catch (Exception ex) {
+            log.debug("Redis unavailable for presence check, falling back to DB: {}", ex.getMessage());
+        }
+        return userRepository.findById(userId).map(u -> Boolean.TRUE.equals(u.isOnline())).orElse(false);
     }
 
     // -------------------------------------------------------------------------

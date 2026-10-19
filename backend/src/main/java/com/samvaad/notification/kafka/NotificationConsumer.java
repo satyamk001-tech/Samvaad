@@ -5,6 +5,7 @@ import com.samvaad.messaging.dto.StompEventPayload;
 import com.samvaad.notification.dto.NotificationEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
@@ -14,6 +15,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
+@ConditionalOnProperty(name = "spring.kafka.enabled", havingValue = "true", matchIfMissing = false)
 public class NotificationConsumer {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationConsumer.class);
