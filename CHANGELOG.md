@@ -49,9 +49,11 @@ All notable changes to the Samvaad platform will be documented in this file.
   - Senders can unsend their own messages for everyone via `DELETE /api/v1/messages/{id}`.
   - Broadcasts real-time `MESSAGE_DELETED` WebSocket event to all conversation members, updating content to "This message was deleted".
 
-- **One-Time Location Sharing:**
-  - Native Geolocation API integration via `MessageType.LOCATION`.
-  - Interactive map card in chat bubble with coordinates and a 1-tap "Open in Google Maps" link.
+- **One-Time Location Sharing & Geolocation Resilience:**
+  - Added Flyway migration `V6__add_location_message_type.sql` updating `messages_type_check` in PostgreSQL to permit `LOCATION` (and `AUDIO`, `VIDEO`), fixing database check constraint rejections on location messages.
+  - Upgraded frontend with two-phase location acquisition: high-accuracy GPS with automatic fallback to low-accuracy/network IP (preventing timeouts on laptops and desktop browsers).
+  - Added interactive **Location Sharing Modal** with live GPS lock status, accuracy indicator, manual landmark/address entry, and quick sovereign city presets (New Delhi, Mumbai, Bengaluru, Varanasi, Kolkata, Hyderabad).
+  - Enhanced in-chat location message card with coordinates badge, custom location label, and one-tap direct links for both **Google Maps** and **OpenStreetMap (OSM)**.
 
 - **Strict Private User Search & Friend Discovery:**
   - Database-backed exact-match username lookup (`WHERE LOWER(username) = LOWER(:username)`) supported by a functional index (`CREATE INDEX idx_users_lower_username ON users(LOWER(username))` in `V5__exact_username_index.sql`).

@@ -40,6 +40,11 @@ import {
   UserCheck,
   AlertCircle,
   ArrowLeft,
+  Navigation,
+  Compass,
+  Loader2,
+  ExternalLink,
+  Crosshair,
 } from 'lucide-react';
 import { ChatWallpaperModal, ChatWallpaperConfig } from './ChatWallpaperModal';
 import { API_BASE } from '../services/api';
@@ -148,48 +153,112 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
     }
   };
 
-  const handleShareLocation = () => {
-    if (!navigator.geolocation) {
-      alert('स्थान सेवा आपके ब्राउज़र पर समर्थित नहीं है।');
+  // Location sharing state & handlers
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [detectedCoords, setDetectedCoords] = useState<{ lat: number; lng: number; accuracy?: number } | null>(null);
+  const [customPlaceName, setCustomPlaceName] = useState('');
+
+  const SOVEREIGN_PRESETS = [
+    { name: 'नई दिल्ली (New Delhi)', lat: 28.6139, lng: 77.2090, desc: 'Capital Territory' },
+    { name: 'मुम्बई (Mumbai)', lat: 19.0760, lng: 72.8777, desc: 'Maharashtra' },
+    { name: 'बेंगलुरु (Bengaluru)', lat: 12.9716, lng: 77.5946, desc: 'Karnataka' },
+    { name: 'वाराणसी (Varanasi)', lat: 25.3176, lng: 82.9739, desc: 'Uttar Pradesh' },
+    { name: 'कोलकाता (Kolkata)', lat: 22.5726, lng: 88.3639, desc: 'West Bengal' },
+    { name: 'हैदराबाद (Hyderabad)', lat: 17.3850, lng: 78.4867, desc: 'Telangana' },
+  ];
+
+  const sendLocationMessage = (lat: number, lng: number, label?: string) => {
+    const latStr = Number(lat).toFixed(6);
+    const lngStr = Number(lng).toFixed(6);
+    const locContent = label
+      ? `${latStr},${lngStr};${label}`
+      : `${latStr},${lngStr};Lat: ${latStr}, Long: ${lngStr}`;
+
+    const tempId = `temp-${Date.now()}`;
+    const newMsg: Message = {
+      id: tempId,
+      conversationId: conversation.id,
+      sender: currentUser,
+      content: locContent,
+      type: 'LOCATION',
+      isEdited: false,
+      isDeleted: false,
+      status: 'SENT',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, newMsg]);
+
+    const payload = {
+      conversationId: conversation.id,
+      content: locContent,
+      type: 'LOCATION' as const,
+      tempId,
+    };
+
+    if (stompService.isConnected()) {
+      stompService.send('/app/chat.send', payload);
+    } else {
+      api.post(`/conversations/${conversation.id}/messages`, payload).catch(console.error);
+    }
+    setShowLocationModal(false);
+  };
+
+  const detectLocation = () => {
+    if (typeof window === 'undefined' || !navigator.geolocation) {
+      setLocationError('स्थान सेवा (Geolocation) आपके ब्राउज़र या डिवाइस पर उपलब्ध नहीं है।');
       return;
     }
+
+    setIsLocating(true);
+    setLocationError(null);
+
+    // Phase 1: Attempt high accuracy first (GPS) with 6s timeout
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const lat = pos.coords.latitude.toFixed(6);
-        const lon = pos.coords.longitude.toFixed(6);
-        const locContent = `${lat},${lon};Lat: ${lat}, Long: ${lon}`;
-        const tempId = `temp-${Date.now()}`;
-        const newMsg: Message = {
-          id: tempId,
-          conversationId: conversation.id,
-          sender: currentUser,
-          content: locContent,
-          type: 'LOCATION',
-          isEdited: false,
-          isDeleted: false,
-          status: 'SENT',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        setMessages((prev) => [...prev, newMsg]);
-
-        const payload = {
-          conversationId: conversation.id,
-          content: locContent,
-          type: 'LOCATION' as const,
-          tempId,
-        };
-        if (stompService.isConnected()) {
-          stompService.send('/app/chat.send', payload);
-        } else {
-          api.post(`/conversations/${conversation.id}/messages`, payload).catch(console.error);
-        }
+        setDetectedCoords({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: Math.round(pos.coords.accuracy),
+        });
+        setIsLocating(false);
       },
       (err) => {
-        alert('स्थान प्राप्त करने में असमर्थ: ' + err.message);
+        console.warn('High accuracy geolocation timed out/failed; trying network fallback...', err);
+        // Phase 2: Automatic fallback to low accuracy / network IP (vastly more reliable on laptops/desktops)
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            setDetectedCoords({
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude,
+              accuracy: Math.round(pos.coords.accuracy),
+            });
+            setIsLocating(false);
+          },
+          (err2) => {
+            setIsLocating(false);
+            if (err2.code === 1) {
+              setLocationError('स्थान अनुमति अस्वीकृत है (Permission Denied)। कृपया ब्राउज़र सेटिंग्स में लोकेशन अनुमति सक्षम करें।');
+            } else if (err2.code === 2) {
+              setLocationError('स्थान अनुपलब्ध है (Position Unavailable)। कृपया नेटवर्क कनेक्शन जांचें।');
+            } else if (err2.code === 3) {
+              setLocationError('स्थान प्राप्त करने का समय समाप्त हो गया (Timeout)। आप नीचे दिए गए प्रमुख नगरों में से भी चुन सकते हैं।');
+            } else {
+              setLocationError(err2.message || 'स्थान प्राप्त करने में विफल');
+            }
+          },
+          { enableHighAccuracy: false, timeout: 12000, maximumAge: 300000 }
+        );
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 6000, maximumAge: 60000 }
     );
+  };
+
+  const handleOpenLocation = () => {
+    setShowLocationModal(true);
+    detectLocation();
   };
   const [isTyping, setIsTyping] = useState(false);
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
@@ -1105,32 +1174,66 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
                     </a>
                   </div>
                 ) : msg.type === 'LOCATION' ? (
-                  <div className="space-y-2 p-2.5 rounded-xl bg-black/5">
+                  <div className="space-y-2.5 p-3 rounded-2xl bg-black/5 max-w-xs sm:max-w-sm">
                     <div className="flex items-center gap-2 text-[#D97706] font-bold text-xs">
-                      <MapPin className="w-4 h-4 text-[#D97706] animate-bounce" />
-                      <span>स्थान साझा किया गया • Location Shared</span>
+                      <div className="w-7 h-7 rounded-xl bg-[#D97706]/15 text-[#D97706] flex items-center justify-center flex-shrink-0 shadow-xs">
+                        <MapPin className="w-4 h-4 text-[#D97706]" />
+                      </div>
+                      <div>
+                        <span className="block leading-tight font-bold text-[#191C3B]">स्थान साझा किया गया</span>
+                        <span className="text-[10px] text-[#686578] font-medium">Live Geolocation Pin</span>
+                      </div>
                     </div>
-                    <p className="text-xs opacity-90 break-words">{msg.content}</p>
+
                     {(() => {
-                      const coords = msg.content.split(';')[0]?.split(',');
-                      if (coords && coords.length === 2) {
-                        const lat = parseFloat(coords[0]);
-                        const lng = parseFloat(coords[1]);
-                        if (!isNaN(lat) && !isNaN(lng)) {
-                          return (
-                            <a
-                              href={`https://www.google.com/maps?q=${lat},${lng}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#D97706] hover:bg-[#B45309] text-white font-semibold text-[11px] shadow-xs transition-colors"
-                            >
-                              <MapPin className="w-3.5 h-3.5" />
-                              <span>गूगल मैप्स पर देखें (Open in Maps)</span>
-                            </a>
-                          );
-                        }
-                      }
-                      return null;
+                      const parts = msg.content.split(';');
+                      const coords = parts[0]?.split(',');
+                      const label = parts[1] || (coords && coords.length === 2 ? `Lat: ${coords[0]}, Long: ${coords[1]}` : msg.content);
+                      const lat = parseFloat(coords[0]?.trim());
+                      const lng = parseFloat(coords[1]?.trim());
+
+                      return (
+                        <div className="space-y-2">
+                          {label && (
+                            <p className="text-xs font-semibold text-[#191C3B] break-words">
+                              {label}
+                            </p>
+                          )}
+
+                          {!isNaN(lat) && !isNaN(lng) && (
+                            <>
+                              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/80 border border-[#E8E2D5] text-[10px] font-mono text-[#686578]">
+                                <Compass className="w-3.5 h-3.5 text-[#C59A58]" />
+                                <span>{lat.toFixed(5)}, {lng.toFixed(5)}</span>
+                              </div>
+
+                              <div className="flex items-center gap-2 pt-0.5">
+                                <a
+                                  href={`https://www.google.com/maps?q=${lat},${lng}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#191C3B] hover:bg-[#101226] text-white font-semibold text-[11px] shadow-xs transition-colors"
+                                >
+                                  <MapPin className="w-3.5 h-3.5 text-[#C59A58]" />
+                                  <span>Google Maps</span>
+                                  <ExternalLink className="w-3 h-3 opacity-70" />
+                                </a>
+
+                                <a
+                                  href={`https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=16/${lat}/${lng}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl bg-white hover:bg-[#FAF7F2] border border-[#E8E2D5] text-[#191C3B] font-semibold text-[11px] transition-colors shadow-xs"
+                                  title="OpenStreetMap"
+                                >
+                                  <Navigation className="w-3.5 h-3.5 text-[#D97706]" />
+                                  <span>OSM</span>
+                                </a>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      );
                     })()}
                   </div>
                 ) : (
@@ -1446,7 +1549,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
                   type="button"
                   onClick={() => {
                     setShowAttachmentSheet(false);
-                    handleShareLocation();
+                    handleOpenLocation();
                   }}
                   className="flex flex-col items-center gap-1.5 p-2.5 rounded-2xl hover:bg-[#FAF7F2] transition-colors group"
                 >
@@ -1619,6 +1722,145 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
           onReset={handleResetWallpaper}
           onClose={() => setIsWallpaperModalOpen(false)}
         />
+      )}
+      {/* Sovereign Location Sharing Modal */}
+      {showLocationModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-[#E8E2D5] animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-[#E8E2D5]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center">
+                  <MapPin className="w-5 h-5 text-[#D97706]" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-[#191C3B] text-sm">स्थान साझा करें • Share Location</h3>
+                  <p className="text-[10px] text-[#686578]">Secure Real-Time Geolocation Pin</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowLocationModal(false)}
+                className="w-8 h-8 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-[#FAF7F2] flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* GPS Detection Status Card */}
+            <div className="mt-4 p-4 rounded-2xl bg-[#FAF7F2] border border-[#E8E2D5] space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#191C3B] flex items-center gap-1.5">
+                  <Crosshair className="w-3.5 h-3.5 text-[#D97706]" />
+                  वर्तमान जीपीएस स्थिति (GPS Status)
+                </span>
+                <button
+                  type="button"
+                  onClick={detectLocation}
+                  disabled={isLocating}
+                  className="text-[11px] font-semibold text-[#D97706] hover:text-[#B45309] disabled:opacity-50 flex items-center gap-1"
+                >
+                  {isLocating && <Loader2 className="w-3 h-3 animate-spin" />}
+                  <span>{isLocating ? 'खोज रहे हैं...' : 'पुनः जांचें (Refresh)'}</span>
+                </button>
+              </div>
+
+              {isLocating && (
+                <div className="flex items-center gap-2.5 py-2 text-xs text-[#686578]">
+                  <Loader2 className="w-4 h-4 animate-spin text-[#D97706]" />
+                  <span>सटीक स्थान का पता लगाया जा रहा है (Acquiring lock)...</span>
+                </div>
+              )}
+
+              {detectedCoords && !isLocating && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-emerald-700 font-semibold flex items-center gap-1">
+                      <Check className="w-4 h-4 text-emerald-600" />
+                      स्थान प्राप्त हुआ (GPS Locked)
+                    </span>
+                    {detectedCoords.accuracy && (
+                      <span className="text-[10px] text-[#686578]">
+                        ±{detectedCoords.accuracy}m सटीकता
+                      </span>
+                    )}
+                  </div>
+                  <div className="p-2 rounded-xl bg-white border border-[#E8E2D5] text-[11px] font-mono text-[#191C3B]">
+                    अक्षांश (Lat): {detectedCoords.lat.toFixed(6)}, देशांतर (Lng): {detectedCoords.lng.toFixed(6)}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => sendLocationMessage(detectedCoords.lat, detectedCoords.lng, 'मेरा वर्तमान स्थान (Current Location)')}
+                    className="w-full py-2.5 px-4 rounded-xl bg-[#191C3B] hover:bg-[#101226] text-white text-xs font-semibold flex items-center justify-center gap-2 shadow-sm transition-all"
+                  >
+                    <MapPin className="w-4 h-4 text-[#C59A58]" />
+                    <span>वर्तमान स्थान भेजें • Send Current Location</span>
+                  </button>
+                </div>
+              )}
+
+              {locationError && !isLocating && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 space-y-1">
+                  <div className="flex items-start gap-1.5 font-semibold">
+                    <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+                    <span>{locationError}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Custom Location / Landmark Input */}
+            <div className="mt-4 space-y-2">
+              <label className="text-[11px] font-bold text-[#191C3B] block uppercase tracking-wider">
+                स्थान का नाम या पता दर्ज करें (Custom Location / Landmark)
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={customPlaceName}
+                  onChange={(e) => setCustomPlaceName(e.target.value)}
+                  placeholder="e.g. Connaught Place, New Delhi"
+                  className="flex-1 bg-[#FAF7F2] border border-[#E8E2D5] rounded-xl px-3 py-2 text-xs text-[#191C3B] focus:outline-none focus:border-[#C59A58]"
+                />
+                <button
+                  type="button"
+                  disabled={!customPlaceName.trim()}
+                  onClick={() => {
+                    const baseLat = detectedCoords?.lat || 28.6139;
+                    const baseLng = detectedCoords?.lng || 77.2090;
+                    sendLocationMessage(baseLat, baseLng, customPlaceName.trim());
+                  }}
+                  className="px-4 py-2 bg-[#191C3B] text-white rounded-xl text-xs font-semibold hover:bg-[#101226] disabled:opacity-40"
+                >
+                  भेजें • Send
+                </button>
+              </div>
+            </div>
+
+            {/* Sovereign Quick City Presets */}
+            <div className="mt-4 space-y-2">
+              <span className="text-[11px] font-bold text-[#686578] block uppercase tracking-wider">
+                त्वरित नगर चयन • Quick Sovereign Landmarks
+              </span>
+              <div className="grid grid-cols-2 gap-2">
+                {SOVEREIGN_PRESETS.map((city) => (
+                  <button
+                    key={city.name}
+                    type="button"
+                    onClick={() => sendLocationMessage(city.lat, city.lng, city.name)}
+                    className="p-2.5 rounded-xl border border-[#E8E2D5] hover:border-[#C59A58] bg-[#FAF7F2] hover:bg-white text-left transition-all group"
+                  >
+                    <div className="text-xs font-bold text-[#191C3B] group-hover:text-[#D97706] flex items-center gap-1">
+                      <MapPin className="w-3 h-3 text-[#C59A58]" />
+                      <span className="truncate">{city.name}</span>
+                    </div>
+                    <span className="text-[10px] text-[#686578] block truncate mt-0.5">{city.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

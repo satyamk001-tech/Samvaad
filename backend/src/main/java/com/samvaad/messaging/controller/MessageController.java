@@ -45,6 +45,18 @@ public class MessageController {
             @AuthenticationPrincipal UserPrincipal principal,
             @Valid @RequestBody com.samvaad.messaging.dto.StompSendMessagePayload payload
     ) {
+        if (payload.conversationId() == null || !payload.conversationId().equals(conversationId) || payload.tempId() == null) {
+            payload = new com.samvaad.messaging.dto.StompSendMessagePayload(
+                    conversationId,
+                    payload.content(),
+                    payload.type(),
+                    payload.replyToMessageId(),
+                    payload.isViewOnce(),
+                    payload.isForwarded(),
+                    payload.forwardedFromId(),
+                    payload.tempId() != null && !payload.tempId().isBlank() ? payload.tempId() : "rest-" + UUID.randomUUID()
+            );
+        }
         MessageDto sent = stompMessagingService.processIncomingMessage(principal.getId(), payload);
         return ResponseEntity.ok(sent);
     }
