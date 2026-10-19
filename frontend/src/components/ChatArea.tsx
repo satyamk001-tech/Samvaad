@@ -25,6 +25,7 @@ import {
   CornerUpRight,
   Eye,
   EyeOff,
+  Image as ImageIcon,
   Sparkles,
   CreditCard,
   Clock,
@@ -71,6 +72,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
 
   const [showMenu, setShowMenu] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
+  const [showAttachmentSheet, setShowAttachmentSheet] = useState(false);
 
   useEffect(() => {
     const other = conversation.members.find((m) => m.user.id !== currentUser.id)?.user;
@@ -749,90 +751,127 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   return (
     <div className="flex-1 flex flex-col h-full bg-[#FAF7F2] overflow-hidden">
       {/* 1. Header Bar */}
-      <header className="h-16 px-6 bg-[#FFFFFF] border-b border-[#E8E2D5] flex items-center justify-between z-10 shadow-xs flex-shrink-0">
-        <div className="flex items-center gap-2 sm:gap-3">
+      <header className="h-14 sm:h-16 px-3 sm:px-4 md:px-6 bg-[#FFFFFF] border-b border-[#E8E2D5] flex items-center justify-between z-20 shadow-xs flex-shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 mr-2">
           {onBack && (
             <button
               onClick={onBack}
-              className="md:hidden p-1.5 -ml-2 rounded-xl text-[#191C3B] hover:bg-gray-100 transition-colors"
+              className="p-1.5 -ml-1 sm:-ml-2 rounded-xl text-[#191C3B] hover:bg-gray-100 transition-colors flex items-center justify-center flex-shrink-0 touch-target"
               title="वापस जाएं • Back"
             >
               <ArrowLeft className="w-5 h-5 text-[#191C3B]" />
             </button>
           )}
-          <div className="w-10 h-10 rounded-2xl bg-[#191C3B] text-white flex items-center justify-center font-serif font-black text-base border border-[#C59A58] shadow-xs flex-shrink-0">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#191C3B] text-white flex items-center justify-center font-serif font-black text-sm sm:text-base border border-[#C59A58] shadow-xs flex-shrink-0">
             {getTitle().charAt(0).toUpperCase()}
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-sm md:text-base font-bold text-[#191C3B] tracking-tight">{getTitle()}</h2>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FDF8EE] border border-[#EAD9BE] text-[#B45309] text-[9px] font-semibold">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 truncate">
+              <h2 className="text-xs sm:text-sm md:text-base font-bold text-[#191C3B] tracking-tight truncate">{getTitle()}</h2>
+              <span className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-[#FDF8EE] border border-[#EAD9BE] text-[#B45309] text-[8px] font-semibold flex-shrink-0">
                 <Shield className="w-2.5 h-2.5 text-[#D97706]" /> E2EE
               </span>
             </div>
-            <p className="text-[11px] text-[#686578]">
+            <p className="text-[10px] sm:text-[11px] text-[#686578] truncate">
               {conversation.type === 'GROUP'
                 ? `${conversation.members.length} सदस्य • Sovereign Channel`
-                : 'सुरक्षित द्विपक्षीय संवाद सत्र (Encrypted Direct)'}
+                : 'सुरक्षित द्विपक्षीय संवाद (Encrypted)'}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1 sm:gap-2">
-          {/* AI Smart Summarizer ("Catch up on unread group chat" - Slack / Telegram style) */}
+        <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
+          {/* AI Smart Summarizer (desktop only) */}
           <button
             onClick={handleGenerateSummary}
-            className="h-9 px-2.5 rounded-xl bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 flex items-center gap-1.5 transition-all text-xs font-semibold shadow-xs"
+            className="hidden lg:flex h-9 px-2.5 rounded-xl bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 items-center gap-1.5 transition-all text-xs font-semibold shadow-xs"
             title="संवाद AI सारांश (1-Click Catch-up TL;DR)"
           >
             <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-            <span className="hidden sm:inline">AI सारांश</span>
+            <span>AI सारांश</span>
           </button>
 
-          {/* Chat Wallpaper Customizer Button */}
+          {/* Chat Wallpaper Customizer Button (desktop only) */}
           <button
             onClick={() => setIsWallpaperModalOpen(true)}
-            className="w-9 h-9 rounded-xl bg-[#FAF7F2] border border-[#E8E2D5] hover:border-[#C59A58] text-[#191C3B] flex items-center justify-center transition-all"
+            className="hidden lg:flex w-9 h-9 rounded-xl bg-[#FAF7F2] border border-[#E8E2D5] hover:border-[#C59A58] text-[#191C3B] items-center justify-center transition-all"
             title="चैट वॉलपेपर बदलें • Change Chat Wallpaper"
           >
             <Palette className="w-4 h-4 text-[#C59A58]" />
           </button>
 
+          {/* Voice Call Button */}
           <button
             onClick={() => onInitiateCall('AUDIO')}
-            className="w-9 h-9 rounded-xl bg-[#FAF7F2] border border-[#E8E2D5] hover:border-[#C59A58] text-[#191C3B] flex items-center justify-center transition-all"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#FAF7F2] border border-[#E8E2D5] hover:border-[#C59A58] text-[#191C3B] flex items-center justify-center transition-all"
             title={`${t('calls') || 'ध्वनि कॉल'} • Voice Call`}
           >
             <Phone className="w-4 h-4 text-[#D97706]" />
           </button>
+
+          {/* Video Call Button */}
           <button
             onClick={() => onInitiateCall('VIDEO')}
-            className="w-9 h-9 rounded-xl bg-[#FAF7F2] border border-[#E8E2D5] hover:border-[#C59A58] text-[#191C3B] flex items-center justify-center transition-all"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#FAF7F2] border border-[#E8E2D5] hover:border-[#C59A58] text-[#191C3B] flex items-center justify-center transition-all"
             title="वीडियो कॉल • Video Call"
           >
             <Video className="w-4 h-4 text-[#C59A58]" />
           </button>
+
+          {/* Dossier button (desktop only) */}
           {onToggleDossier && (
             <button
               onClick={onToggleDossier}
-              className="w-9 h-9 rounded-xl bg-[#FAF7F2] border border-[#E8E2D5] hover:border-[#C59A58] text-[#686578] hover:text-[#191C3B] flex items-center justify-center transition-all"
+              className="hidden lg:flex w-9 h-9 rounded-xl bg-[#FAF7F2] border border-[#E8E2D5] hover:border-[#C59A58] text-[#686578] hover:text-[#191C3B] items-center justify-center transition-all"
               title="दस्तावेज़ एवं फ़ाइलें • Dossier"
             >
               <Info className="w-4 h-4" />
             </button>
           )}
 
-          {/* More options menu (Block, Delete chat) */}
+          {/* More options menu */}
           <div className="relative">
             <button
               onClick={() => setShowMenu((prev) => !prev)}
-              className="w-9 h-9 rounded-xl bg-[#FAF7F2] border border-[#E8E2D5] hover:border-[#C59A58] text-[#686578] hover:text-[#191C3B] flex items-center justify-center transition-all"
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#FAF7F2] border border-[#E8E2D5] hover:border-[#C59A58] text-[#686578] hover:text-[#191C3B] flex items-center justify-center transition-all"
               title="अधिक विकल्प • More Options"
             >
               <MoreVertical className="w-4 h-4" />
             </button>
             {showMenu && (
-              <div className="absolute right-0 top-11 w-48 bg-white border border-[#E8E2D5] rounded-2xl shadow-xl z-50 py-1.5 animate-in fade-in zoom-in-95 text-xs">
+              <div className="absolute right-0 top-11 w-52 bg-white border border-[#E8E2D5] rounded-2xl shadow-xl z-50 py-1.5 animate-in fade-in zoom-in-95 text-xs">
+                {onToggleDossier && (
+                  <button
+                    onClick={() => {
+                      onToggleDossier();
+                      setShowMenu(false);
+                    }}
+                    className="w-full px-3.5 py-2 text-left flex items-center gap-2 hover:bg-gray-50 text-[#191C3B] font-medium"
+                  >
+                    <Info className="w-4 h-4 text-[#686578]" />
+                    <span>संपर्क जानकारी एवं फ़ाइलें</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    handleGenerateSummary();
+                    setShowMenu(false);
+                  }}
+                  className="w-full px-3.5 py-2 text-left flex items-center gap-2 hover:bg-gray-50 text-purple-700 font-medium"
+                >
+                  <Sparkles className="w-4 h-4 text-purple-600" />
+                  <span>संवाद AI सारांश (Catch-up)</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setIsWallpaperModalOpen(true);
+                    setShowMenu(false);
+                  }}
+                  className="w-full px-3.5 py-2 text-left flex items-center gap-2 hover:bg-gray-50 text-[#191C3B] font-medium"
+                >
+                  <Palette className="w-4 h-4 text-[#C59A58]" />
+                  <span>वॉलपेपर बदलें (Wallpaper)</span>
+                </button>
                 {conversation.type === 'DIRECT' && (
                   <button
                     onClick={handleToggleBlock}
@@ -844,7 +883,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
                 )}
                 <button
                   onClick={handleDeleteConversation}
-                  className="w-full px-3.5 py-2 text-left flex items-center gap-2 text-red-600 hover:bg-red-50 font-medium"
+                  className="w-full px-3.5 py-2 text-left flex items-center gap-2 text-red-600 hover:bg-red-50 font-medium border-t border-gray-100 mt-1 pt-1.5"
                 >
                   <Trash2 className="w-4 h-4" />
                   <span>चैट हटाएं (Delete Chat)</span>
@@ -962,7 +1001,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
 
               {/* Message Bubble */}
               <div
-                className={`max-w-[85%] md:max-w-[70%] rounded-2xl px-4 py-2.5 text-xs md:text-sm shadow-xs transition-all relative ${
+                className={`max-w-[85%] sm:max-w-[78%] md:max-w-[68%] break-words [overflow-wrap:anywhere] rounded-2xl px-3.5 py-2 sm:px-4 sm:py-2.5 text-xs md:text-sm shadow-xs transition-all relative ${
                   isMe
                     ? 'bg-[#191C3B] text-white border border-[#C59A58]/30 rounded-br-xs'
                     : 'bg-[#FFFFFF] text-[#191C3B] border border-[#E8E2D5] rounded-bl-xs'
@@ -1097,7 +1136,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
                 ) : (
                   /* Text Message Content + Live Bhashini Translation */
                   <div className="space-y-1">
-                    <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                    <p className="leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{msg.content}</p>
                     {translations[msg.id] && (
                       <div className={`p-2 rounded-xl text-xs font-medium border ${
                         isMe ? 'bg-white/10 border-white/20 text-emerald-300' : 'bg-emerald-50 border-emerald-200 text-emerald-800'
@@ -1219,106 +1258,260 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
       )}
 
       {/* 3. Input Bar */}
-      <footer className="p-3 md:p-4 bg-[#FFFFFF] border-t border-[#E8E2D5]">
-        <div className="flex items-center gap-2">
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileUpload}
-            className="hidden"
-          />
+      <footer className="p-2 sm:p-3 bg-[#FFFFFF] border-t border-[#E8E2D5] safe-pb relative z-20 flex-shrink-0">
+        {/* Active Mode Banner Indicators (View Once, Indic, Replying) */}
+        {isViewOnceEnabled && (
+          <div className="flex items-center justify-between bg-purple-50 border border-purple-200 px-3 py-1 rounded-xl mb-1.5 text-xs text-purple-800 animate-in fade-in">
+            <span className="flex items-center gap-1.5 font-semibold text-[11px] sm:text-xs">
+              <Eye className="w-3.5 h-3.5 text-purple-600" />
+              View Once सक्षम है (1-time view media)
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsViewOnceEnabled(false)}
+              className="text-purple-600 hover:text-purple-800 p-0.5"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
 
-          {/* Indic Script Toggle */}
-          <button
-            type="button"
-            onClick={() => setIndicMode(!indicMode)}
-            className={`h-10 px-2.5 rounded-xl border flex items-center gap-1 transition-all text-xs font-bold ${
-              indicMode
-                ? 'bg-[#191C3B] text-white border-[#191C3B]'
-                : 'bg-[#FAF7F2] text-[#191C3B] border-[#E8E2D5] hover:border-[#C59A58]'
-            }`}
-            title="भारतीय लिपि / Indic Script Mode"
-          >
-            <Languages className="w-3.5 h-3.5 text-[#C59A58]" />
-            <span className="hidden sm:inline">अ / A</span>
-          </button>
+        {indicMode && (
+          <div className="flex items-center justify-between bg-amber-50 border border-amber-200 px-3 py-1 rounded-xl mb-1.5 text-xs text-amber-900 animate-in fade-in">
+            <span className="flex items-center gap-1.5 font-semibold text-[11px] sm:text-xs">
+              <Languages className="w-3.5 h-3.5 text-[#D97706]" />
+              भारतीय लिपि मोड (Devanagari typing active)
+            </span>
+            <button
+              type="button"
+              onClick={() => setIndicMode(false)}
+              className="text-amber-800 hover:text-amber-950 p-0.5"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
 
-          {/* View Once Media Toggle */}
-          <button
-            type="button"
-            onClick={() => setIsViewOnceEnabled(!isViewOnceEnabled)}
-            className={`w-10 h-10 rounded-xl border flex items-center justify-center transition-all ${
-              isViewOnceEnabled
-                ? 'bg-purple-600 text-white border-purple-600'
-                : 'bg-[#FAF7F2] text-[#686578] border-[#E8E2D5] hover:border-purple-400'
-            }`}
-            title="View Once (एक बार देखने योग्य मीडिया)"
-          >
-            <Eye className="w-4 h-4" />
-          </button>
+        {replyingTo && (
+          <div className="flex items-center justify-between bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-xl mb-1.5 text-xs text-gray-700 animate-in fade-in">
+            <div className="flex items-center gap-2 truncate">
+              <Reply className="w-3.5 h-3.5 text-[#C59A58] flex-shrink-0" />
+              <span className="font-semibold text-gray-500">उत्तर दें:</span>
+              <span className="truncate italic">{replyingTo.content}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setReplyingTo(null)}
+              className="text-gray-500 hover:text-gray-800 p-0.5 ml-2 flex-shrink-0"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
 
-          {/* UPI Instant Payment Trigger Button */}
-          <button
-            type="button"
-            onClick={() => setShowUpiModal(true)}
-            className="w-10 h-10 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 flex items-center justify-center transition-all"
-            title="UPI त्वरित भुगतान (Send UPI Money)"
-          >
-            <IndianRupee className="w-4 h-4 text-emerald-600" />
-          </button>
+        {/* Hidden File Input */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileUpload}
+          className="hidden"
+        />
 
+        {/* WhatsApp-Style Composer Row */}
+        <div className="flex items-end gap-1.5 sm:gap-2">
           {/* Emoji Picker Button */}
-          <MessageEmojiPicker onEmojiSelect={handleEmojiSelect} />
+          <div className="flex-shrink-0 mb-0.5">
+            <MessageEmojiPicker onEmojiSelect={handleEmojiSelect} />
+          </div>
 
-          {/* Paperclip Attachment */}
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-            className="w-10 h-10 rounded-xl bg-[#FAF7F2] border border-[#E8E2D5] text-[#686578] hover:text-[#191C3B] hover:border-[#C59A58] flex items-center justify-center transition-all flex-shrink-0"
-            title="संलग्नक जोड़ें • Attach File (up to 2GB)"
-          >
-            <Paperclip className="w-4 h-4" />
-          </button>
-
-          {/* Location Sharing Button */}
-          <button
-            type="button"
-            onClick={handleShareLocation}
-            className="w-10 h-10 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 flex items-center justify-center transition-all flex-shrink-0"
-            title="वर्तमान स्थान साझा करें • Share Current Location"
-          >
-            <MapPin className="w-4 h-4 text-amber-600" />
-          </button>
-
-          {/* Voice Note Recorder (Inline Mic trigger + waveform preview) */}
-          <VoiceNoteRecorder onSendVoiceNote={handleSendVoiceNote} />
-
-          {/* Text input form */}
-          <form onSubmit={handleSendMessage} className="flex-1 flex items-center gap-2">
+          {/* Center Input Capsule: Input + Paperclip Attachment */}
+          <div className="flex-1 flex items-center bg-[#FAF7F2] border border-[#E8E2D5] focus-within:border-[#C59A58] focus-within:ring-1 focus-within:ring-[#C59A58]/20 rounded-2xl px-3 py-1.5 min-w-0 transition-all">
             <input
               type="text"
               value={inputText}
               onChange={handleInputChange}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage(e);
+                }
+              }}
               placeholder={
                 indicMode
                   ? 'संदेश लिखें (देवनागरी अथवा रोमन)...'
-                  : 'Type your message or record a voice note...'
+                  : 'संदेश लिखें • Type a message...'
               }
-              className="flex-1 bg-[#FAF7F2] border border-[#E8E2D5] rounded-xl px-4 py-2.5 text-xs md:text-sm text-[#191C3B] placeholder:text-[#9E9AA8] focus:outline-none focus:border-[#C59A58] focus:ring-1 focus:ring-[#C59A58]"
+              className="flex-1 bg-transparent border-0 text-xs sm:text-sm text-[#191C3B] placeholder:text-[#9E9AA8] focus:outline-none min-w-0 py-1"
             />
 
-            {/* Send button */}
+            {/* Paperclip Button for Attachments */}
             <button
-              type="submit"
-              disabled={!inputText.trim()}
-              className="w-10 h-10 rounded-xl bg-[#191C3B] text-white flex items-center justify-center hover:bg-[#101226] transition-all shadow-md shadow-[#191C3B]/10 disabled:opacity-40 flex-shrink-0 border border-[#C59A58]/20"
-              title="भेजें • Send"
+              type="button"
+              onClick={() => setShowAttachmentSheet((prev) => !prev)}
+              disabled={uploading}
+              className={`p-1.5 rounded-xl transition-all flex-shrink-0 ml-1 ${
+                showAttachmentSheet
+                  ? 'bg-[#191C3B] text-white'
+                  : 'text-[#686578] hover:text-[#191C3B] hover:bg-[#E8E2D5]/50'
+              }`}
+              title="संलग्नक एवं सुविधाएं • Attachments & Actions"
             >
-              <Send className="w-4 h-4 text-[#C59A58]" />
+              <Paperclip className="w-4 h-4" />
             </button>
-          </form>
+          </div>
+
+          {/* Action button: Send if inputText exists, otherwise VoiceNoteRecorder */}
+          <div className="flex-shrink-0 mb-0.5">
+            {inputText.trim() ? (
+              <button
+                type="button"
+                onClick={handleSendMessage}
+                disabled={!inputText.trim()}
+                className="w-10 h-10 rounded-2xl bg-[#191C3B] text-white flex items-center justify-center hover:bg-[#101226] transition-all shadow-md shadow-[#191C3B]/10 border border-[#C59A58]/20"
+                title="भेजें • Send"
+              >
+                <Send className="w-4 h-4 text-[#C59A58]" />
+              </button>
+            ) : (
+              <VoiceNoteRecorder onSendVoiceNote={handleSendVoiceNote} />
+            )}
+          </div>
         </div>
+
+        {/* WhatsApp-Style Attachment Bottom Sheet / Popover */}
+        {showAttachmentSheet && (
+          <>
+            {/* Backdrop for closing */}
+            <div
+              className="fixed inset-0 bg-black/40 backdrop-blur-2xs z-40"
+              onClick={() => setShowAttachmentSheet(false)}
+            />
+
+            {/* Attachment Sheet Panel */}
+            <div className="fixed bottom-0 left-0 right-0 md:absolute md:bottom-16 md:left-4 md:right-auto md:w-80 bg-white rounded-t-3xl md:rounded-2xl border-t md:border border-[#E8E2D5] p-5 z-50 shadow-2xl animate-in slide-in-from-bottom-4 duration-200 safe-pb">
+              <div className="flex items-center justify-between mb-4 pb-2 border-b border-[#E8E2D5]">
+                <span className="text-xs font-bold text-[#191C3B] uppercase tracking-wider flex items-center gap-1.5">
+                  <Paperclip className="w-3.5 h-3.5 text-[#D97706]" />
+                  संलग्नक एवं सुविधाएं • Actions
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowAttachmentSheet(false)}
+                  className="w-7 h-7 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 flex items-center justify-center"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* 6-Grid Icons */}
+              <div className="grid grid-cols-3 gap-3">
+                {/* 1. Photos & Videos */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAttachmentSheet(false);
+                    if (fileInputRef.current) {
+                      fileInputRef.current.accept = 'image/*,video/*';
+                      fileInputRef.current.click();
+                    }
+                  }}
+                  className="flex flex-col items-center gap-1.5 p-2.5 rounded-2xl hover:bg-[#FAF7F2] transition-colors group"
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 border border-purple-200 flex items-center justify-center group-hover:scale-105 transition-transform shadow-xs">
+                    <ImageIcon className="w-6 h-6" />
+                  </div>
+                  <span className="text-[11px] font-semibold text-[#191C3B] text-center">गैलरी / Media</span>
+                </button>
+
+                {/* 2. Documents */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAttachmentSheet(false);
+                    if (fileInputRef.current) {
+                      fileInputRef.current.accept = '*/*';
+                      fileInputRef.current.click();
+                    }
+                  }}
+                  className="flex flex-col items-center gap-1.5 p-2.5 rounded-2xl hover:bg-[#FAF7F2] transition-colors group"
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-200 flex items-center justify-center group-hover:scale-105 transition-transform shadow-xs">
+                    <FileText className="w-6 h-6" />
+                  </div>
+                  <span className="text-[11px] font-semibold text-[#191C3B] text-center">दस्तावेज़ / Doc</span>
+                </button>
+
+                {/* 3. Location */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAttachmentSheet(false);
+                    handleShareLocation();
+                  }}
+                  className="flex flex-col items-center gap-1.5 p-2.5 rounded-2xl hover:bg-[#FAF7F2] transition-colors group"
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center group-hover:scale-105 transition-transform shadow-xs">
+                    <MapPin className="w-6 h-6" />
+                  </div>
+                  <span className="text-[11px] font-semibold text-[#191C3B] text-center">स्थान / Location</span>
+                </button>
+
+                {/* 4. UPI Payment */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAttachmentSheet(false);
+                    setShowUpiModal(true);
+                  }}
+                  className="flex flex-col items-center gap-1.5 p-2.5 rounded-2xl hover:bg-[#FAF7F2] transition-colors group"
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center group-hover:scale-105 transition-transform shadow-xs">
+                    <IndianRupee className="w-6 h-6" />
+                  </div>
+                  <span className="text-[11px] font-semibold text-[#191C3B] text-center">UPI भुगतान / Pay</span>
+                </button>
+
+                {/* 5. View Once Media */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsViewOnceEnabled(!isViewOnceEnabled);
+                    setShowAttachmentSheet(false);
+                  }}
+                  className="flex flex-col items-center gap-1.5 p-2.5 rounded-2xl hover:bg-[#FAF7F2] transition-colors group"
+                >
+                  <div className={`w-12 h-12 rounded-2xl border flex items-center justify-center group-hover:scale-105 transition-transform shadow-xs ${
+                    isViewOnceEnabled ? 'bg-purple-600 text-white border-purple-600' : 'bg-rose-50 text-rose-600 border-rose-200'
+                  }`}>
+                    <Eye className="w-6 h-6" />
+                  </div>
+                  <span className="text-[11px] font-semibold text-[#191C3B] text-center">
+                    {isViewOnceEnabled ? '✓ 1-बार ऑन' : '1-बार देखें'}
+                  </span>
+                </button>
+
+                {/* 6. Indic Script Toggle */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIndicMode(!indicMode);
+                    setShowAttachmentSheet(false);
+                  }}
+                  className="flex flex-col items-center gap-1.5 p-2.5 rounded-2xl hover:bg-[#FAF7F2] transition-colors group"
+                >
+                  <div className={`w-12 h-12 rounded-2xl border flex items-center justify-center group-hover:scale-105 transition-transform shadow-xs ${
+                    indicMode ? 'bg-[#191C3B] text-white border-[#191C3B]' : 'bg-[#FDF8EE] text-[#B45309] border-[#EAD9BE]'
+                  }`}>
+                    <Languages className="w-6 h-6" />
+                  </div>
+                  <span className="text-[11px] font-semibold text-[#191C3B] text-center">
+                    {indicMode ? '✓ लिपि ऑन' : 'भारतीय लिपि'}
+                  </span>
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </footer>
 
       {/* UPI Payment Modal */}

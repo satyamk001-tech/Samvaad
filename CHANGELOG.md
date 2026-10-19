@@ -73,5 +73,14 @@ All notable changes to the Samvaad platform will be documented in this file.
   - Smooth interactive draggable divider between sidebar and chat area.
   - Width constraints (260px - 550px) with automatic persistence to `localStorage`.
 
-- **Mobile-First Responsive Layout:**
-  - Seamless navigation switching on mobile viewports (< 768px): active chat takes full screen with a back button to return to conversation list.
+- **WhatsApp-Style Mobile UI/UX & Responsive Architecture:**
+  - **Three Distinct Breakpoint Layouts:** Dedicated mobile (< 768px), tablet (768px - 1023px), and desktop (>= 1024px) experiences.
+  - **WhatsApp Mobile Home Screen:** Clean top header with sovereign branding, search trigger, status stories indicator, and 3-dots overflow menu (New Chat, Call History, Avatar Studio, Language switcher, Settings, Sign Out).
+  - **WhatsApp Mobile Bottom Navigation Bar:** Fixed bottom navigation bar with active indicators and badges for Chats, Status, Calls, Contacts, and Settings.
+  - **Floating Action Button (FAB):** High-visibility round FAB for initiating new chats directly on mobile without hunting through desktop menus.
+  - **Full-Screen Mobile Chat View:** Tapping any conversation hides the home top bar and bottom nav, presenting a full-height chat experience with a dedicated back button.
+  - **Compact Chat Header & Overflow Menu:** Chat header collapses non-essential triggers (AI summaries, wallpaper, dossier) into a 3-dots action menu on mobile while keeping voice call, video call, and avatar front and center.
+  - **Slide-Over Contact Dossier Drawer:** Transformed Contact Dossier from an in-line panel that squeezed the chat into a slide-over overlay drawer with a backdrop on mobile/tablet viewports.
+  - **WhatsApp-Style Composer & Attachment Bottom Sheet:** Replaced bloated horizontal action button row with a clean input capsule (Emoji picker, expanding text input, paperclip attachment trigger, send / voice note record toggle). Tapping the paperclip opens a slide-up attachment sheet with clean cards for Gallery, Document, Location, UPI Payment, View Once, and Indic Script.
+  - **Zero Horizontal Overflow & Safe Area Insets:** Added `viewport-fit=cover`, safe-area padding helpers (`safe-pb`, `safe-pt`), and word-break wrapping on message bubbles and URLs. Minimum 44px touch targets across all mobile interactive controls.
+

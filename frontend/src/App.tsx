@@ -31,6 +31,10 @@ import {
   Plus,
   Check,
   CircleDashed,
+  Search,
+  MoreVertical,
+  Settings,
+  Sparkles,
 } from 'lucide-react';
 
 type NavView = 'CHATS' | 'CALLS' | 'CONTACTS' | 'VAULT' | 'LANGUAGE';
@@ -71,6 +75,8 @@ const MainApp: React.FC = () => {
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   // Avatar Studio modal state
   const [isAvatarStudioOpen, setIsAvatarStudioOpen] = useState(false);
+  // Mobile home header 3-dots overflow menu state
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Desktop Resizable Sidebar state
   const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
@@ -255,9 +261,9 @@ const MainApp: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#FAF7F2] font-sans text-[#191C3B] select-none">
-      {/* 1. Global Sovereign Top Navigation Header */}
-      <header className="h-14 bg-white border-b border-[#E8E2D5] px-4 md:px-6 flex items-center justify-between z-30 flex-shrink-0 shadow-xs">
+    <div className="flex flex-col h-[100dvh] w-full overflow-hidden bg-[#FAF7F2] font-sans text-[#191C3B] select-none">
+      {/* 1. Global Sovereign Top Navigation Header - Desktop & Tablet */}
+      <header className="hidden md:flex h-14 bg-white border-b border-[#E8E2D5] px-4 md:px-6 items-center justify-between z-30 flex-shrink-0 shadow-xs">
         {/* Brand & Emblem */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
@@ -381,10 +387,152 @@ const MainApp: React.FC = () => {
         </div>
       </header>
 
+      {/* Mobile WhatsApp-Style Home Header - Visible on Mobile when NOT in an active conversation */}
+      {!activeConversation && (
+        <header className="flex md:hidden h-14 bg-white border-b border-[#E8E2D5] px-4 items-center justify-between z-30 flex-shrink-0 shadow-xs">
+          {/* Brand & Emblem */}
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-[#191C3B] text-white flex items-center justify-center font-serif font-black text-base border border-[#C59A58] shadow-xs">
+              सं
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5 leading-none">
+                <span className="font-bold text-base tracking-tight text-[#191C3B]">संवाद</span>
+                <span className="text-xs text-[#C59A58] font-light">|</span>
+                <span className="font-serif font-semibold text-xs text-[#191C3B]">Samvaad</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Header Actions: Search, Status, Overflow Menu */}
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => {
+                if (activeView !== 'CHATS') setActiveView('CHATS');
+              }}
+              className="w-10 h-10 rounded-xl text-[#191C3B] hover:bg-[#FAF7F2] flex items-center justify-center touch-target"
+              title="खोजें • Search"
+              aria-label="खोजें"
+            >
+              <Search className="w-5 h-5 text-[#686578]" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsStatusModalOpen(true)}
+              className="w-10 h-10 rounded-xl text-[#191C3B] hover:bg-[#FAF7F2] flex items-center justify-center relative touch-target"
+              title="स्थिति • Status"
+              aria-label="Status & Stories"
+            >
+              <CircleDashed className="w-5 h-5 text-[#C59A58]" />
+              <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white" />
+            </button>
+
+            {/* Mobile 3-Dots Overflow Menu */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="w-10 h-10 rounded-xl text-[#191C3B] hover:bg-[#FAF7F2] flex items-center justify-center touch-target"
+                title="अधिक विकल्प • More Options"
+                aria-label="More options"
+              >
+                <MoreVertical className="w-5 h-5 text-[#686578]" />
+              </button>
+
+              {isMobileMenuOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40 bg-black/20"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  />
+                  <div className="absolute right-0 top-11 w-56 bg-white border border-[#E8E2D5] rounded-2xl shadow-xl z-50 py-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        setIsNewChatOpen(true);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-[#191C3B] hover:bg-[#FAF7F2] font-medium"
+                    >
+                      <Plus className="w-4 h-4 text-[#C59A58]" />
+                      <span>{t('newConversation') || 'नया संदेश • New Chat'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        setIsCallHistoryOpen(true);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-[#191C3B] hover:bg-[#FAF7F2] font-medium"
+                    >
+                      <Phone className="w-4 h-4 text-[#D97706]" />
+                      <span>{t('calls') || 'कॉल इतिहास • Call History'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        setIsAvatarStudioOpen(true);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-[#191C3B] hover:bg-[#FAF7F2] font-medium"
+                    >
+                      <Sparkles className="w-4 h-4 text-[#8B5CF6]" />
+                      <span>अवतार स्टूडियो • Avatar Studio</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        setActiveSettingsSection('LANGUAGE');
+                      }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-[#191C3B] hover:bg-[#FAF7F2] font-medium"
+                    >
+                      <Languages className="w-4 h-4 text-[#C59A58]" />
+                      <span>भाषा एवं लिपियाँ • Language ({i18n.language || 'hi'})</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        setActiveSettingsSection('ACCOUNT');
+                      }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-[#191C3B] hover:bg-[#FAF7F2] font-medium"
+                    >
+                      <Settings className="w-4 h-4 text-[#686578]" />
+                      <span>सेटिंग्स • Settings</span>
+                    </button>
+
+                    <div className="my-1 border-t border-[#E8E2D5]" />
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        logout();
+                      }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-red-600 hover:bg-red-50 font-medium"
+                    >
+                      <LogOut className="w-4 h-4 text-red-600" />
+                      <span>{t('signOut') || 'लॉग आउट • Sign Out'}</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </header>
+      )}
+
       {/* 2. Main Workspace Layout */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left Vertical Navigation Rail */}
-        <aside className="w-16 md:w-18 bg-white border-r border-[#E8E2D5] flex flex-col items-center py-4 justify-between z-20 flex-shrink-0">
+      <div className={`flex flex-1 overflow-hidden ${!activeConversation ? 'pb-16 md:pb-0' : ''}`}>
+        {/* Left Vertical Navigation Rail - Hidden on Mobile (<768px), Visible on Tablet & Desktop */}
+        <aside className="hidden md:flex w-16 md:w-18 bg-white border-r border-[#E8E2D5] flex-col items-center py-4 justify-between z-20 flex-shrink-0">
           <div className="flex flex-col items-center gap-4 w-full">
             {/* Quick New Chat Button */}
             <button
@@ -600,6 +748,109 @@ const MainApp: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* WhatsApp Floating Action Button (FAB) for New Chat on Mobile */}
+      {!activeConversation && activeView === 'CHATS' && (
+        <button
+          type="button"
+          onClick={() => setIsNewChatOpen(true)}
+          className="md:hidden fixed bottom-20 right-5 z-40 w-14 h-14 rounded-full bg-[#191C3B] text-[#C59A58] shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all border border-[#C59A58]/30 touch-target"
+          aria-label="नया संवाद"
+          title="नया संदेश • New Chat"
+        >
+          <Plus className="w-6 h-6 text-[#C59A58]" />
+        </button>
+      )}
+
+      {/* WhatsApp-Style Mobile Bottom Navigation Bar */}
+      {!activeConversation && (
+        <nav className="flex md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-[#E8E2D5] z-30 safe-pb items-center justify-around shadow-lg">
+          {/* Chats */}
+          <button
+            type="button"
+            onClick={() => setActiveView('CHATS')}
+            className={`flex flex-col items-center justify-center flex-1 h-full py-1 transition-colors relative touch-target ${
+              activeView === 'CHATS' ? 'text-[#191C3B]' : 'text-[#686578] hover:text-[#191C3B]'
+            }`}
+          >
+            <div className="relative">
+              <MessageSquare className={`w-5 h-5 ${activeView === 'CHATS' ? 'text-[#191C3B] stroke-[2.5]' : ''}`} />
+              {conversations.length > 0 && (
+                <span className="absolute -top-1 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-[#D97706] text-white text-[9px] font-bold flex items-center justify-center">
+                  {conversations.length}
+                </span>
+              )}
+            </div>
+            <span className={`text-[10px] mt-1 ${activeView === 'CHATS' ? 'font-bold text-[#191C3B]' : 'font-medium'}`}>
+              {t('chats') || 'वार्तालाप'}
+            </span>
+          </button>
+
+          {/* Status */}
+          <button
+            type="button"
+            onClick={() => setIsStatusModalOpen(true)}
+            className="flex flex-col items-center justify-center flex-1 h-full py-1 transition-colors relative touch-target text-[#686578] hover:text-[#191C3B]"
+          >
+            <div className="relative">
+              <CircleDashed className="w-5 h-5 text-[#C59A58]" />
+              <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white" />
+            </div>
+            <span className="text-[10px] mt-1 font-medium">
+              स्थिति
+            </span>
+          </button>
+
+          {/* Calls */}
+          <button
+            type="button"
+            onClick={() => setIsCallHistoryOpen(true)}
+            className="flex flex-col items-center justify-center flex-1 h-full py-1 transition-colors relative touch-target text-[#686578] hover:text-[#191C3B]"
+          >
+            <Phone className="w-5 h-5 text-[#D97706]" />
+            <span className="text-[10px] mt-1 font-medium">
+              {t('calls') || 'कॉल'}
+            </span>
+          </button>
+
+          {/* Contacts / Friends */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveView('CONTACTS');
+              setActiveConversation(null);
+            }}
+            className={`flex flex-col items-center justify-center flex-1 h-full py-1 transition-colors relative touch-target ${
+              activeView === 'CONTACTS' ? 'text-[#191C3B]' : 'text-[#686578] hover:text-[#191C3B]'
+            }`}
+          >
+            <Users className={`w-5 h-5 ${activeView === 'CONTACTS' ? 'text-[#191C3B] stroke-[2.5]' : ''}`} />
+            <span className={`text-[10px] mt-1 ${activeView === 'CONTACTS' ? 'font-bold text-[#191C3B]' : 'font-medium'}`}>
+              संपर्क
+            </span>
+          </button>
+
+          {/* Settings / Profile */}
+          <button
+            type="button"
+            onClick={() => setActiveSettingsSection('ACCOUNT')}
+            className="flex flex-col items-center justify-center flex-1 h-full py-1 transition-colors relative touch-target text-[#686578] hover:text-[#191C3B]"
+          >
+            {user.avatarUrl ? (
+              <img
+                src={user.avatarUrl}
+                alt={user.displayName || user.username}
+                className="w-5 h-5 rounded-full object-cover border border-[#C59A58]"
+              />
+            ) : (
+              <Settings className="w-5 h-5" />
+            )}
+            <span className="text-[10px] mt-1 font-medium">
+              सेटिंग्स
+            </span>
+          </button>
+        </nav>
+      )}
 
       {/* Floating / Fullscreen Call Modal (WhatsApp Picture-in-Picture) */}
       {activeCall && (

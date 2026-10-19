@@ -55,7 +55,13 @@ export const ContactDossier: React.FC<ContactDossierProps> = ({
     : `@${otherUser?.username || 'user'}`;
 
   return (
-    <aside className="w-80 md:w-88 bg-white border-l border-[#E8E2D5] flex flex-col h-full overflow-y-auto z-10">
+    <>
+      {/* Mobile/Tablet Backdrop */}
+      <div
+        className="lg:hidden fixed inset-0 bg-black/40 backdrop-blur-2xs z-40 animate-in fade-in"
+        onClick={onClose}
+      />
+      <aside className="fixed inset-y-0 right-0 z-50 w-full sm:w-96 lg:static lg:w-80 xl:w-88 bg-white border-l border-[#E8E2D5] flex flex-col h-full overflow-y-auto shadow-2xl lg:shadow-none animate-in slide-in-from-right duration-200">
       {/* Dossier Header */}
       <div className="p-4 border-b border-[#E8E2D5] flex items-center justify-between bg-white">
         <div>
@@ -262,5 +268,6 @@ export const ContactDossier: React.FC<ContactDossierProps> = ({
         )}
       </div>
     </aside>
+    </>
   );
 };
