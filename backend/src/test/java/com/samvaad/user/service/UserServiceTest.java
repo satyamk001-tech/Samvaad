@@ -66,17 +66,37 @@ class UserServiceTest {
     }
 
     @Test
-    void shouldSearchUsersByQuery() {
+    void shouldSearchUserByExactUsernameIgnoringCaseAndAtSign() {
         User user1 = User.builder().id(UUID.randomUUID()).username("elena").displayName("Elena Rostova").build();
-        User user2 = User.builder().id(UUID.randomUUID()).username("eric").displayName("Eric Thorne").build();
 
-        when(userRepository.findByUsernameContainingIgnoreCaseOrDisplayNameContainingIgnoreCase("elena", "elena"))
-                .thenReturn(List.of(user1));
+        when(userRepository.findByUsernameIgnoreCase(argThat(s -> s != null && s.equalsIgnoreCase("elena"))))
+                .thenReturn(Optional.of(user1));
 
-        List<UserDto> results = userService.searchUsers("elena");
+        List<UserDto> resultsWithAt = userService.searchUsers("  @Elena  ");
+        assertEquals(1, resultsWithAt.size());
+        assertEquals("elena", resultsWithAt.get(0).username());
 
-        assertEquals(1, results.size());
-        assertEquals("elena", results.get(0).username());
+        List<UserDto> resultsPlain = userService.searchUsers("elena");
+        assertEquals(1, resultsPlain.size());
+        assertEquals("elena", resultsPlain.get(0).username());
+    }
+
+    @Test
+    void shouldReturnEmptyWhenExactUsernameNotFound() {
+        when(userRepository.findByUsernameIgnoreCase("unknown_user"))
+                .thenReturn(Optional.empty());
+
+        List<UserDto> results = userService.searchUsers("@unknown_user");
+        assertTrue(results.isEmpty());
+    }
+
+    @Test
+    void shouldReturnEmptyForBlankOrEmptyQuery() {
+        assertTrue(userService.searchUsers("").isEmpty());
+        assertTrue(userService.searchUsers("   ").isEmpty());
+        assertTrue(userService.searchUsers("@").isEmpty());
+        assertTrue(userService.searchUsers("  @  ").isEmpty());
+        assertTrue(userService.searchUsers(null).isEmpty());
     }
 
     @Test

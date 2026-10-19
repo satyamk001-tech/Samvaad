@@ -19,9 +19,11 @@ import java.util.UUID;
 public class UserController {
 
     private final UserService userService;
+    private final com.samvaad.user.security.SearchRateLimiter searchRateLimiter;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, com.samvaad.user.security.SearchRateLimiter searchRateLimiter) {
         this.userService = userService;
+        this.searchRateLimiter = searchRateLimiter;
     }
 
     @GetMapping("/me")
@@ -48,11 +50,16 @@ public class UserController {
     @GetMapping("/search")
     public ResponseEntity<List<UserDto>> searchUsers(
             @RequestParam(value = "query", required = false) String query,
-            @RequestParam(value = "q", required = false) String q
+            @RequestParam(value = "q", required = false) String q,
+            @AuthenticationPrincipal UserPrincipal principal
     ) {
+        if (principal != null && !searchRateLimiter.tryAcquire(principal.getId())) {
+            throw new com.samvaad.common.exception.RateLimitExceededException("Too many search requests. Please wait a moment before trying again.");
+        }
         String effectiveQuery = (query != null && !query.isBlank()) ? query : q;
         List<UserDto> users = userService.searchUsers(effectiveQuery)
                 .stream()
+                .filter(u -> principal == null || !u.id().equals(principal.getId()))
                 .map(UserDto::toPublicDto)
                 .toList();
         return ResponseEntity.ok(users);

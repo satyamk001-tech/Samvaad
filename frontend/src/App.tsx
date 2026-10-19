@@ -7,6 +7,7 @@ import { ConversationSidebar } from './components/ConversationSidebar';
 import { ChatArea } from './components/ChatArea';
 import { ContactDossier } from './components/ContactDossier';
 import { LanguageSettings } from './components/LanguageSettings';
+import { FriendsView } from './components/FriendsView';
 import { NewChatModal } from './components/NewChatModal';
 import { CallModal } from './components/CallModal';
 import { IncomingCallPopup } from './components/IncomingCallPopup';
@@ -433,11 +434,18 @@ const MainApp: React.FC = () => {
                 <Phone className="w-4 h-4 text-[#D97706]" />
               </button>
 
-              {/* Contacts */}
+              {/* Contacts / Friends */}
               <button
-                onClick={() => setIsNewChatOpen(true)}
-                className="w-10 h-10 md:w-11 md:h-11 rounded-2xl flex flex-col items-center justify-center text-[#686578] hover:text-[#191C3B] hover:bg-[#FAF7F2] transition-all"
-                title={`${t('contacts') || 'संपर्क सूची'}`}
+                onClick={() => {
+                  setActiveView('CONTACTS');
+                  setActiveConversation(null);
+                }}
+                className={`w-10 h-10 md:w-11 md:h-11 rounded-2xl flex flex-col items-center justify-center transition-all ${
+                  activeView === 'CONTACTS'
+                    ? 'bg-[#191C3B] text-white shadow-sm'
+                    : 'text-[#686578] hover:text-[#191C3B] hover:bg-[#FAF7F2]'
+                }`}
+                title="मित्र एवं संपर्क सूची • Friends & Contacts"
               >
                 <Users className="w-4 h-4" />
               </button>
@@ -523,8 +531,31 @@ const MainApp: React.FC = () => {
             </div>
           )}
 
+          {activeView === 'CONTACTS' && (
+            <div className="flex-1 h-full overflow-hidden flex flex-col">
+              <FriendsView
+                currentUser={user}
+                conversations={conversations}
+                onSelectConversation={(conv) => {
+                  setActiveConversation(conv);
+                  setActiveView('CHATS');
+                }}
+                onOpenNewChat={() => setIsNewChatOpen(true)}
+                onInitiateCall={handleInitiateCall}
+                onConversationCreated={(conv) => {
+                  setConversations((prev) => {
+                    if (prev.some((c) => c.id === conv.id)) {
+                      return prev.map((c) => (c.id === conv.id ? conv : c));
+                    }
+                    return [conv, ...prev];
+                  });
+                }}
+              />
+            </div>
+          )}
+
           {/* Active Chat Conversation View */}
-          {activeConversation ? (
+          {activeView === 'CHATS' && (activeConversation ? (
             <div className={`flex-1 h-full overflow-hidden flex flex-col ${!activeConversation ? 'hidden md:flex' : 'flex'}`}>
               <ChatArea
                 conversation={activeConversation}
@@ -557,7 +588,7 @@ const MainApp: React.FC = () => {
                 <span>{t('newConversation') || 'नया संदेश प्रारंभ करें'}</span>
               </button>
             </div>
-          )}
+          ))}
 
           {/* Right Dossier Panel */}
           {showDossier && activeConversation && (
@@ -614,6 +645,7 @@ const MainApp: React.FC = () => {
       {isNewChatOpen && (
         <NewChatModal
           currentUser={user}
+          existingConversations={conversations}
           onClose={() => setIsNewChatOpen(false)}
           onConversationCreated={handleConversationCreated}
         />

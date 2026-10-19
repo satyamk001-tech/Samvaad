@@ -41,15 +41,21 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public List<UserDto> searchUsers(String query) {
-        // Privacy protection: never dump directory on empty or single-character search
-        if (query == null || query.trim().length() < 2) {
+        if (query == null) {
             return Collections.emptyList();
         }
-        String cleanQuery = query.trim();
-        return userRepository.findByUsernameContainingIgnoreCaseOrDisplayNameContainingIgnoreCase(cleanQuery, cleanQuery)
-                .stream()
+        String clean = query.trim();
+        if (clean.startsWith("@")) {
+            clean = clean.substring(1).trim();
+        }
+        if (clean.isEmpty()) {
+            return Collections.emptyList();
+        }
+        // Strict exact username lookup (case-insensitive) - no substring/display name enumeration
+        return userRepository.findByUsernameIgnoreCase(clean)
                 .map(UserDto::fromEntity)
-                .toList();
+                .map(List::of)
+                .orElse(Collections.emptyList());
     }
 
     @Transactional

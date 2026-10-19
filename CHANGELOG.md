@@ -53,8 +53,12 @@ All notable changes to the Samvaad platform will be documented in this file.
   - Native Geolocation API integration via `MessageType.LOCATION`.
   - Interactive map card in chat bubble with coordinates and a 1-tap "Open in Google Maps" link.
 
-- **Private Username Search:**
-  - Hardened search query handling in `UserService`: empty or short queries (< 2 characters) return empty lists, preventing full user directory enumeration.
+- **Strict Private User Search & Friend Discovery:**
+  - Database-backed exact-match username lookup (`WHERE LOWER(username) = LOWER(:username)`) supported by a functional index (`CREATE INDEX idx_users_lower_username ON users(LOWER(username))` in `V5__exact_username_index.sql`).
+  - Leading `@` stripping and whitespace trimming. Zero partial matches, zero display name matches, and zero random/suggested user directories.
+  - Dedicated rate limiter (`SearchRateLimiter`) enforcing a 30 searches/minute per-user sliding window to protect against automated username enumeration.
+  - Dedicated **Friends & Contacts** panel (`FriendsView`) displaying only users with established, accepted conversations (`status = 'ACCEPTED'`), complete with voice/video calling and clean empty states.
+  - `NewChatModal` upgraded with explicit submission, exact match lookup, and clear relationship badges ("Request Sent", "Pending Acceptance", "Accepted Connection").
 
 ---
 
