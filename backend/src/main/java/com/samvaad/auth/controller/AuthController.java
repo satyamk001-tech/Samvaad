@@ -77,4 +77,31 @@ public class AuthController {
         UserDto currentUser = authService.getCurrentUser(principal);
         return ResponseEntity.ok(currentUser);
     }
+
+    @GetMapping("/sessions")
+    public ResponseEntity<java.util.List<SessionDto>> getActiveSessions(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @RequestHeader(value = "X-Refresh-Token", required = false) String refreshToken
+    ) {
+        java.util.List<SessionDto> sessions = authService.getActiveSessions(principal, refreshToken);
+        return ResponseEntity.ok(sessions);
+    }
+
+    @DeleteMapping("/sessions/{sessionId}")
+    public ResponseEntity<Map<String, String>> revokeSession(
+            @PathVariable java.util.UUID sessionId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        authService.revokeSession(principal, sessionId);
+        return ResponseEntity.ok(Map.of("message", "Session revoked successfully"));
+    }
+
+    @DeleteMapping("/sessions/others")
+    public ResponseEntity<Map<String, String>> revokeOtherSessions(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @RequestParam(required = false) java.util.UUID currentSessionId
+    ) {
+        authService.revokeOtherSessions(principal, currentSessionId);
+        return ResponseEntity.ok(Map.of("message", "All other sessions revoked successfully"));
+    }
 }

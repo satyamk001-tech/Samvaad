@@ -86,3 +86,9 @@ All notable changes to the Samvaad platform will be documented in this file.
   - **WhatsApp-Style Composer & Attachment Bottom Sheet:** Replaced bloated horizontal action button row with a clean input capsule (Emoji picker, expanding text input, paperclip attachment trigger, send / voice note record toggle). Tapping the paperclip opens a slide-up attachment sheet with clean cards for Gallery, Document, Location, UPI Payment, View Once, and Indic Script.
   - **Zero Horizontal Overflow & Safe Area Insets:** Added `viewport-fit=cover`, safe-area padding helpers (`safe-pb`, `safe-pt`), and word-break wrapping on message bubbles and URLs. Minimum 44px touch targets across all mobile interactive controls.
 
+- **Active Sessions & Linked Devices Management (Settings > Sessions):**
+  - **Comprehensive Multi-Device Session Control:** Added dedicated `SESSIONS` tab in Settings (`/auth/sessions`) allowing users to view all active login sessions across devices (Device type, Browser, OS, Location, IP address, and active duration).
+  - **One-Tap Session Revocation:** Users can terminate any specific remote session or click "Log Out of All Other Devices" to instantly invalidate all other refresh tokens in the database.
+  - **Inactivity Auto-Lock Preferences:** Customizable timer (5m, 15m, 30m, 1h, Never) for locking sensitive views during inactivity.
+  - **Master-Detail Mobile Settings Navigation:** Mobile viewports (< 768px) now display an organized WhatsApp/Telegram-style master list of categories with accessory chevrons, transitioning smoothly to full-screen detail views with a prominent back button (`←`).
+

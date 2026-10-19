@@ -152,3 +152,16 @@ export interface SignalingMessage {
   type: 'OFFER' | 'ANSWER' | 'ICE_CANDIDATE' | 'RINGING' | 'ACCEPT' | 'REJECT' | 'END';
   data: any;
 }
+
+export interface ActiveSession {
+  id: string;
+  createdAt: string;
+  expiresAt: string;
+  isCurrent: boolean;
+  deviceType: string;
+  browser: string;
+  os: string;
+  location: string;
+  ipAddress: string;
+}
+

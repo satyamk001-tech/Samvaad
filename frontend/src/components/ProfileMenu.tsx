@@ -15,7 +15,8 @@ import {
   HelpCircle,
   Info,
   LogOut,
-  ChevronRight
+  ChevronRight,
+  Smartphone,
 } from 'lucide-react';
 
 interface ProfileMenuProps {
@@ -55,6 +56,7 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
     { id: 'MY_PROFILE', label: t('myProfile') || 'My Profile', icon: <UserIcon className="w-4 h-4 text-[#C59A58]" /> },
     { id: 'CHANGE_AVATAR', label: t('changeProfilePic') || 'Change Profile Picture', icon: <Image className="w-4 h-4 text-[#686578]" /> },
     { id: 'SET_STATUS', label: t('setStatus') || 'Set Status', icon: <Activity className="w-4 h-4 text-[#10B981]" /> },
+    { id: 'SESSIONS', label: 'सक्रिय सत्र एवं उपकरण • Sessions & Devices', icon: <Smartphone className="w-4 h-4 text-[#D97706]" /> },
     { id: 'ACCOUNT', label: t('accountSettings') || 'Account Settings', icon: <Settings className="w-4 h-4 text-[#686578]" /> },
     { id: 'PRIVACY', label: t('privacySecurity') || 'Privacy and Security', icon: <Shield className="w-4 h-4 text-[#686578]" /> },
     { id: 'NOTIFICATIONS', label: t('notifications') || 'Notifications', icon: <Bell className="w-4 h-4 text-[#686578]" /> },
