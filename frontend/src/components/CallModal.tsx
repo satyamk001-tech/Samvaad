@@ -278,6 +278,15 @@ export const CallModal: React.FC<CallModalProps> = ({
         { urls: 'stun:global.stun.twilio.com:3478' },
         { urls: 'stun:stun.nextcloud.com:443' },
         { urls: 'stun:relay.metered.ca:80' },
+        {
+          urls: [
+            'turn:turn.evan-brass.net:3478?transport=udp',
+            'turn:turn.evan-brass.net:3478?transport=tcp',
+            'turns:turn.evan-brass.net:443?transport=tcp',
+          ],
+          username: 'user',
+          credential: 'password',
+        },
       ],
       bundlePolicy: 'max-bundle',
       rtcpMuxPolicy: 'require',
@@ -298,6 +307,7 @@ export const CallModal: React.FC<CallModalProps> = ({
         });
       } else if (pc.iceConnectionState === 'failed') {
         console.warn('[WebRTC] ICE state failed, attempting restart...');
+        setConnectionStatus('पुनः जुड़ने का प्रयास... • Reconnecting via Relay...');
         if (isCaller && pc.signalingState === 'stable') {
           try {
             pc.restartIce();

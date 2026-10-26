@@ -15,6 +15,7 @@ All notable changes to the Samvaad platform will be documented in this file.
   - Migrated `createAnswer` to modern W3C Unified Plan (parameterless) to eliminate WebKit `InvalidStateError` when answering multi-stream offers.
   - Dispatched `ACCEPT` signal immediately on call answer rather than awaiting media resolution, preventing signaling timeout deadlocks on permission prompts.
   - Created fresh `MediaStream` instances on `ontrack` with direct Web Audio API routing (`ctx.destination`) to ensure instant macOS audio playback.
+  - Added TURN relay support (`turn:` and `turns:` on UDP/TCP port 3478 and TCP port 443) allowing WebRTC calls to bypass strict Wi-Fi router firewalls, Symmetric NAT, and AP isolation.
   - Configured Vercel cache-invalidation headers (`no-cache, no-store, must-revalidate`) on `/` and `/index.html` to prevent Safari from caching stale client bundles.
 
 - **Automated macOS Safari Audio Unblocker:**
