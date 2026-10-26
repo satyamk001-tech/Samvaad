@@ -8,6 +8,7 @@ class StompService {
   private pendingSubscriptions: Map<string, MessageCallback[]> = new Map();
   private connected: boolean = false;
   private heartbeatInterval: any = null;
+  private messageQueue: { destination: string; body: any }[] = [];
 
   public connect(token: string) {
     if (this.client && this.connected) return;
@@ -58,6 +59,21 @@ class StompService {
         callbacks.forEach((cb) => this.subscribe(destination, cb));
       });
       this.pendingSubscriptions.clear();
+
+      // Flush any queued outgoing messages/signals
+      while (this.messageQueue.length > 0) {
+        const item = this.messageQueue.shift();
+        if (item && this.client) {
+          try {
+            this.client.publish({
+              destination: item.destination,
+              body: JSON.stringify(item.body),
+            });
+          } catch (qErr) {
+            console.error('[STOMP] Error flushing queued message:', qErr);
+          }
+        }
+      }
     };
 
     this.client.onDisconnect = () => {
@@ -122,14 +138,20 @@ class StompService {
 
   public send(destination: string, body: any) {
     if (!this.connected || !this.client) {
-      console.warn('[STOMP] Cannot send message, not connected');
+      console.warn('[STOMP] Not connected yet, queuing message for:', destination);
+      this.messageQueue.push({ destination, body });
       return;
     }
 
-    this.client.publish({
-      destination,
-      body: JSON.stringify(body),
-    });
+    try {
+      this.client.publish({
+        destination,
+        body: JSON.stringify(body),
+      });
+    } catch (err) {
+      console.warn('[STOMP] Publish error, queuing message:', err);
+      this.messageQueue.push({ destination, body });
+    }
   }
 
   private subscribeToPrivateQueue() {

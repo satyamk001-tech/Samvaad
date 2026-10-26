@@ -190,15 +190,25 @@ const MainApp: React.FC = () => {
     return () => window.removeEventListener('samvaad:private_message', handlePrivateMessage);
   }, []);
 
-  const handleInitiateCall = async (type: 'AUDIO' | 'VIDEO') => {
-    if (!activeConversation || !user) return;
-    const recipient = activeConversation.members.find((m) => m.user.id !== user.id)?.user;
-    if (!recipient) return;
+  const handleInitiateCall = async (type: 'AUDIO' | 'VIDEO', targetConversation?: Conversation, targetUserId?: string) => {
+    if (!user) return;
+    const conv = targetConversation || activeConversation;
+    let receiverId = targetUserId;
+
+    if (!receiverId && conv) {
+      const recipient = conv.members?.find((m) => m.user?.id !== user.id)?.user;
+      if (recipient) receiverId = recipient.id;
+    }
+
+    if (!receiverId) {
+      console.warn('Cannot initiate call: receiver could not be determined');
+      return;
+    }
 
     try {
       const call = await api.post<Call>('/calls/initiate', {
-        receiverId: recipient.id,
-        conversationId: activeConversation.id,
+        receiverId,
+        conversationId: conv?.id,
         type,
       });
       setActiveCall(call);
@@ -225,7 +235,14 @@ const MainApp: React.FC = () => {
   const handleAcceptIncomingCall = () => {
     if (!incomingCall) return;
     soundService.stopIncomingRingtone();
-    // Activate CallModal immediately; CallModal handles RTCPeerConnection setup and media capture before signaling ACCEPT
+    // Warm up AudioContext from user gesture so incoming audio is never blocked by browser autoplay policy
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtx) {
+        const audioCtx = new AudioCtx();
+        audioCtx.resume().catch(() => {});
+      }
+    } catch {}
     setActiveCall(incomingCall);
     setIncomingCall(null);
     setIsCallMinimized(false);

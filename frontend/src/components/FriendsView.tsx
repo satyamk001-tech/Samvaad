@@ -8,7 +8,7 @@ interface FriendsViewProps {
   conversations: Conversation[];
   onSelectConversation: (conversation: Conversation) => void;
   onOpenNewChat: () => void;
-  onInitiateCall?: (type: 'AUDIO' | 'VIDEO') => void;
+  onInitiateCall?: (type: 'AUDIO' | 'VIDEO', targetConversation?: Conversation) => void;
   onConversationCreated: (conversation: Conversation) => void;
 }
 
@@ -417,7 +417,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                         <button
                           onClick={() => {
                             onSelectConversation(conversation);
-                            setTimeout(() => onInitiateCall('AUDIO'), 50);
+                            onInitiateCall('AUDIO', conversation);
                           }}
                           className="p-2 rounded-lg bg-white border border-[#E8E2D5] text-amber-700 hover:bg-amber-600 hover:text-white transition-all shadow-2xs"
                           title="ऑडियो कॉल • Voice Call"
@@ -427,7 +427,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                         <button
                           onClick={() => {
                             onSelectConversation(conversation);
-                            setTimeout(() => onInitiateCall('VIDEO'), 50);
+                            onInitiateCall('VIDEO', conversation);
                           }}
                           className="p-2 rounded-lg bg-white border border-[#E8E2D5] text-purple-700 hover:bg-purple-600 hover:text-white transition-all shadow-2xs"
                           title="वीडियो कॉल • Video Call"

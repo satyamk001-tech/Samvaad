@@ -92,3 +92,11 @@ All notable changes to the Samvaad platform will be documented in this file.
   - **Inactivity Auto-Lock Preferences:** Customizable timer (5m, 15m, 30m, 1h, Never) for locking sensitive views during inactivity.
   - **Master-Detail Mobile Settings Navigation:** Mobile viewports (< 768px) now display an organized WhatsApp/Telegram-style master list of categories with accessory chevrons, transitioning smoothly to full-screen detail views with a prominent back button (`←`).
 
+- **WebRTC Audio & Video Calling Engine Overhaul:**
+  - **Global TURN Relay Server Infrastructure:** Integrated high-availability TURN relay servers (`stun:openrelay.metered.ca:80`, `turn:openrelay.metered.ca:80`, `turn:openrelay.metered.ca:443`, `turn:openrelay.metered.ca:443?transport=tcp`) to bypass symmetric NAT, cellular carrier-grade NAT (CGNAT), and firewall blocks across different networks.
+  - **Restored Remote Audio Playback:** Removed erroneous `muted` attribute on remote video elements and replaced `display: none` (`className="hidden"`) on `<audio>` elements with active DOM offscreen styling, resolving browser autoplay restrictions on audio and video calls.
+  - **Asynchronous WebRTC State Synchronization:** Wrapped media acquisition in `mediaReadyPromise` to eliminate SDP offer/answer race conditions, ensuring local media tracks are attached before creating offers or answers.
+  - **Resilient ICE Candidate Handshake:** Isolated individual ICE candidate injections inside defensive `try/catch` blocks and synchronized candidate queue draining to run strictly after remote/local description settlement.
+  - **Reliable STOMP Signaling Delivery:** Implemented an outgoing message queue in `stomp.ts` that buffers and automatically flushes signaling frames (`ACCEPT`, `OFFER`, `ANSWER`, `ICE_CANDIDATE`) during connection initialization and network reconnects.
+  - **Direct Call Initiation in Contacts:** Resolved state latency in `FriendsView.tsx` by passing target conversation directly to `onInitiateCall`.
+
