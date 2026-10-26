@@ -4,8 +4,8 @@ type MessageCallback = (message: any) => void;
 
 class StompService {
   private client: Client | null = null;
-  private subscriptions: Map<string, StompSubscription> = new Map();
-  private pendingSubscriptions: Map<string, MessageCallback[]> = new Map();
+  private clientSubscriptions: Map<string, StompSubscription> = new Map();
+  private destinationListeners: Map<string, Set<MessageCallback>> = new Map();
   private connected: boolean = false;
   private heartbeatInterval: any = null;
   private messageQueue: { destination: string; body: any }[] = [];
@@ -36,10 +36,12 @@ class StompService {
       connectHeaders: {
         Authorization: `Bearer ${token}`,
       },
-      debug: (_str) => {
-        // debug logging can be enabled when troubleshooting
+      debug: (str) => {
+        if (str.includes('ERROR') || str.includes('CLOSED')) {
+          console.warn('[STOMP NOTICE]', str);
+        }
       },
-      reconnectDelay: 5000,
+      reconnectDelay: 3000,
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
     });
@@ -48,17 +50,16 @@ class StompService {
       this.connected = true;
       console.log('[STOMP] Connected successfully');
 
+      // Clear any stale client subscriptions from previous connection
+      this.clientSubscriptions.clear();
+
       // Start presence heartbeat ping
       this.startHeartbeat();
 
-      // Subscribe to personal queue
-      this.subscribeToPrivateQueue();
-
-      // Process any pending subscriptions
-      this.pendingSubscriptions.forEach((callbacks, destination) => {
-        callbacks.forEach((cb) => this.subscribe(destination, cb));
+      // Automatically re-establish all active destination subscriptions on the new connection
+      this.destinationListeners.forEach((_, destination) => {
+        this.bindStompSubscription(destination);
       });
-      this.pendingSubscriptions.clear();
 
       // Flush any queued outgoing messages/signals
       while (this.messageQueue.length > 0) {
@@ -78,6 +79,7 @@ class StompService {
 
     this.client.onDisconnect = () => {
       this.connected = false;
+      this.clientSubscriptions.clear();
       this.stopHeartbeat();
       console.log('[STOMP] Disconnected');
     };
@@ -87,12 +89,20 @@ class StompService {
     };
 
     this.client.activate();
+
+    // Ensure private queue is always registered as a persistent destination
+    this.subscribeToPrivateQueue();
   }
 
   public disconnect() {
     this.stopHeartbeat();
-    this.subscriptions.forEach((sub) => sub.unsubscribe());
-    this.subscriptions.clear();
+    this.clientSubscriptions.forEach((sub) => {
+      try {
+        sub.unsubscribe();
+      } catch {}
+    });
+    this.clientSubscriptions.clear();
+    this.destinationListeners.clear();
     if (this.client) {
       this.client.deactivate();
       this.client = null;
@@ -101,35 +111,57 @@ class StompService {
   }
 
   public subscribe(destination: string, callback: MessageCallback) {
-    if (!this.connected || !this.client) {
-      const callbacks = this.pendingSubscriptions.get(destination) || [];
-      callbacks.push(callback);
-      this.pendingSubscriptions.set(destination, callbacks);
+    if (!this.destinationListeners.has(destination)) {
+      this.destinationListeners.set(destination, new Set());
+    }
+    this.destinationListeners.get(destination)!.add(callback);
+
+    if (this.connected && this.client) {
+      this.bindStompSubscription(destination);
+    }
+  }
+
+  private bindStompSubscription(destination: string) {
+    if (!this.connected || !this.client || this.clientSubscriptions.has(destination)) {
       return;
     }
 
-    if (this.subscriptions.has(destination)) {
-      return;
+    try {
+      const sub = this.client.subscribe(destination, (msg: IMessage) => {
+        let parsed: any;
+        try {
+          parsed = JSON.parse(msg.body);
+        } catch {
+          parsed = msg.body;
+        }
+
+        const listeners = this.destinationListeners.get(destination);
+        if (listeners) {
+          listeners.forEach((cb) => {
+            try {
+              cb(parsed);
+            } catch (cbErr) {
+              console.error('[STOMP Listener Error]', cbErr);
+            }
+          });
+        }
+      });
+
+      this.clientSubscriptions.set(destination, sub);
+    } catch (err) {
+      console.warn('[STOMP] Subscribe error for ' + destination + ':', err);
     }
-
-    const sub = this.client.subscribe(destination, (msg: IMessage) => {
-      try {
-        const parsed = JSON.parse(msg.body);
-        callback(parsed);
-      } catch {
-        callback(msg.body);
-      }
-    });
-
-    this.subscriptions.set(destination, sub);
   }
 
   public unsubscribe(destination: string) {
-    const sub = this.subscriptions.get(destination);
+    const sub = this.clientSubscriptions.get(destination);
     if (sub) {
-      sub.unsubscribe();
-      this.subscriptions.delete(destination);
+      try {
+        sub.unsubscribe();
+      } catch {}
+      this.clientSubscriptions.delete(destination);
     }
+    this.destinationListeners.delete(destination);
   }
 
   public isConnected(): boolean {

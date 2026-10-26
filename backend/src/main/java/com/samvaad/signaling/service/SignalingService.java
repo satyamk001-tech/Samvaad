@@ -85,6 +85,11 @@ public class SignalingService {
                 "/queue/messages",
                 StompEventPayload.of("INCOMING_CALL", callDto)
         );
+        messagingTemplate.convertAndSendToUser(
+                receiver.getId().toString(),
+                "/queue/messages",
+                StompEventPayload.of("INCOMING_CALL", callDto)
+        );
 
         return callDto;
     }
@@ -149,6 +154,11 @@ public class SignalingService {
         // Relay signaling frame (OFFER, ANSWER, ICE_CANDIDATE, etc.) directly to recipient's private STOMP queue
         messagingTemplate.convertAndSendToUser(
                 targetUser.getUsername(),
+                "/queue/messages",
+                StompEventPayload.of("CALL_SIGNAL", message)
+        );
+        messagingTemplate.convertAndSendToUser(
+                targetUser.getId().toString(),
                 "/queue/messages",
                 StompEventPayload.of("CALL_SIGNAL", message)
         );
