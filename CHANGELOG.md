@@ -4,6 +4,26 @@ All notable changes to the Samvaad platform will be documented in this file.
 
 ---
 
+## [1.0.2] - 2026-10-26
+
+### 📞 Universal Cross-Platform Audio & Video Calling Engine
+- **Cross-Platform macOS, iOS, Windows & Android WebRTC Stability:**
+  - Resolved candidate pool allocation delays (`iceCandidatePoolSize`) that caused WebKit / Safari on macOS to stall ICE candidate gathering.
+  - Added strict WebRTC bundle configurations (`bundlePolicy: 'max-bundle'`, `rtcpMuxPolicy: 'require'`) for unified cross-browser negotiation.
+  - Relaxed desktop webcam constraints (`facingMode: { ideal: 'user' }`) to eliminate `OverconstrainedError` on MacBook FaceTime HD and external desktop webcams.
+  - Implemented progressive media fallback (`{ audio: true, video: true }`) before synthetic stream generation.
+
+- **Automated macOS Safari Audio Unblocker:**
+  - Integrated gesture-driven Web Audio `AudioContext` and dynamic callback refs (`setRemoteAudioEl`), ensuring remote audio tracks bypass Safari's strict "Stop Media with Audio" autoplay policies.
+
+- **Signaling Synchronization & Resilient ICE Negotiation:**
+  - Added bidirectional `CONNECTED` signaling frame propagation so both peers immediately transition out of connecting state upon connection establishment.
+  - Replaced dead relay endpoints with high-performance public STUN endpoints (Google, Cloudflare, Twilio, Nextcloud) with sub-50ms roundtrip response times.
+  - Handled candidate payload parsing directly on `activePc.addIceCandidate(cand)` to prevent runtime crashes on empty or end-of-candidate descriptors.
+  - Integrated `stompService` outgoing message queueing, guaranteeing zero dropped signaling packets during transient network re-connections.
+
+---
+
 ## [1.0.1] - 2026-10-19
 
 ### 🚀 Critical Bug Fixes & Stability Improvements

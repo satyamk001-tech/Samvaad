@@ -12,7 +12,7 @@
     
     <groupId>com.samvaad</groupId>
     <artifactId>samvaad-backend</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
     <name>samvaad-backend</name>
     <description>Samvaad - Real-Time Sovereign Messaging &amp; Communication Platform</description>
 
