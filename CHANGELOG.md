@@ -12,6 +12,10 @@ All notable changes to the Samvaad platform will be documented in this file.
   - Added strict WebRTC bundle configurations (`bundlePolicy: 'max-bundle'`, `rtcpMuxPolicy: 'require'`) for unified cross-browser negotiation.
   - Relaxed desktop webcam constraints (`facingMode: { ideal: 'user' }`) to eliminate `OverconstrainedError` on MacBook FaceTime HD and external desktop webcams.
   - Implemented progressive media fallback (`{ audio: true, video: true }`) before synthetic stream generation.
+  - Migrated `createAnswer` to modern W3C Unified Plan (parameterless) to eliminate WebKit `InvalidStateError` when answering multi-stream offers.
+  - Dispatched `ACCEPT` signal immediately on call answer rather than awaiting media resolution, preventing signaling timeout deadlocks on permission prompts.
+  - Created fresh `MediaStream` instances on `ontrack` with direct Web Audio API routing (`ctx.destination`) to ensure instant macOS audio playback.
+  - Configured Vercel cache-invalidation headers (`no-cache, no-store, must-revalidate`) on `/` and `/index.html` to prevent Safari from caching stale client bundles.
 
 - **Automated macOS Safari Audio Unblocker:**
   - Integrated gesture-driven Web Audio `AudioContext` and dynamic callback refs (`setRemoteAudioEl`), ensuring remote audio tracks bypass Safari's strict "Stop Media with Audio" autoplay policies.

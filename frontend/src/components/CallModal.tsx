@@ -265,7 +265,6 @@ export const CallModal: React.FC<CallModalProps> = ({
 
   useEffect(() => {
     const candidateQueue: RTCIceCandidateInit[] = [];
-    const localGatheredCandidates: RTCIceCandidateInit[] = [];
     let isTerminated = false;
 
     const pc = new RTCPeerConnection({
@@ -278,6 +277,7 @@ export const CallModal: React.FC<CallModalProps> = ({
         { urls: 'stun:stun.cloudflare.com:3478' },
         { urls: 'stun:global.stun.twilio.com:3478' },
         { urls: 'stun:stun.nextcloud.com:443' },
+        { urls: 'stun:relay.metered.ca:80' },
       ],
       bundlePolicy: 'max-bundle',
       rtcpMuxPolicy: 'require',
@@ -331,7 +331,6 @@ export const CallModal: React.FC<CallModalProps> = ({
     pc.onicecandidate = (event) => {
       if (event.candidate) {
         const cand = event.candidate.toJSON ? event.candidate.toJSON() : event.candidate;
-        localGatheredCandidates.push(cand);
         stompService.send('/app/call.signal', {
           callId: call.id,
           targetUserId: peerUser.id,
@@ -355,20 +354,39 @@ export const CallModal: React.FC<CallModalProps> = ({
         trackStream = remoteStreamRef.current;
       }
 
-      remoteStreamRef.current = trackStream;
-      setRemoteStream(trackStream);
+      // Create a fresh MediaStream instance so React state and video elements re-evaluate immediately
+      const freshStream = new MediaStream(trackStream.getTracks());
+      remoteStreamRef.current = freshStream;
+      setRemoteStream(freshStream);
       setHasRemoteStream(true);
       setIsConnected(true);
       soundService.stopOutgoingRingback();
       setConnectionStatus('जुड़ा हुआ • Connected');
 
       if (remoteAudioRef.current) {
-        remoteAudioRef.current.srcObject = trackStream;
+        remoteAudioRef.current.srcObject = freshStream;
         remoteAudioRef.current.play().catch(() => {});
       }
       if (remoteVideoRef.current) {
-        remoteVideoRef.current.srcObject = trackStream;
+        remoteVideoRef.current.srcObject = freshStream;
         remoteVideoRef.current.play().catch(() => {});
+      }
+
+      // macOS Safari direct Web Audio routing to guarantee audio playback
+      if (event.track.kind === 'audio') {
+        try {
+          const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+          if (AudioContextClass) {
+            const ctx = new AudioContextClass();
+            if (ctx.state === 'suspended') {
+              ctx.resume().catch(() => {});
+            }
+            const src = ctx.createMediaStreamSource(new MediaStream([event.track]));
+            src.connect(ctx.destination);
+          }
+        } catch (ctxErr) {
+          console.warn('[WebRTC] Web Audio direct routing notice:', ctxErr);
+        }
       }
     };
 
@@ -438,35 +456,35 @@ export const CallModal: React.FC<CallModalProps> = ({
             }
           });
         }
-
-        if (isCaller) {
-          setConnectionStatus(t('outgoingCall') || 'कॉल किया जा रहा है... • Calling...');
-          soundService.startOutgoingRingback();
-
-          setTimeout(() => {
-            if (!isTerminated) {
-              setConnectionStatus((prev) =>
-                prev.includes('Calling') || prev.includes('कॉल किया जा रहा')
-                  ? 'रिंग हो रहा है... • Ringing...'
-                  : prev
-              );
-            }
-          }, 1500);
-        } else {
-          // Receiver: emit ACCEPT signal to caller once media is ready
-          setConnectionStatus('स्वीकार किया जा रहा है • Connecting...');
-          api.post(`/calls/${call.id}/accept`).catch(() => {});
-          stompService.send('/app/call.signal', {
-            callId: call.id,
-            targetUserId: peerUser.id,
-            type: 'ACCEPT',
-            data: null,
-          });
-        }
       } catch (err) {
         console.warn('Media setup notice:', err);
       }
     })();
+
+    if (!isCaller) {
+      // Receiver: emit ACCEPT signal immediately so caller can generate offer without waiting
+      setConnectionStatus('स्वीकार किया जा रहा है • Connecting...');
+      api.post(`/calls/${call.id}/accept`).catch(() => {});
+      stompService.send('/app/call.signal', {
+        callId: call.id,
+        targetUserId: peerUser.id,
+        type: 'ACCEPT',
+        data: null,
+      });
+    } else {
+      setConnectionStatus(t('outgoingCall') || 'कॉल किया जा रहा है... • Calling...');
+      soundService.startOutgoingRingback();
+
+      setTimeout(() => {
+        if (!isTerminated) {
+          setConnectionStatus((prev) =>
+            prev.includes('Calling') || prev.includes('कॉल किया जा रहा')
+              ? 'रिंग हो रहा है... • Ringing...'
+              : prev
+          );
+        }
+      }, 1500);
+    }
 
     const handleSignal = async (e: any) => {
       if (e.detail?.eventType !== 'CALL_SIGNAL') return;
@@ -501,16 +519,6 @@ export const CallModal: React.FC<CallModalProps> = ({
             type: 'OFFER',
             data: offer.sdp,
           });
-
-          // Flush any local candidates gathered so far
-          localGatheredCandidates.forEach((cand) => {
-            stompService.send('/app/call.signal', {
-              callId: call.id,
-              targetUserId: peerUser.id,
-              type: 'ICE_CANDIDATE',
-              data: cand,
-            });
-          });
         } else if (signal.type === 'OFFER' && !isCaller) {
           setConnectionStatus('जुड़ रहा है... • Connecting...');
           await mediaReadyPromise;
@@ -525,10 +533,8 @@ export const CallModal: React.FC<CallModalProps> = ({
 
           await activePc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: signal.data }));
 
-          const answer = await activePc.createAnswer({
-            offerToReceiveAudio: true,
-            offerToReceiveVideo: call.type === 'VIDEO',
-          });
+          // Modern Unified Plan createAnswer automatically negotiates transceivers without legacy plan-b flags
+          const answer = await activePc.createAnswer();
           await activePc.setLocalDescription(answer);
 
           stompService.send('/app/call.signal', {
@@ -549,16 +555,6 @@ export const CallModal: React.FC<CallModalProps> = ({
               }
             }
           }
-
-          // Flush any local candidates gathered so far
-          localGatheredCandidates.forEach((cand) => {
-            stompService.send('/app/call.signal', {
-              callId: call.id,
-              targetUserId: peerUser.id,
-              type: 'ICE_CANDIDATE',
-              data: cand,
-            });
-          });
 
           setIsConnected(true);
           setConnectionStatus('जुड़ा हुआ • Connected');
