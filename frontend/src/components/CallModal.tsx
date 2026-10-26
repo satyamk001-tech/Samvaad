@@ -175,6 +175,15 @@ export const CallModal: React.FC<CallModalProps> = ({
     }
   }, []);
 
+  // Callback ref for remote audio element
+  const setRemoteAudioEl = useCallback((el: HTMLAudioElement | null) => {
+    remoteAudioRef.current = el;
+    if (el && remoteStreamRef.current) {
+      el.srcObject = remoteStreamRef.current;
+      el.play().catch(() => {});
+    }
+  }, []);
+
   // Callback ref for local video element
   const setLocalVideoEl = useCallback((el: HTMLVideoElement | null) => {
     localVideoRef.current = el;
@@ -233,22 +242,16 @@ export const CallModal: React.FC<CallModalProps> = ({
         { urls: 'stun:stun2.l.google.com:19302' },
         { urls: 'stun:stun3.l.google.com:19302' },
         { urls: 'stun:stun4.l.google.com:19302' },
-        {
-          urls: [
-            'stun:openrelay.metered.ca:80',
-            'turn:openrelay.metered.ca:80',
-            'turn:openrelay.metered.ca:443',
-            'turn:openrelay.metered.ca:443?transport=tcp',
-          ],
-          username: 'openrelayproject',
-          credential: 'openrelayproject',
-        },
+        { urls: 'stun:stun.cloudflare.com:3478' },
+        { urls: 'stun:global.stun.twilio.com:3478' },
+        { urls: 'stun:stun.nextcloud.com:443' },
       ],
       iceCandidatePoolSize: 10,
     });
     peerConnectionRef.current = pc;
 
     pc.oniceconnectionstatechange = () => {
+      console.log('[WebRTC] ICE Connection State:', pc.iceConnectionState);
       if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
         soundService.stopOutgoingRingback();
         setIsConnected(true);
@@ -259,26 +262,35 @@ export const CallModal: React.FC<CallModalProps> = ({
           type: 'CONNECTED',
           data: null,
         });
-      } else if (pc.iceConnectionState === 'disconnected') {
-        setConnectionStatus('पुनः जुड़ रहा है • Reconnecting...');
       } else if (pc.iceConnectionState === 'failed') {
-        soundService.stopOutgoingRingback();
-        setConnectionStatus('पुनः प्रयास • Reconnecting');
+        console.warn('[WebRTC] ICE state failed, attempting restart...');
+        if (isCaller && pc.signalingState === 'stable') {
+          try {
+            pc.restartIce();
+            pc.createOffer({ iceRestart: true }).then(async (offer) => {
+              await pc.setLocalDescription(offer);
+              stompService.send('/app/call.signal', {
+                callId: call.id,
+                targetUserId: peerUser.id,
+                type: 'OFFER',
+                data: offer.sdp,
+              });
+            }).catch(console.error);
+          } catch (e) {
+            console.error('[WebRTC] ICE restart error:', e);
+          }
+        }
       }
     };
 
     pc.onconnectionstatechange = () => {
+      console.log('[WebRTC] Connection State:', pc.connectionState);
       if (pc.connectionState === 'connected') {
         soundService.stopOutgoingRingback();
         setIsConnected(true);
         setConnectionStatus('जुड़ा हुआ • Connected');
       } else if (pc.connectionState === 'connecting') {
         setConnectionStatus('जुड़ रहा है... • Connecting...');
-      } else if (pc.connectionState === 'disconnected') {
-        setConnectionStatus('पुनः जुड़ रहा है • Reconnecting...');
-      } else if (pc.connectionState === 'failed') {
-        soundService.stopOutgoingRingback();
-        setConnectionStatus('पुनः प्रयास • Reconnecting');
       }
     };
 
@@ -457,6 +469,7 @@ export const CallModal: React.FC<CallModalProps> = ({
             });
           });
         } else if (signal.type === 'OFFER' && !isCaller) {
+          setConnectionStatus('जुड़ रहा है... • Connecting...');
           await mediaReadyPromise;
 
           if (activePc.signalingState !== 'stable') {
@@ -485,7 +498,7 @@ export const CallModal: React.FC<CallModalProps> = ({
             const cand = candidateQueue.shift();
             if (cand) {
               try {
-                await activePc.addIceCandidate(new RTCIceCandidate(cand));
+                await activePc.addIceCandidate(cand);
               } catch (candErr) {
                 console.warn('Could not add queued ice candidate:', candErr);
               }
@@ -501,6 +514,9 @@ export const CallModal: React.FC<CallModalProps> = ({
               data: cand,
             });
           });
+
+          setIsConnected(true);
+          setConnectionStatus('जुड़ा हुआ • Connected');
         } else if (signal.type === 'ANSWER' && isCaller) {
           soundService.stopOutgoingRingback();
           setIsConnected(true);
@@ -512,7 +528,7 @@ export const CallModal: React.FC<CallModalProps> = ({
               const cand = candidateQueue.shift();
               if (cand) {
                 try {
-                  await activePc.addIceCandidate(new RTCIceCandidate(cand));
+                  await activePc.addIceCandidate(cand);
                 } catch (candErr) {
                   console.warn('Could not add queued ice candidate:', candErr);
                 }
@@ -523,13 +539,17 @@ export const CallModal: React.FC<CallModalProps> = ({
         } else if (signal.type === 'ICE_CANDIDATE' && signal.data) {
           if (activePc.remoteDescription && activePc.remoteDescription.type) {
             try {
-              await activePc.addIceCandidate(new RTCIceCandidate(signal.data));
+              await activePc.addIceCandidate(signal.data);
             } catch (candErr) {
               console.warn('Could not add ice candidate directly:', candErr);
             }
           } else {
             candidateQueue.push(signal.data);
           }
+        } else if (signal.type === 'CONNECTED') {
+          soundService.stopOutgoingRingback();
+          setIsConnected(true);
+          setConnectionStatus('जुड़ा हुआ • Connected');
         } else if (signal.type === 'REJECT') {
           soundService.stopOutgoingRingback();
           soundService.playCallEndedTone();
@@ -723,7 +743,7 @@ export const CallModal: React.FC<CallModalProps> = ({
       return (
         <>
           <audio
-            ref={remoteAudioRef}
+            ref={setRemoteAudioEl}
             autoPlay
             playsInline
             style={{ position: 'fixed', top: -9999, left: -9999, width: 1, height: 1, opacity: 0.01, pointerEvents: 'none' }}
@@ -851,7 +871,7 @@ export const CallModal: React.FC<CallModalProps> = ({
     return (
       <>
         <audio
-          ref={remoteAudioRef}
+          ref={setRemoteAudioEl}
           autoPlay
           playsInline
           style={{ position: 'fixed', top: -9999, left: -9999, width: 1, height: 1, opacity: 0.01, pointerEvents: 'none' }}
@@ -944,7 +964,7 @@ export const CallModal: React.FC<CallModalProps> = ({
   return (
     <>
       <audio
-        ref={remoteAudioRef}
+        ref={setRemoteAudioEl}
         autoPlay
         playsInline
         style={{ position: 'fixed', top: -9999, left: -9999, width: 1, height: 1, opacity: 0.01, pointerEvents: 'none' }}
