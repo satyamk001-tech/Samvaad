@@ -184,6 +184,39 @@ export const CallModal: React.FC<CallModalProps> = ({
     }
   }, []);
 
+  // macOS Safari Audio Unblocker: ensures audio playback starts on interaction
+  const ensureAudioPlayback = useCallback(() => {
+    if (remoteAudioRef.current && remoteStreamRef.current) {
+      remoteAudioRef.current.play().catch(() => {});
+    }
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtx) {
+        const ctx = new AudioCtx();
+        if (ctx.state === 'suspended') {
+          ctx.resume().catch(() => {});
+        }
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (hasRemoteStream) {
+      ensureAudioPlayback();
+      const unblockOnInteraction = () => {
+        ensureAudioPlayback();
+        window.removeEventListener('click', unblockOnInteraction);
+        window.removeEventListener('touchstart', unblockOnInteraction);
+      };
+      window.addEventListener('click', unblockOnInteraction, { once: true });
+      window.addEventListener('touchstart', unblockOnInteraction, { once: true });
+      return () => {
+        window.removeEventListener('click', unblockOnInteraction);
+        window.removeEventListener('touchstart', unblockOnInteraction);
+      };
+    }
+  }, [hasRemoteStream, ensureAudioPlayback]);
+
   // Callback ref for local video element
   const setLocalVideoEl = useCallback((el: HTMLVideoElement | null) => {
     localVideoRef.current = el;
@@ -246,7 +279,8 @@ export const CallModal: React.FC<CallModalProps> = ({
         { urls: 'stun:global.stun.twilio.com:3478' },
         { urls: 'stun:stun.nextcloud.com:443' },
       ],
-      iceCandidatePoolSize: 10,
+      bundlePolicy: 'max-bundle',
+      rtcpMuxPolicy: 'require',
     });
     peerConnectionRef.current = pc;
 
@@ -352,30 +386,39 @@ export const CallModal: React.FC<CallModalProps> = ({
             video: call.type === 'VIDEO' ? {
               width: { ideal: 1280 },
               height: { ideal: 720 },
-              facingMode: 'user',
+              facingMode: { ideal: 'user' },
             } : false,
           });
         } catch (mediaErr) {
-          console.warn('Initial media access notice, attempting fallback:', mediaErr);
-          if (call.type === 'VIDEO') {
-            try {
-              const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-              const syntheticStream = createSyntheticMediaStream(currentUser.displayName || currentUser.username, true);
-              const videoTrack = syntheticStream.getVideoTracks()[0];
-              const audioTrack = audioStream.getAudioTracks()[0];
-              stream = new MediaStream();
-              if (videoTrack) stream.addTrack(videoTrack);
-              if (audioTrack) stream.addTrack(audioTrack);
-            } catch (fallbackErr) {
-              console.warn('Audio fallback also unavailable, using synthetic stream:', fallbackErr);
-              stream = createSyntheticMediaStream(currentUser.displayName || currentUser.username, true);
-            }
-          } else {
-            try {
-              stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            } catch (fallbackAudioErr) {
-              console.warn('Physical audio unavailable, using synthetic comfort stream:', fallbackAudioErr);
-              stream = createSyntheticMediaStream(currentUser.displayName || currentUser.username, false);
+          console.warn('Initial media access notice, attempting relaxed fallback:', mediaErr);
+          try {
+            // Relaxed fallback for macOS Safari & desktop webcams without exact constraints
+            stream = await navigator.mediaDevices.getUserMedia({
+              audio: true,
+              video: call.type === 'VIDEO',
+            });
+          } catch (relaxedErr) {
+            console.warn('Relaxed media access also failed, using synthetic fallback:', relaxedErr);
+            if (call.type === 'VIDEO') {
+              try {
+                const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                const syntheticStream = createSyntheticMediaStream(currentUser.displayName || currentUser.username, true);
+                const videoTrack = syntheticStream.getVideoTracks()[0];
+                const audioTrack = audioStream.getAudioTracks()[0];
+                stream = new MediaStream();
+                if (videoTrack) stream.addTrack(videoTrack);
+                if (audioTrack) stream.addTrack(audioTrack);
+              } catch (fallbackErr) {
+                console.warn('Audio fallback also unavailable, using synthetic stream:', fallbackErr);
+                stream = createSyntheticMediaStream(currentUser.displayName || currentUser.username, true);
+              }
+            } else {
+              try {
+                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+              } catch (fallbackAudioErr) {
+                console.warn('Physical audio unavailable, using synthetic comfort stream:', fallbackAudioErr);
+                stream = createSyntheticMediaStream(currentUser.displayName || currentUser.username, false);
+              }
             }
           }
         }
@@ -473,9 +516,11 @@ export const CallModal: React.FC<CallModalProps> = ({
           await mediaReadyPromise;
 
           if (activePc.signalingState !== 'stable') {
-            await Promise.all([
-              activePc.setLocalDescription({ type: 'rollback' }),
-            ]).catch(() => {});
+            try {
+              await (activePc as any).setLocalDescription({ type: 'rollback' });
+            } catch (rbErr) {
+              console.warn('[WebRTC] Rollback ignored on this browser:', rbErr);
+            }
           }
 
           await activePc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: signal.data }));
@@ -496,7 +541,7 @@ export const CallModal: React.FC<CallModalProps> = ({
           // Drain queued candidates AFTER local description answer is set
           while (candidateQueue.length > 0) {
             const cand = candidateQueue.shift();
-            if (cand) {
+            if (cand && (cand.candidate || (cand as any).sdpMid !== undefined || (cand as any).sdpMLineIndex !== undefined)) {
               try {
                 await activePc.addIceCandidate(cand);
               } catch (candErr) {
@@ -526,7 +571,7 @@ export const CallModal: React.FC<CallModalProps> = ({
 
             while (candidateQueue.length > 0) {
               const cand = candidateQueue.shift();
-              if (cand) {
+              if (cand && (cand.candidate || (cand as any).sdpMid !== undefined || (cand as any).sdpMLineIndex !== undefined)) {
                 try {
                   await activePc.addIceCandidate(cand);
                 } catch (candErr) {
@@ -537,14 +582,17 @@ export const CallModal: React.FC<CallModalProps> = ({
           }
           setConnectionStatus('जुड़ा हुआ • Connected');
         } else if (signal.type === 'ICE_CANDIDATE' && signal.data) {
-          if (activePc.remoteDescription && activePc.remoteDescription.type) {
-            try {
-              await activePc.addIceCandidate(signal.data);
-            } catch (candErr) {
-              console.warn('Could not add ice candidate directly:', candErr);
+          const cand = signal.data;
+          if (cand && (cand.candidate || (cand as any).sdpMid !== undefined || (cand as any).sdpMLineIndex !== undefined)) {
+            if (activePc.remoteDescription && activePc.remoteDescription.type) {
+              try {
+                await activePc.addIceCandidate(cand);
+              } catch (candErr) {
+                console.warn('Could not add ice candidate directly:', candErr);
+              }
+            } else {
+              candidateQueue.push(cand);
             }
-          } else {
-            candidateQueue.push(signal.data);
           }
         } else if (signal.type === 'CONNECTED') {
           soundService.stopOutgoingRingback();
@@ -969,7 +1017,10 @@ export const CallModal: React.FC<CallModalProps> = ({
         playsInline
         style={{ position: 'fixed', top: -9999, left: -9999, width: 1, height: 1, opacity: 0.01, pointerEvents: 'none' }}
       />
-      <div className="fixed inset-0 bg-[#0F1123]/85 backdrop-blur-md flex items-center justify-center p-3 md:p-6 z-50">
+      <div
+        onClick={ensureAudioPlayback}
+        className="fixed inset-0 bg-[#0F1123]/85 backdrop-blur-md flex items-center justify-center p-3 md:p-6 z-50"
+      >
       <div className="bg-[#191C3B] border border-[#C59A58]/30 rounded-3xl w-full max-w-4xl h-[85vh] overflow-hidden shadow-2xl flex flex-col text-white relative">
         {/* Top Header */}
         <header className="px-6 py-3.5 border-b border-white/10 flex items-center justify-between bg-black/20">
