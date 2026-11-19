@@ -9,7 +9,7 @@ WORKDIR /workspace
 
 # Cache dependencies
 COPY pom.xml .
-RUN mvn dependency:go-offline -B
+RUN mvn dependency:resolve -B
 
 # Compile and package production JAR
 COPY src ./src

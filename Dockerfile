@@ -9,7 +9,7 @@ WORKDIR /workspace
 
 # Cache dependencies
 COPY backend/pom.xml ./pom.xml
-RUN mvn dependency:go-offline -B
+RUN mvn dependency:resolve -B
 
 # Compile and package production JAR
 COPY backend/src ./src
