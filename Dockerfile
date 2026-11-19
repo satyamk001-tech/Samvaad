@@ -13,7 +13,7 @@ RUN mvn dependency:go-offline -B
 
 # Compile and package production JAR
 COPY backend/src ./src
-RUN mvn clean package -DskipTests -B && cp target/*.jar target/app.jar
+RUN mvn clean package -DskipTests -B
 
 # Stage 2: Lightweight Runtime Image
 FROM eclipse-temurin:21-jre-jammy
