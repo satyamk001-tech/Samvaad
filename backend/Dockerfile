@@ -34,4 +34,4 @@ COPY --from=build /workspace/target/app.jar app.jar
 EXPOSE 8080 10000
 
 # Execute Spring Boot with container-aware memory flags, dynamic PORT, and auto-convert postgres:// to jdbc:postgresql://
-ENTRYPOINT ["sh", "-c", "if [ -n \"$DATABASE_URL\" ] && echo \"$DATABASE_URL\" | grep -qE '^postgres(ql)?://'; then export SPRING_DATASOURCE_URL=$(echo \"$DATABASE_URL\" | sed -e 's|^postgres://|jdbc:postgresql://|' -e 's|^postgresql://|jdbc:postgresql://|'); fi; exec java -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom -Dserver.port=${PORT:-8080} -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "if [ -n \"$DATABASE_URL\" ] && echo \"$DATABASE_URL\" | grep -qE '^postgres(ql)?://'; then export SPRING_DATASOURCE_URL=$(echo \"$DATABASE_URL\" | sed -e 's|^postgres://|jdbc:postgresql://|' -e 's|^postgresql://|jdbc:postgresql://|'); fi; exec java -XX:+UseContainerSupport -XX:MaxRAMPercentage=50.0 -XX:+UseSerialGC -Xss512k -XX:+ExitOnOutOfMemoryError -Djava.security.egd=file:/dev/./urandom -Dserver.port=${PORT:-8080} -Dserver.address=0.0.0.0 -jar app.jar"]
